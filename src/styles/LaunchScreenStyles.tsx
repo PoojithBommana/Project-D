@@ -3,36 +3,44 @@ import { StyleSheet, Dimensions } from 'react-native';
 const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  backgroundImage: {
+  container: {
     flex: 1,
+  },
+  backgroundVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
     width: '100%',
     height: '100%',
   },
-  container: {
+  overlayContainer: {
     flex: 1,
-    backgroundColor: 'rgba(156, 39, 176, 0.75)', // Lighter semi-transparent purple overlay
+    backgroundColor: 'transparent',
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: 60,
+    justifyContent: 'flex-end',
     paddingHorizontal: 20,
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: height * 0.1,
+    paddingTop: 60,
+    paddingHorizontal: 20,
   },
   logo: {
-    color: '#FFFFFF',
+    color: '#f0f351',
     fontSize: 48,
-    fontFamily: 'OpenSans-ExtraBold',
-    marginBottom: 10,
+    fontFamily: 'OpenSans-Bold',
+    letterSpacing: 2,
   },
   tagline: {
-    color: '#FFFFFF',
+    color: '#f8f99a', // Lighter shade of the logo color (#f0f351)
     fontSize: 32,
-    fontFamily: 'OpenSans-SemiBold',
+    fontFamily: 'OpenSans-SemiBoldItalic',
     textAlign: 'center',
+    marginBottom: 20,
     marginHorizontal: 20,
   },
   bottomContainer: {
@@ -40,6 +48,10 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  buttonWrapper: {
+    width: '100%',
+    marginBottom: 20,
   },
   signInButton: {
     backgroundColor: '#FFFFFF',

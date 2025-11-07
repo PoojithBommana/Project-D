@@ -1,8 +1,9 @@
-import { Text, View, TouchableOpacity, SafeAreaView, ImageBackground, Animated } from 'react-native';
+import { Text, View, SafeAreaView, Animated } from 'react-native';
 import React, { Component } from 'react';
 import { StatusBar } from 'react-native';
+import Video from 'react-native-video';
 import styles from '../styles/LaunchScreenStyles';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import CustomButton from '../components/CustomButton';
 
 interface State {
   dropdownVisible: boolean;
@@ -51,35 +52,47 @@ export default class LaunchScreen extends Component<{}, State> {
     const buttonOpacity = this.state.buttonAnimation;
 
     return (
-      <ImageBackground 
-        source={require('../assets/heart-bg.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
-        <SafeAreaView style={styles.container}>
-          <StatusBar translucent backgroundColor="rgba(156, 39, 176, 0.75)" barStyle="light-content" />
+      <View style={styles.container}>
+        <Video
+          source={require('../assets/backgroundvideo.mp4')}
+          style={styles.backgroundVideo}
+          resizeMode="cover"
+          repeat={true}
+          muted={true}
+          paused={false}
+          playInBackground={false}
+          playWhenInactive={false}
+          ignoreSilentSwitch="ignore"
+        />
+        <SafeAreaView style={styles.overlayContainer}>
+          <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
         
-        <View style={styles.contentContainer}>
-          {/* Logo Section */}
-          <View style={styles.logoContainer}>
-            <Text style={styles.logo}>DilMil</Text>
-            <Text style={styles.tagline}>Where Indian hearts meet</Text>
-          </View>
+        {/* Logo Section - Top */}
+        <View style={styles.logoContainer}>
+          <Text style={styles.logo}>DilMil</Text>
+        </View>
 
+        <View style={styles.contentContainer}>
           {/* Bottom Section */}
           <View style={styles.bottomContainer}>
-            <TouchableOpacity style={styles.signInButton}>
-              <Text style={styles.signInText}>Sign In</Text>
-            </TouchableOpacity>
+            <Text style={styles.tagline}>Where Indian hearts meet</Text>
+            <View style={styles.buttonWrapper}>
+              <CustomButton
+                title="Quick Sign In"
+                variant="primary"
+                onPress={() => {
+                  // Handle sign in
+                }}
+              />
+            </View>
 
-            <Animated.View style={{ opacity: buttonOpacity }}>
-              <TouchableOpacity 
-                style={styles.otherMethodsButton} 
+            <Animated.View style={[styles.buttonWrapper, { opacity: buttonOpacity }]}>
+              <CustomButton
+                title="Continue with other methods"
+                variant="outlined"
                 onPress={this.toggleDropdown}
                 disabled={this.state.dropdownVisible}
-              >
-                <Text style={styles.otherMethodsText}>Continue with other methods</Text>
-              </TouchableOpacity>
+              />
             </Animated.View>
 
             <Animated.View 
@@ -92,14 +105,24 @@ export default class LaunchScreen extends Component<{}, State> {
                 }
               ]}
             >
-              <TouchableOpacity style={styles.socialButton}>
-                <Icon name="google" size={20} color="#DB4437" style={styles.socialIcon} />
-                <Text style={styles.socialButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Icon name="facebook" size={20} color="#4267B2" style={styles.socialIcon} />
-                <Text style={styles.socialButtonText}>Continue with Facebook</Text>
-              </TouchableOpacity>
+              <CustomButton
+                title="Continue with Google"
+                variant="social"
+                iconName="google"
+                iconColor="#DB4437"
+                onPress={() => {
+                  // Handle Google sign in
+                }}
+              />
+              <CustomButton
+                title="Continue with Facebook"
+                variant="social"
+                iconName="facebook"
+                iconColor="#4267B2"
+                onPress={() => {
+                  // Handle Facebook sign in
+                }}
+              />
             </Animated.View>
 
             <View style={styles.termsContainer}>
@@ -112,7 +135,7 @@ export default class LaunchScreen extends Component<{}, State> {
           </View>
         </View>
       </SafeAreaView>
-      </ImageBackground>
+      </View>
     );
   }
 }
