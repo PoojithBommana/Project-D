@@ -21,37 +21,52 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
   },
-  logoContainer: {
+  topSection: {
     alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingTop: 40,
+    marginTop: 50,
+    width: '100%',
   },
   logo: {
     color: '#f0f351',
     fontSize: 48,
     fontFamily: 'OpenSans-Bold',
     letterSpacing: 2,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   tagline: {
-    color: '#f8f99a', // Lighter shade of the logo color (#f0f351)
-    fontSize: 32,
-    fontFamily: 'OpenSans-SemiBoldItalic',
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontFamily: 'OpenSans-SemiBold',
     textAlign: 'center',
-    marginBottom: 20,
+  },
+  mainMessage: {
+    color: '#f0f351',
+    fontSize: 43,
+    fontFamily: 'OpenSans-Bold',
+    textAlign: 'center',
     marginHorizontal: 20,
+  
+    marginTop: 50,
   },
   bottomContainer: {
-    marginTop: 'auto',
     width: '100%',
-    paddingHorizontal: 20,
     paddingBottom: 40,
+    alignItems: 'center',
+    marginTop: 50,
   },
   buttonWrapper: {
     width: '100%',
-    marginBottom: 20,
+   
+    marginTop: 30,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
   },
   signInButton: {
     backgroundColor: '#FFFFFF',
@@ -97,11 +112,10 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     marginBottom: 15,
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     borderRadius: 15,
     padding: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginTop: 5,
   },
   socialButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',

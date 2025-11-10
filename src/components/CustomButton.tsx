@@ -1,11 +1,11 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator , Image, ImageSourcePropType} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 export interface CustomButtonProps {
   title: string;
   onPress?: () => void;
-  variant?: 'primary' | 'outlined' | 'social';
+  variant?: 'primary' | 'outlined' | 'social' | 'borderless';
   disabled?: boolean;
   loading?: boolean;
   iconName?: string;
@@ -13,6 +13,7 @@ export interface CustomButtonProps {
   iconSize?: number;
   customStyle?: ViewStyle;
   textStyle?: TextStyle;
+  imageUrl?: ImageSourcePropType;
   iconStyle?: ViewStyle;
 }
 
@@ -28,6 +29,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   customStyle,
   textStyle,
   iconStyle,
+  imageUrl,
 }) => {
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
@@ -54,10 +56,16 @@ const CustomButton: React.FC<CustomButtonProps> = ({
           borderWidth: 2,
           borderColor: '#FFFFFF',
         };
+      case 'borderless':
+        return {
+          ...baseStyle,
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+        };
       case 'social':
         return {
           ...baseStyle,
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backgroundColor: 'transparent',
           marginVertical: 5,
         };
       default:
@@ -83,11 +91,16 @@ const CustomButton: React.FC<CustomButtonProps> = ({
           ...baseStyle,
           color: '#FFFFFF',
         };
+      case 'borderless':
+        return {
+          ...baseStyle,
+          color: '#FFFFFF',
+        };
       case 'social':
         return {
           ...baseStyle,
-          color: '#9C27B0',
-          marginLeft: iconName ? 12 : 0,
+          color: '#FFFFFF',
+          marginLeft: (iconName || imageUrl) ? 12 : 0,
         };
       default:
         return baseStyle;
@@ -100,6 +113,9 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading }}
     >
       {loading ? (
         <ActivityIndicator
@@ -108,11 +124,14 @@ const CustomButton: React.FC<CustomButtonProps> = ({
         />
       ) : (
         <>
-          {iconName && (
+          {imageUrl && (
+            <Image source={imageUrl} style={styles.icon} />
+          )}
+          {iconName && !imageUrl && (
             <Icon
               name={iconName}
               size={iconSize}
-              color={iconColor || (variant === 'social' ? '#9C27B0' : '#FFFFFF')}
+              color={iconColor || '#FFFFFF'}
               style={[styles.icon, iconStyle]}
             />
           )}

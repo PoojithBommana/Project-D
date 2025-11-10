@@ -1,0 +1,103 @@
+import React from 'react';
+import { View, Text, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../App';
+import CustomButton from '../components/CustomButton';
+import styles from '../styles/AccountNotFoundScreenStyles';
+
+interface Props {
+  navigation?: NativeStackNavigationProp<RootStackParamList, 'AccountNotFound'>;
+}
+
+/**
+ * AccountNotFoundScreen Component
+ * 
+ * Displays when user login information is not recognized.
+ * Provides options to create a new account or try alternative login methods.
+ * 
+ * Features:
+ * - Back navigation button
+ * - Clear error messaging with icon
+ * - Primary action: Create new account
+ * - Secondary action: Try different login method
+ */
+export default class AccountNotFoundScreen extends React.Component<Props> {
+  /**
+   * Handles navigation back to previous screen
+   */
+  handleGoBack = () => {
+    this.props.navigation?.goBack();
+  };
+
+  /**
+   * Handles create new account action
+   */
+  handleCreateAccount = () => {
+    // Navigate to phone number login to create account
+    this.props.navigation?.navigate('PhoneNumberLogin');
+  };
+
+  /**
+   * Handles try different login method action
+   */
+  handleTryDifferentMethod = () => {
+    // Navigate back to launch screen to try different methods
+    this.props.navigation?.navigate('Launch');
+  };
+
+  render() {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        
+        {/* Header Section */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={this.handleGoBack} 
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <Icon name="chevron-left" size={24} color="#000000" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Main Content Section */}
+        <View style={styles.contentContainer}>
+          {/* Error Icon */}
+          <View style={styles.iconCircle}>
+            <Icon name="minus" size={40} color="#000000" />
+          </View>
+
+          {/* Title */}
+          <Text style={styles.title}>Hmm, we can't find an account</Text>
+
+          {/* Description */}
+          <Text style={styles.description}>
+            We don't recognize the info you gave. Create a new account or try a different login method.
+          </Text>
+        </View>
+
+        {/* Bottom Action Buttons */}
+        <View style={styles.bottomContainer}>
+          <CustomButton
+            title="Create a new account"
+            variant="primary"
+            onPress={this.handleCreateAccount}
+            customStyle={styles.createAccountButton}
+            textStyle={styles.createAccountButtonText}
+          />
+          
+          <CustomButton
+            title="Try different login method"
+            variant="borderless"
+            onPress={this.handleTryDifferentMethod}
+            customStyle={styles.tryDifferentMethodButton}
+            textStyle={styles.tryDifferentMethodButtonText}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+}
+

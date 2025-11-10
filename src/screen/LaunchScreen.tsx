@@ -2,58 +2,87 @@ import { Text, View, SafeAreaView, Animated } from 'react-native';
 import React, { Component } from 'react';
 import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../App';
 import styles from '../styles/LaunchScreenStyles';
 import CustomButton from '../components/CustomButton';
+import { Facebookicon , Googleicon } from '../assets/index';
+
+interface Props {
+  navigation?: NativeStackNavigationProp<RootStackParamList, 'Launch'>;
+}
 
 interface State {
   dropdownVisible: boolean;
   dropdownAnimation: Animated.Value;
-  buttonAnimation: Animated.Value;
 }
 
-export default class LaunchScreen extends Component<{}, State> {
-  constructor(props: {}) {
+export default class LaunchScreen extends Component<Props, State> {
+  private videoRef: any = null;
+
+  constructor(props: Props) {
     super(props);
     this.state = {
       dropdownVisible: false,
       dropdownAnimation: new Animated.Value(0),
-      buttonAnimation: new Animated.Value(1)
     };
   }
 
   toggleDropdown = () => {
-    const { dropdownAnimation, buttonAnimation } = this.state;
+    const { dropdownVisible, dropdownAnimation } = this.state;
 
-    Animated.parallel([
-      // Fade out the "Continue with other methods" button
-      Animated.timing(buttonAnimation, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      // Slide down and fade in the dropdown
-      Animated.timing(dropdownAnimation, {
+    if (!dropdownVisible) {
+      // Open dropdown with smooth animation
+      Animated.spring(dropdownAnimation, {
         toValue: 1,
-        duration: 400,
+        tension: 50,
+        friction: 8,
         useNativeDriver: true,
-      })
-    ]).start();
+      }).start();
+      this.setState({ dropdownVisible: true });
+    } else {
+      // Close dropdown
+      Animated.spring(dropdownAnimation, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start(() => {
+        this.setState({ dropdownVisible: false });
+      });
+    }
+  };
 
-    this.setState({ dropdownVisible: true });
+  /**
+   * Handles continue with mobile number action
+   */
+  handleContinueWithMobile = () => {
+    this.props.navigation?.navigate('PhoneNumberLogin');
   };
 
   render() {
+    // Dropdown appears below the "Continue with other methods" button
     const dropdownTranslateY = this.state.dropdownAnimation.interpolate({
       inputRange: [0, 1],
-      outputRange: [-50, 0],
+      outputRange: [10, 0], // Starts slightly below, moves to position
     });
 
-    const dropdownOpacity = this.state.dropdownAnimation;
-    const buttonOpacity = this.state.buttonAnimation;
+    const dropdownOpacity = this.state.dropdownAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
+    const dropdownScale = this.state.dropdownAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.95, 1],
+    });
 
     return (
       <View style={styles.container}>
         <Video
+          ref={(ref) => {
+            this.videoRef = ref;
+          }}
           source={require('../assets/backgroundvideo.mp4')}
           style={styles.backgroundVideo}
           resizeMode="cover"
@@ -63,78 +92,96 @@ export default class LaunchScreen extends Component<{}, State> {
           playInBackground={false}
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
+          onEnd={() => {
+            // Ensure video restarts when it ends
+            this.videoRef?.seek(0);
+          }}
         />
         <SafeAreaView style={styles.overlayContainer}>
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
         
-        {/* Logo Section - Top */}
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>DilMil</Text>
-        </View>
-
-        <View style={styles.contentContainer}>
-          {/* Bottom Section */}
-          <View style={styles.bottomContainer}>
-            <Text style={styles.tagline}>Where Indian hearts meet</Text>
-            <View style={styles.buttonWrapper}>
-              <CustomButton
-                title="Quick Sign In"
-                variant="primary"
-                onPress={() => {
-                  // Handle sign in
-                }}
-              />
+          <View style={styles.contentContainer}>
+            {/* Top Section: Logo and Tagline */}
+            <View style={styles.topSection}>
+              <Text style={styles.logo}>DilMil</Text>
             </View>
 
-            <Animated.View style={[styles.buttonWrapper, { opacity: buttonOpacity }]}>
-              <CustomButton
-                title="Continue with other methods"
-                variant="outlined"
-                onPress={this.toggleDropdown}
-                disabled={this.state.dropdownVisible}
-              />
-            </Animated.View>
+            {/* Bottom Section: Main Message, Buttons and Legal Text */}
+            <View style={styles.bottomContainer}>
+              <Text style={styles.mainMessage}>Where Indian hearts meet</Text>
+              
+              <View style={styles.buttonWrapper}>
+                <CustomButton
+                  title="Quick sign in"
+                  variant="primary"
+                  onPress={() => {
+                    // Handle sign in
+                  }}
+                />
+              </View>
 
-            <Animated.View 
-              style={[
-                styles.dropdownContainer,
-                {
-                  opacity: dropdownOpacity,
-                  transform: [{ translateY: dropdownTranslateY }],
-                  display: this.state.dropdownVisible ? 'flex' : 'none'
-                }
-              ]}
-            >
-              <CustomButton
-                title="Continue with Google"
-                variant="social"
-                iconName="google"
-                iconColor="#DB4437"
-                onPress={() => {
-                  // Handle Google sign in
-                }}
-              />
-              <CustomButton
-                title="Continue with Facebook"
-                variant="social"
-                iconName="facebook"
-                iconColor="#4267B2"
-                onPress={() => {
-                  // Handle Facebook sign in
-                }}
-              />
-            </Animated.View>
+              <View style={styles.buttonWrapper}>
+                <CustomButton
+                  title="Continue with other methods"
+                  variant="borderless"
+                  onPress={this.toggleDropdown}
+                />
+              </View>
 
-            <View style={styles.termsContainer}>
-              <Text style={styles.termsText}>
-                By signing up, you agree to our{' '}
-                <Text style={styles.linkText}>Terms</Text>. See how we use{'\n'}
-                your data in our <Text style={styles.linkText}>Privacy Policy</Text>.
-              </Text>
+              <Animated.View 
+                style={[
+                  styles.dropdownContainer,
+                  {
+                    opacity: dropdownOpacity,
+                    transform: [
+                      { translateY: dropdownTranslateY },
+                      { scale: dropdownScale }
+                    ],
+                    pointerEvents: this.state.dropdownVisible ? 'auto' : 'none',
+                  }
+                ]}
+              >
+                <CustomButton
+                  title="Continue with Google"
+                  variant="social"
+                  imageUrl={Googleicon}
+                  onPress={() => {
+                    // Handle Google sign in
+                  }}
+                  customStyle={{backgroundColor: 'white'}}
+                  textStyle={{color: '#000000'}}
+                />
+                <CustomButton
+                  title="Continue with Facebook"
+                  variant="social"
+                  imageUrl={Facebookicon}
+                  onPress={() => {
+                    // Handle Facebook sign in
+                  }}
+                  customStyle={{backgroundColor: 'white'}}
+                  textStyle={{color: '#000000'}}
+                />
+                <CustomButton
+                  title="Continue with mobile number"
+                  variant="social"
+                  iconName="phone"
+                  iconColor="#000000"
+                  onPress={this.handleContinueWithMobile}
+                  customStyle={{backgroundColor: 'white'}}
+                  textStyle={{color: '#000000'}}
+                />
+              </Animated.View>
+
+              <View style={styles.termsContainer}>
+                <Text style={styles.termsText}>
+                  By signing up, you agree to our{' '}
+                  <Text style={styles.linkText}>Terms</Text>. See how we use{'\n'}
+                  your data in our <Text style={styles.linkText}>Privacy Policy</Text>.
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
       </View>
     );
   }

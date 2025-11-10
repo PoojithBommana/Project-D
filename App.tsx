@@ -1,13 +1,75 @@
-import { View } from 'react-native'
-import React, { Component } from 'react'
-import LaunchScreen from './src/screen/LaunchScreen'
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import LaunchScreen from './src/screen/LaunchScreen';
+import PhoneNumberLoginPage from './src/screen/PhoneNumberLoginPage';
+import VerifyPhoneNumberScreen from './src/screen/VerifyPhoneNumberScreen';
+import HomeScreen from './src/screen/HomeScreen';
+import AccountDetailsNotFound from './src/screen/AccountDetailsNotFound';
 
-export default class App extends Component {
-  render() {
-    return (
-      <View style={{ flex: 1 }}>
-        <LaunchScreen />
-      </View>
-    )
-  }
-}
+export type RootStackParamList = {
+  Launch: undefined;
+  PhoneNumberLogin: undefined;
+  VerifyPhoneNumber: {
+    countryCode: string;
+    phoneNumber: string;
+  };
+  Home: undefined;
+  AccountNotFound: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+/**
+ * AppNavigator Component
+ * 
+ * Main navigation container for the app.
+ * Defines all screens and their navigation flow.
+ * 
+ * Navigation Flow:
+ * - LaunchScreen (initial)
+ * - PhoneNumberLoginPage
+ * - VerifyPhoneNumberScreen
+ * - HomeScreen
+ * - AccountDetailsNotFound (error screen)
+ */
+const AppNavigator: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Launch"
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen 
+            name="Launch" 
+            component={LaunchScreen} 
+          />
+          <Stack.Screen 
+            name="PhoneNumberLogin" 
+            component={PhoneNumberLoginPage} 
+          />
+          <Stack.Screen 
+            name="VerifyPhoneNumber" 
+            component={VerifyPhoneNumberScreen} 
+          />
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen} 
+          />
+          <Stack.Screen 
+            name="AccountNotFound" 
+            component={AccountDetailsNotFound} 
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ErrorBoundary>
+  );
+};
+
+export default AppNavigator;
+
