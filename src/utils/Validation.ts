@@ -5,6 +5,8 @@
  * Provides reusable validation logic across the application.
  */
 
+import { t } from '../config/i18n';
+
 export interface ValidationResult {
   isValid: boolean;
   error?: string;
@@ -17,7 +19,7 @@ export const validatePhoneNumber = (phoneNumber: string, countryCode?: string): 
   if (!phoneNumber || !phoneNumber.trim()) {
     return {
       isValid: false,
-      error: 'Phone number is required',
+      error: t('PhoneNumberRequired'),
     };
   }
 
@@ -28,7 +30,7 @@ export const validatePhoneNumber = (phoneNumber: string, countryCode?: string): 
   if (!/^\d+$/.test(cleaned)) {
     return {
       isValid: false,
-      error: 'Phone number should contain only digits',
+      error: t('PhoneNumberDigitsOnly'),
     };
   }
 
@@ -39,14 +41,14 @@ export const validatePhoneNumber = (phoneNumber: string, countryCode?: string): 
   if (cleaned.length < minLength) {
     return {
       isValid: false,
-      error: `Phone number should be at least ${minLength} digits`,
+      error: t('PhoneNumberMinLength').replace('{minLength}', minLength.toString()),
     };
   }
 
   if (cleaned.length > maxLength) {
     return {
       isValid: false,
-      error: `Phone number should not exceed ${maxLength} digits`,
+      error: t('PhoneNumberMaxLength').replace('{maxLength}', maxLength.toString()),
     };
   }
 
@@ -60,14 +62,14 @@ export const validateOTP = (otp: string): ValidationResult => {
   if (!otp || !otp.trim()) {
     return {
       isValid: false,
-      error: 'OTP code is required',
+      error: t('OTPRequired'),
     };
   }
 
   if (!/^\d{6}$/.test(otp)) {
     return {
       isValid: false,
-      error: 'OTP must be exactly 6 digits',
+      error: t('OTPInvalid'),
     };
   }
 
@@ -81,7 +83,7 @@ export const validateCountryCode = (countryCode: string): ValidationResult => {
   if (!countryCode || !countryCode.startsWith('+')) {
     return {
       isValid: false,
-      error: 'Invalid country code format',
+      error: t('InvalidCountryCode'),
     };
   }
 

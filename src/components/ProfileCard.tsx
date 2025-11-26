@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Profile } from '../types/Profile';
+import { t } from '../config/i18n';
 import styles from '../styles/ProfileCardStyles';
 
 const { width, height } = Dimensions.get('window');
@@ -53,7 +54,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onActionPress }) => 
         {/* New Here Badge */}
         {profile.isNew && (
           <View style={styles.newBadge}>
-            <Text style={styles.newBadgeText}>New here</Text>
+            <Text style={styles.newBadgeText}>{t("NewHere")}</Text>
           </View>
         )}
         
@@ -86,7 +87,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onActionPress }) => 
         {/* Distance */}
         {profile.distance && (
           <Text style={styles.distanceText}>
-            {profile.distance} km away
+            {profile.distance} {t("KmAway")}
           </Text>
         )}
       </View>

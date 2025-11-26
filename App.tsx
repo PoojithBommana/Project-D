@@ -4,8 +4,8 @@ import MainNavigation from './src/navigation/MainNavigation';
 
 export type RootStackParamList = {
   Launch: undefined;
-  PhoneNumberLogin: undefined;
-  VerifyPhoneNumber: {
+  RegisterScreen: undefined;
+  VerifyPhoneNumberScreen: {
     countryCode: string;
     phoneNumber: string;
   };

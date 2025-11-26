@@ -6,6 +6,7 @@ import ProfileCard from '../../components/ProfileCard';
 import { Profile, SwipeAction } from '../../types/Profile';
 import { profileService } from '../../services/ProfileService';
 import { Usericon, Discovericon, Likedicon, Chatsicon } from '../../assets/index';
+import { t } from '../../config/i18n';
 import styles from '../../styles/HomeScreenStyles';
 
 interface State {
@@ -128,9 +129,7 @@ export default class HomeScreen extends Component<{}, State> {
     ];
   };
 
-  /**
-   * Handles card swipe action with API call
-   */
+
   handleSwipe = async (cardIndex: number, direction: 'left' | 'right') => {
     const { profiles } = this.state;
     const swipedProfile = profiles[cardIndex];
@@ -145,33 +144,31 @@ export default class HomeScreen extends Component<{}, State> {
 
     const newIndex = cardIndex + 1;
 
-    // Update state immediately for smooth UX
+   
     this.setState((prevState) => ({
       swipeActions: [...prevState.swipeActions, action],
       currentIndex: newIndex,
     }));
 
-    // Send swipe action to backend API (fire and forget for better UX)
+  
     try {
       const response = await profileService.submitSwipeAction(action);
       if (response.success && response.isMatch) {
-        // Handle match scenario
-        Alert.alert('It\'s a Match!', 'You and this person liked each other!');
+      
+        Alert.alert(t('ItsAMatch'), t('MatchDescription'));
       }
     } catch (error) {
-      // Log error but don't block user experience
+     
       console.error('Error submitting swipe action:', error);
     }
 
-    // Check if all cards are swiped
+  
     if (newIndex >= profiles.length) {
       setTimeout(() => this.handleAllCardsSwiped(), 500);
     }
   };
 
-  /**
-   * Handles manual action button press with API call
-   */
+
   handleActionPress = async (action: 'like' | 'pass' | 'superlike') => {
     const { currentIndex, profiles } = this.state;
 
@@ -188,72 +185,62 @@ export default class HomeScreen extends Component<{}, State> {
       timestamp: Date.now(),
     };
 
-    // Update state immediately for smooth UX
+  
     this.setState((prevState) => ({
       swipeActions: [...prevState.swipeActions, swipeAction],
       currentIndex: prevState.currentIndex + 1,
     }));
 
-    // Perform swipe animation based on action
+  
     if (action === 'like' || action === 'superlike') {
       this.swiperRef?.swipeRight();
     } else if (action === 'pass') {
       this.swiperRef?.swipeLeft();
     }
 
-    // Send action to backend API (fire and forget for better UX)
+  
     try {
       const response = await profileService.submitSwipeAction(swipeAction);
       if (response.success && response.isMatch) {
-        // Handle match scenario
-        Alert.alert('It\'s a Match!', 'You and this person liked each other!');
+      
+        Alert.alert(t('ItsAMatch'), t('MatchDescription'));
       }
     } catch (error) {
-      // Log error but don't block user experience
+     
       console.error('Error submitting swipe action:', error);
     }
 
-    // Check if all cards are swiped
+  
     if (currentIndex === profiles.length - 1) {
       setTimeout(() => this.handleAllCardsSwiped(), 500);
     }
   };
 
-  /**
-   * Handles when all cards are swiped
-   */
+
   handleAllCardsSwiped = () => {
     Alert.alert(
-      'No more profiles',
-      'You have swiped through all available profiles. Check back later for more matches!',
-      [{ text: 'OK' }]
+      t('NoMoreProfilesTitle'),
+      t('NoMoreProfilesDescription'),
+      [{ text: t('OK') }]
     );
   };
 
-  /**
-   * Handles when a card is swiped right (like)
-   */
+
   onSwipedRight = (cardIndex: number) => {
     this.handleSwipe(cardIndex, 'right');
   };
 
-  /**
-   * Handles when a card is swiped left (pass)
-   */
+
   onSwipedLeft = (cardIndex: number) => {
     this.handleSwipe(cardIndex, 'left');
   };
 
-  /**
-   * Handles when swiping is aborted
-   */
+
   onSwipedAborted = () => {
     console.log('Swipe aborted');
   };
 
-  /**
-   * Renders individual profile card
-   */
+
   renderCard = (profile: Profile, cardIndex: number) => {
     if (!profile) {
       return null;
@@ -267,14 +254,12 @@ export default class HomeScreen extends Component<{}, State> {
     );
   };
 
-  /**
-   * Renders when no more cards are available
-   */
+
   renderEmpty = () => {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No more profiles available</Text>
-        <Text style={styles.emptySubtext}>Check back later for more matches!</Text>
+        <Text style={styles.emptyText}>{t("NoMoreProfiles")}</Text>
+        <Text style={styles.emptySubtext}>{t("CheckBackLater")}</Text>
       </View>
     );
   };
@@ -286,9 +271,8 @@ export default class HomeScreen extends Component<{}, State> {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>DilMil</Text>
+          <Text style={styles.headerTitle}>{t("DilMil")}</Text>
           <View style={styles.headerIcon}>
             {/* Filter/Settings icon can be added here */}
           </View>
@@ -323,7 +307,7 @@ export default class HomeScreen extends Component<{}, State> {
               secondCardZoom={0.95}
               overlayLabels={{
                 left: {
-                  title: 'PASS',
+                  title: t('PASS'),
                   style: {
                     label: {
                       backgroundColor: 'red',
@@ -345,7 +329,7 @@ export default class HomeScreen extends Component<{}, State> {
                   },
                 },
                 right: {
-                  title: 'LIKE',
+                  title: t('LIKE'),
                   style: {
                     label: {
                       backgroundColor: 'green',
@@ -393,7 +377,7 @@ export default class HomeScreen extends Component<{}, State> {
             <Text style={[
               styles.navLabel,
               this.state.activeTab === 'profile' && styles.navLabelActive
-            ]}>Profile</Text>
+            ]}>{t("Profile")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -411,7 +395,7 @@ export default class HomeScreen extends Component<{}, State> {
             <Text style={[
               styles.navLabel,
               this.state.activeTab === 'discover' && styles.navLabelActive
-            ]}>Discover</Text>
+            ]}>{t("Discover")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -431,7 +415,7 @@ export default class HomeScreen extends Component<{}, State> {
             <Text style={[
               styles.navLabel,
               this.state.activeTab === 'people' && styles.navLabelActive
-            ]}>People</Text>
+            ]}>{t("People")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -452,7 +436,7 @@ export default class HomeScreen extends Component<{}, State> {
             <Text style={[
               styles.navLabel,
               this.state.activeTab === 'liked' && styles.navLabelActive
-            ]}>Liked You</Text>
+            ]}>{t("LikedYou")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -470,7 +454,7 @@ export default class HomeScreen extends Component<{}, State> {
             <Text style={[
               styles.navLabel,
               this.state.activeTab === 'chats' && styles.navLabelActive
-            ]}>Chats</Text>
+            ]}>{t("Chats")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

@@ -3,14 +3,14 @@ import React, { Component } from 'react';
 import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../App';
+import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import styles from '../../styles/LaunchScreenStyles';
 import CustomButton from '../../components/CustomButton';
 import { Facebookicon , Googleicon } from '../../assets/index';
 import { t } from '../../config/i18n';
 
 interface Props {
-  navigation?: NativeStackNavigationProp<RootStackParamList, 'Launch'>;
+  navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
 }
 
 interface State {
@@ -55,18 +55,16 @@ export default class LoginScreen extends Component<Props, State> {
     }
   };
 
-  /**
-   * Handles continue with mobile number action
-   */
+
   handleContinueWithMobile = () => {
-    this.props.navigation?.navigate('PhoneNumberLogin');
+    this.props.navigation?.navigate('RegisterScreen');
   };
 
   render() {
-    // Dropdown appears below the "Continue with other methods" button
+    
     const dropdownTranslateY = this.state.dropdownAnimation.interpolate({
       inputRange: [0, 1],
-      outputRange: [10, 0], // Starts slightly below, moves to position
+      outputRange: [10, 0], 
     });
 
     const dropdownOpacity = this.state.dropdownAnimation.interpolate({
@@ -88,14 +86,14 @@ export default class LoginScreen extends Component<Props, State> {
           source={require('./../../assets/backgroundvideo.mp4')}
           style={styles.backgroundVideo}
           resizeMode="cover"
-          repeat={false}
+          repeat={true}
           muted={true}
           paused={false}
           playInBackground={false}
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
           onEnd={() => {
-            // Ensure video restarts when it ends
+           
             this.videoRef?.seek(0);
           }}
         />
@@ -103,28 +101,28 @@ export default class LoginScreen extends Component<Props, State> {
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
         
           <View style={styles.contentContainer}>
-            {/* Top Section: Logo and Tagline */}
+            
             <View style={styles.topSection}>
               <Text style={styles.logo}>{t("DilMil")}</Text>
             </View>
 
-            {/* Bottom Section: Main Message, Buttons and Legal Text */}
+          
             <View style={styles.bottomContainer}>
               <Text style={styles.mainMessage}>{t('IndianHeartsMeet')}</Text>
               
               <View style={styles.buttonWrapper}>
                 <CustomButton
-                  title="Quick sign in"
+                  title={t("QuickSignIn")}
                   variant="primary"
                   onPress={() => {
-                    // Handle sign in
+                 
                   }}
                 />
               </View>
 
               <View style={styles.buttonWrapper}>
                 <CustomButton
-                  title="Continue with other methods"
+                  title={t("ContinueWithOtherMethods")}
                   variant="borderless"
                   onPress={this.toggleDropdown}
                 />
@@ -144,7 +142,7 @@ export default class LoginScreen extends Component<Props, State> {
                 ]}
               >
                 <CustomButton
-                  title="Continue with Google"
+                  title={t("ContinueWithGoogle")}
                   variant="social"
                   imageUrl={Googleicon}
                   onPress={() => {
@@ -154,7 +152,7 @@ export default class LoginScreen extends Component<Props, State> {
                   textStyle={{color: '#000000'}}
                 />
                 <CustomButton
-                  title="Continue with Facebook"
+                  title={t("ContinueWithFacebook")}
                   variant="social"
                   imageUrl={Facebookicon}
                   onPress={() => {
@@ -164,7 +162,7 @@ export default class LoginScreen extends Component<Props, State> {
                   textStyle={{color: '#000000'}}
                 />
                 <CustomButton
-                  title="Continue with mobile number"
+                  title={t("ContinueWithMobileNumber")}
                   variant="social"
                   iconName="phone"
                   iconColor="#000000"
@@ -176,9 +174,7 @@ export default class LoginScreen extends Component<Props, State> {
 
               <View style={styles.termsContainer}>
                 <Text style={styles.termsText}>
-                  By signing up, you agree to our{' '}
-                  <Text style={styles.linkText}>Terms</Text>. See how we use{'\n'}
-                  your data in our <Text style={styles.linkText}>Privacy Policy</Text>.
+                  {t("TermsAndPrivacy")}
                 </Text>
               </View>
             </View>

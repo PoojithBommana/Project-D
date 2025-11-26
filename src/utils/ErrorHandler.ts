@@ -6,6 +6,7 @@
  */
 
 import { Alert } from 'react-native';
+import { t } from '../config/i18n';
 
 export interface AppError {
   code?: string;
@@ -16,16 +17,16 @@ export interface AppError {
 /**
  * Shows user-friendly error alert
  */
-export const showErrorAlert = (error: string | AppError, title: string = 'Error') => {
+export const showErrorAlert = (error: string | AppError, title: string = t('Error')) => {
   const message = typeof error === 'string' ? error : error.message;
-  Alert.alert(title, message, [{ text: 'OK' }]);
+  Alert.alert(title, message, [{ text: t('OK') }]);
 };
 
 /**
  * Shows success alert
  */
-export const showSuccessAlert = (message: string, title: string = 'Success') => {
-  Alert.alert(title, message, [{ text: 'OK' }]);
+export const showSuccessAlert = (message: string, title: string = t('Success')) => {
+  Alert.alert(title, message, [{ text: t('OK') }]);
 };
 
 /**
@@ -45,25 +46,25 @@ export const handleAPIError = (error: any): string => {
   }
 
   if (error?.response?.status === 401) {
-    return 'Authentication failed. Please try again.';
+    return t('AuthenticationFailed');
   }
 
   if (error?.response?.status === 403) {
-    return 'You do not have permission to perform this action.';
+    return t('NoPermission');
   }
 
   if (error?.response?.status === 404) {
-    return 'Resource not found.';
+    return t('ResourceNotFound');
   }
 
   if (error?.response?.status >= 500) {
-    return 'Server error. Please try again later.';
+    return t('ServerError');
   }
 
   if (error?.code === 'NETWORK_ERROR') {
-    return 'Network error. Please check your internet connection.';
+    return t('NetworkError');
   }
 
-  return 'An unexpected error occurred. Please try again.';
+  return t('UnexpectedError');
 };
 

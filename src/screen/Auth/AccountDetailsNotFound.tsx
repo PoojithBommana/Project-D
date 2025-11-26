@@ -2,12 +2,13 @@ import React from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../App';
+import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import CustomButton from '../../components/CustomButton';
+import { t } from '../../config/i18n';
 import styles from '../../styles/AccountNotFoundScreenStyles';
 
 interface Props {
-  navigation?: NativeStackNavigationProp<RootStackParamList, 'AccountNotFound'>;
+  navigation?: NativeStackNavigationProp<AuthStackParamList, 'AccountNotFound'>;
 }
 
 export default class AccountNotFoundScreen extends React.Component<Props> {
@@ -16,10 +17,11 @@ export default class AccountNotFoundScreen extends React.Component<Props> {
     this.props.navigation?.goBack();
   };
   handleCreateAccount = () => {
-    this.props.navigation?.navigate('PhoneNumberLogin');
+    this.props.navigation?.navigate('RegisterScreen');
   };
   handleTryDifferentMethod = () => {
-    this.props.navigation?.navigate('Launch');
+    
+    this.props.navigation?.navigate('LoginScreen');
   };
 
   render() {
@@ -42,16 +44,16 @@ export default class AccountNotFoundScreen extends React.Component<Props> {
             <Icon name="minus" size={40} color="#000000" />
           </View>
 
-          <Text style={styles.title}>Hmm, we can't find an account</Text>
+          <Text style={styles.title}>{t("AccountNotFound")}</Text>
 
           <Text style={styles.description}>
-            We don't recognize the info you gave. Create a new account or try a different login method.
+            {t("AccountNotFoundDescription")}
           </Text>
         </View>
 
         <View style={styles.bottomContainer}>
           <CustomButton
-            title="Create a new account"
+            title={t("CreateNewAccount")}
             variant="primary"
             onPress={this.handleCreateAccount}
             customStyle={styles.createAccountButton}
@@ -59,7 +61,7 @@ export default class AccountNotFoundScreen extends React.Component<Props> {
           />
           
           <CustomButton
-            title="Try different login method"
+            title={t("TryDifferentLoginMethod")}
             variant="borderless"
             onPress={this.handleTryDifferentMethod}
             customStyle={styles.tryDifferentMethodButton}
