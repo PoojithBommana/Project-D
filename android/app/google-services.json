@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "134345709818",
+    "project_id": "dilmil-911be",
+    "storage_bucket": "dilmil-911be.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:134345709818:android:3cc0d8f92037f8857d5143",
+        "android_client_info": {
+          "package_name": "com.projectd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6QoeNB20qsaP2tVB_-FQ2SJBPoH0HRuI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

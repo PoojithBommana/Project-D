@@ -21,19 +21,7 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-/**
- * AppNavigator Component
- * 
- * Main navigation container for the app.
- * Defines all screens and their navigation flow.
- * 
- * Navigation Flow:
- * - LaunchScreen (initial)
- * - PhoneNumberLoginPage
- * - VerifyPhoneNumberScreen
- * - HomeScreen
- * - AccountDetailsNotFound (error screen)
- */
+
 const AppNavigator: React.FC = () => {
   return (
     <ErrorBoundary>
