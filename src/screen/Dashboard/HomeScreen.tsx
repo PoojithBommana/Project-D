@@ -2,12 +2,11 @@ import React, { Component } from 'react';
 import { View, Text, SafeAreaView, StatusBar, Alert, TouchableOpacity, Image } from 'react-native';
 import Swiper from 'react-native-deck-swiper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import ProfileCard from '../components/ProfileCard';
-import { Profile, SwipeAction } from '../types/Profile';
-import { profileService } from '../services/ProfileService';
-import { handleAPIError, showErrorAlert } from '../utils/ErrorHandler';
-import { Usericon, Discovericon, Likedicon, Chatsicon } from '../assets/index';
-import styles from '../styles/HomeScreenStyles';
+import ProfileCard from '../../components/ProfileCard';
+import { Profile, SwipeAction } from '../../types/Profile';
+import { profileService } from '../../services/ProfileService';
+import { Usericon, Discovericon, Likedicon, Chatsicon } from '../../assets/index';
+import styles from '../../styles/HomeScreenStyles';
 
 interface State {
   profiles: Profile[];
@@ -18,18 +17,6 @@ interface State {
   activeTab: 'profile' | 'discover' | 'people' | 'liked' | 'chats';
 }
 
-/**
- * HomeScreen Component
- * 
- * Main screen displaying swipeable profile cards.
- * Implements Tinder/Bumble-style card swiping functionality.
- * 
- * Features:
- * - Swipeable profile cards
- * - Like, Pass, and Super Like actions
- * - Smooth animations
- * - Future-ready for API integration
- */
 export default class HomeScreen extends Component<{}, State> {
   private swiperRef: Swiper<Profile> | null = null;
 
@@ -45,16 +32,10 @@ export default class HomeScreen extends Component<{}, State> {
     };
   }
 
-  /**
-   * Fetches profiles from API
-   */
   componentDidMount() {
     this.loadProfiles();
   }
 
-  /**
-   * Loads profiles from API
-   */
   loadProfiles = async () => {
     this.setState({ loading: true });
 
@@ -64,12 +45,10 @@ export default class HomeScreen extends Component<{}, State> {
       if (response.success && response.profiles && response.profiles.length > 0) {
         this.setState({ profiles: response.profiles });
       } else {
-        // Fallback to mock data if API fails or returns empty
         console.warn('API failed or returned empty, using mock data:', response.error);
         this.setState({ profiles: this.getMockProfiles() });
       }
     } catch (error) {
-      // Fallback to mock data on error
       console.error('Error loading profiles:', error);
       this.setState({ profiles: this.getMockProfiles() });
     } finally {
@@ -77,10 +56,6 @@ export default class HomeScreen extends Component<{}, State> {
     }
   };
 
-  /**
-   * Mock profiles for development
-   * TODO: Replace with API call to fetch real profiles
-   */
   getMockProfiles = (): Profile[] => {
     return [
         {
