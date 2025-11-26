@@ -1,0 +1,21 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import SplashScreen from '../screen/Auth/SplashScreen';
+import AuthNavigation from './AuthNavigation';
+
+const Stack = createNativeStackNavigator();
+
+export default function MainNavigation() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+      initialRouteName='AuthNavigation'
+    >
+      <Stack.Screen name="SplashScreen" component={SplashScreen} />
+      <Stack.Screen name="AuthNavigation" component={AuthNavigation} />
+    </Stack.Navigator>
+  );
+}

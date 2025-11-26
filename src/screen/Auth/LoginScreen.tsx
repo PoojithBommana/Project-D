@@ -3,10 +3,11 @@ import React, { Component } from 'react';
 import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App';
-import styles from '../styles/LaunchScreenStyles';
-import CustomButton from '../components/CustomButton';
-import { Facebookicon , Googleicon } from '../assets/index';
+import { RootStackParamList } from '../../../App';
+import styles from '../../styles/LaunchScreenStyles';
+import CustomButton from '../../components/CustomButton';
+import { Facebookicon , Googleicon } from '../../assets/index';
+import { t } from '../../config/i18n';
 
 interface Props {
   navigation?: NativeStackNavigationProp<RootStackParamList, 'Launch'>;
@@ -17,7 +18,7 @@ interface State {
   dropdownAnimation: Animated.Value;
 }
 
-export default class LaunchScreen extends Component<Props, State> {
+export default class LoginScreen extends Component<Props, State> {
   private videoRef: any = null;
 
   constructor(props: Props) {
@@ -26,6 +27,7 @@ export default class LaunchScreen extends Component<Props, State> {
       dropdownVisible: false,
       dropdownAnimation: new Animated.Value(0),
     };
+    this.videoRef = React.createRef()
   }
 
   toggleDropdown = () => {
@@ -83,10 +85,10 @@ export default class LaunchScreen extends Component<Props, State> {
           ref={(ref) => {
             this.videoRef = ref;
           }}
-          source={require('../assets/backgroundvideo.mp4')}
+          source={require('./../../assets/backgroundvideo.mp4')}
           style={styles.backgroundVideo}
           resizeMode="cover"
-          repeat={true}
+          repeat={false}
           muted={true}
           paused={false}
           playInBackground={false}
@@ -103,12 +105,12 @@ export default class LaunchScreen extends Component<Props, State> {
           <View style={styles.contentContainer}>
             {/* Top Section: Logo and Tagline */}
             <View style={styles.topSection}>
-              <Text style={styles.logo}>DilMil</Text>
+              <Text style={styles.logo}>{t("DilMil")}</Text>
             </View>
 
             {/* Bottom Section: Main Message, Buttons and Legal Text */}
             <View style={styles.bottomContainer}>
-              <Text style={styles.mainMessage}>Where Indian hearts meet</Text>
+              <Text style={styles.mainMessage}>{t('IndianHeartsMeet')}</Text>
               
               <View style={styles.buttonWrapper}>
                 <CustomButton

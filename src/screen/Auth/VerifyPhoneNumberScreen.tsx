@@ -10,12 +10,12 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../../App';
-import { authService } from '../services/AuthService';
-import { validateOTP } from '../utils/Validation';
-import { showErrorAlert, showSuccessAlert, handleAPIError } from '../utils/ErrorHandler';
-import { DEFAULT_COUNTRY_CODE } from '../constants/CountryCodes';
-import styles from '../styles/VerifyPhoneNumberScreenStyles';
+import { RootStackParamList } from '../../../App';
+import { authService } from '../../services/AuthService';
+import { validateOTP } from '../../utils/Validation';
+import { showErrorAlert, showSuccessAlert, handleAPIError } from '../../utils/ErrorHandler';
+import { DEFAULT_COUNTRY_CODE } from '../../constants/CountryCodes';
+import styles from '../../styles/VerifyPhoneNumberScreenStyles';
 
 interface Props {
   navigation?: NativeStackNavigationProp<RootStackParamList, 'VerifyPhoneNumber'>;

@@ -11,13 +11,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App';
-import CustomButton from '../components/CustomButton';
-import { authService } from '../services/AuthService';
-import { validatePhoneNumber, validateCountryCode } from '../utils/Validation';
-import { showErrorAlert, handleAPIError } from '../utils/ErrorHandler';
-import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE } from '../constants/CountryCodes';
-import styles from '../styles/LoginScreenStyles';
+import { RootStackParamList } from '../../../App';
+import CustomButton from '../../components/CustomButton';
+import { authService } from '../../services/AuthService';
+import { validatePhoneNumber, validateCountryCode } from '../../utils/Validation';
+import { showErrorAlert, handleAPIError } from '../../utils/ErrorHandler';
+import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE } from '../../constants/CountryCodes';
+import styles from '../../styles/LoginScreenStyles';
 
 interface Props {
   navigation?: NativeStackNavigationProp<RootStackParamList, 'PhoneNumberLogin'>;
@@ -43,7 +43,7 @@ interface State {
  * - Phone number input
  * - Continue button
  */
-export default class LoginScreen extends Component<Props, State> {
+export default class RegisterScreen extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
