@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ProjectD</string>
+    <string name="facebook_app_id">1586110712740100</string>
+      <string name="fb_login_protocol_scheme">fb1586110712740100</string>
+    <string name="facebook_client_token">573f36003a315c01a4a29c5e1f7bfb3f</string>
 </resources>

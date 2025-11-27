@@ -3,7 +3,7 @@ import en from './locales/en.json';
 import hi from './locales/hi.json';
 
 const i18n = new I18n();
-i18n.locale = 'hi';
+i18n.locale = 'en';
 i18n.enableFallback = false;
 i18n.translations = { en, hi };
 i18n.missingTranslation.get = (text:string) => `${text}`;

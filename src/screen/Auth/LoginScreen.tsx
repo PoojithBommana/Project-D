@@ -4,11 +4,14 @@ import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
+import { AccessToken, LoginManager, Profile } from 'react-native-fbsdk-next'
+import auth from '@react-native-firebase/auth';
 import styles from '../../styles/LaunchScreenStyles';
 import CustomButton from '../../components/CustomButton';
 import { Facebookicon , Googleicon } from '../../assets/index';
 import { t } from '../../config/i18n';
 import { authService } from '../../services/AuthService';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
@@ -29,6 +32,15 @@ export default class LoginScreen extends Component<Props, State> {
       dropdownAnimation: new Animated.Value(0),
     };
     this.videoRef = React.createRef()
+  }
+
+  componentDidMount(): void {
+    GoogleSignin.configure({
+      webClientId: '168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com',
+      scopes:[
+        'https://www.googleapis.com/auth/calendar'
+      ]
+    });
   }
 
   toggleDropdown = () => {
@@ -66,6 +78,7 @@ export default class LoginScreen extends Component<Props, State> {
       const result = await authService.signInWithGoogle();
       
       if (result.success && result.user) {
+        this.props.navigation?.navigate("Home")
         // Navigate to home screen on successful sign in
         console.log('Signed in with Google!', result.user.email);
         // TODO: Navigate to home screen
@@ -82,6 +95,27 @@ export default class LoginScreen extends Component<Props, State> {
       Alert.alert('Error', error?.message || 'Failed to sign in with Google');
     }
   };
+
+   onFacebookButtonPress = async() => {
+    // Attempt login with permissions
+    const result = await LoginManager?.logInWithPermissions(['email']);
+  
+    if (result.isCancelled) {
+      throw 'User cancelled the login process';
+    }
+  
+    const data = await AccessToken.getCurrentAccessToken();
+    if (!data) {
+      throw 'Something went wrong obtaining access token';
+    }
+
+    this.props.navigation?.navigate("Home")
+  
+    const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
+  
+    return auth().signInWithCredential(facebookCredential);
+  }
+
 
   render() {
     
@@ -109,7 +143,7 @@ export default class LoginScreen extends Component<Props, State> {
           source={require('./../../assets/backgroundvideo.mp4')}
           style={styles.backgroundVideo}
           resizeMode="cover"
-          repeat={true}
+          repeat={false}
           muted={true}
           paused={false}
           playInBackground={false}
@@ -178,6 +212,7 @@ export default class LoginScreen extends Component<Props, State> {
                   imageUrl={Facebookicon}
                   onPress={() => {
                     // Handle Facebook sign in
+                    this.onFacebookButtonPress()
                   }}
                   customStyle={{backgroundColor: 'white'}}
                   textStyle={{color: '#000000'}}

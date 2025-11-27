@@ -13,6 +13,7 @@ export type AuthStackParamList = {
     phoneNumber: string;
   };
   AccountNotFound: undefined;
+  Home:undefined
 };
 
 const AuthNavigationStack = createNativeStackNavigator<AuthStackParamList>()
