@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "134345709818",
-    "project_id": "dilmil-911be",
-    "storage_bucket": "dilmil-911be.firebasestorage.app"
+    "project_number": "168980396946",
+    "project_id": "productd-373bb",
+    "storage_bucket": "productd-373bb.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:134345709818:android:3cc0d8f92037f8857d5143",
+        "mobilesdk_app_id": "1:168980396946:android:ec684bb32ecbda0369df4b",
         "android_client_info": {
           "package_name": "com.projectd"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "168980396946-0dka4ei042sso045r95qltcvr9n9l2io.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.projectd",
+            "certificate_hash": "35375f795ff6dd8b7c9f8901d912bb108eb9fd51"
+          }
+        },
+        {
+          "client_id": "168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyD6QoeNB20qsaP2tVB_-FQ2SJBPoH0HRuI"
+          "current_key": "AIzaSyDaoF8d6eD90jjHkAa-9RxLTf1PF-rzj5k"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

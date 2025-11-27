@@ -1,4 +1,4 @@
-import { Text, View, SafeAreaView, Animated } from 'react-native';
+import { Text, View, SafeAreaView, Animated, Alert } from 'react-native';
 import React, { Component } from 'react';
 import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
@@ -8,6 +8,7 @@ import styles from '../../styles/LaunchScreenStyles';
 import CustomButton from '../../components/CustomButton';
 import { Facebookicon , Googleicon } from '../../assets/index';
 import { t } from '../../config/i18n';
+import { authService } from '../../services/AuthService';
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
@@ -58,6 +59,28 @@ export default class LoginScreen extends Component<Props, State> {
 
   handleContinueWithMobile = () => {
     this.props.navigation?.navigate('RegisterScreen');
+  };
+
+  handleGoogleSignIn = async () => {
+    try {
+      const result = await authService.signInWithGoogle();
+      
+      if (result.success && result.user) {
+        // Navigate to home screen on successful sign in
+        console.log('Signed in with Google!', result.user.email);
+        // TODO: Navigate to home screen
+        // this.props.navigation?.navigate('Home');
+        Alert.alert('Success', 'Signed in with Google successfully!');
+      } else {
+        // Only show error if it wasn't a cancellation
+        if (result.error && result.error !== 'Sign in was cancelled') {
+          Alert.alert('Error', result.error || 'Failed to sign in with Google');
+        }
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+      Alert.alert('Error', error?.message || 'Failed to sign in with Google');
+    }
   };
 
   render() {
@@ -145,9 +168,7 @@ export default class LoginScreen extends Component<Props, State> {
                   title={t("ContinueWithGoogle")}
                   variant="social"
                   imageUrl={Googleicon}
-                  onPress={() => {
-                    // Handle Google sign in
-                  }}
+                  onPress={this.handleGoogleSignIn}
                   customStyle={{backgroundColor: 'white'}}
                   textStyle={{color: '#000000'}}
                 />
