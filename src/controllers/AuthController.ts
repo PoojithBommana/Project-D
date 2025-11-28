@@ -13,7 +13,7 @@
  * - Logout
  */
 
-import { API_BASE_URL, API_ENDPOINTS, getDefaultHeaders, getAuthHeaders, API_TIMEOUT, ENABLE_BACKEND_API } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS, getDefaultHeaders, getAuthHeaders, API_TIMEOUT, ENABLE_BACKEND_API } from '../config/endpoints';
 
 // Request Interfaces
 export interface SendOTPRequest {
