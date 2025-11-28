@@ -12,7 +12,7 @@
  * - Get matches
  */
 
-import { API_BASE_URL, API_ENDPOINTS, getAuthHeaders, API_TIMEOUT, ENABLE_BACKEND_API } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS, getAuthHeaders, API_TIMEOUT, ENABLE_BACKEND_API } from '../config/endpoints';
 import { Profile, SwipeAction } from '../types/Profile';
 
 // Request Interfaces

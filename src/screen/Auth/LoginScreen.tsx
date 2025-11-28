@@ -11,6 +11,7 @@ import { Facebookicon , Googleicon } from '../../assets/index';
 import { t } from '../../config/i18n';
 import { authService } from '../../services/AuthService';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
@@ -92,7 +93,7 @@ export default class LoginScreen extends Component<Props, State> {
           console.log('👤 Backend User ID:', result.backendResponse.user?.id || 'Not received');
         }
         console.log('========================================');
-        
+        await AsyncStorage.setItem("authToken",`${result.backendResponse?.token}`)
         this.props.navigation?.navigate("Home")
         Alert.alert('Success', 'Signed in with Google successfully!');
       } else {
