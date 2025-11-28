@@ -16,6 +16,7 @@
 
 import { GoogleAuthProvider, FacebookAuthProvider, getAuth, signInWithCredential, FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { authController, GoogleLoginRequest, GoogleLoginResponse, FacebookLoginRequest, FacebookLoginResponse } from '../controllers/AuthController';
+import { splashScreenController } from '../controllers/SplashScreenController';
 
 // Lazy import GoogleSignin to avoid initialization errors
 let GoogleSignin: any;
@@ -227,6 +228,14 @@ class AuthService {
           console.log('🔄 Refresh Token:', backendResponse.refreshToken || 'Not provided');
           console.log('👤 Backend User ID:', backendResponse.user?.id || 'Not provided');
           console.log('========================================');
+          
+          // Store tokens for future use
+          if (backendResponse.token) {
+            await splashScreenController.storeToken(backendResponse.token);
+          }
+          if (backendResponse.refreshToken) {
+            await splashScreenController.storeRefreshToken(backendResponse.refreshToken);
+          }
         }
       } catch (error) {
         // Even if backend call fails completely, Firebase auth succeeded
@@ -382,6 +391,14 @@ class AuthService {
           console.log('🔄 Refresh Token:', backendResponse.refreshToken || 'Not provided');
           console.log('👤 Backend User ID:', backendResponse.user?.id || 'Not provided');
           console.log('========================================');
+          
+          // Store tokens for future use
+          if (backendResponse.token) {
+            await splashScreenController.storeToken(backendResponse.token);
+          }
+          if (backendResponse.refreshToken) {
+            await splashScreenController.storeRefreshToken(backendResponse.refreshToken);
+          }
         }
       } catch (error) {
         // Even if backend call fails completely, Firebase auth succeeded
