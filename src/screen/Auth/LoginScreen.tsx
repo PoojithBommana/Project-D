@@ -4,8 +4,7 @@ import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
-import { AccessToken, LoginManager, Profile } from 'react-native-fbsdk-next'
-import auth from '@react-native-firebase/auth';
+// Facebook login is now handled by AuthService
 import styles from '../../styles/LaunchScreenStyles';
 import CustomButton from '../../components/CustomButton';
 import { Facebookicon , Googleicon } from '../../assets/index';
@@ -78,11 +77,23 @@ export default class LoginScreen extends Component<Props, State> {
       const result = await authService.signInWithGoogle();
       
       if (result.success && result.user) {
+        // Console logs for user to see in frontend
+        console.log('========================================');
+        console.log('✅ GOOGLE SIGN-IN SUCCESS');
+        console.log('========================================');
+        console.log('📱 Firebase UID:', result.user.uid);
+        console.log('📧 Email:', result.user.email);
+        console.log('👤 Display Name:', result.user.displayName);
+        
+        // Log backend response if available
+        if (result.backendResponse) {
+          console.log('🎫 Backend Token:', result.backendResponse.token || 'Not received');
+          console.log('🔄 Refresh Token:', result.backendResponse.refreshToken || 'Not received');
+          console.log('👤 Backend User ID:', result.backendResponse.user?.id || 'Not received');
+        }
+        console.log('========================================');
+        
         this.props.navigation?.navigate("Home")
-        // Navigate to home screen on successful sign in
-        console.log('Signed in with Google!', result.user.email);
-        // TODO: Navigate to home screen
-        // this.props.navigation?.navigate('Home');
         Alert.alert('Success', 'Signed in with Google successfully!');
       } else {
         // Only show error if it wasn't a cancellation
@@ -91,30 +102,45 @@ export default class LoginScreen extends Component<Props, State> {
         }
       }
     } catch (error: any) {
-      console.error('Google Sign-In Error:', error);
+      console.error('❌ Google Sign-In Error:', error);
       Alert.alert('Error', error?.message || 'Failed to sign in with Google');
     }
   };
 
-   onFacebookButtonPress = async() => {
-    // Attempt login with permissions
-    const result = await LoginManager?.logInWithPermissions(['email']);
-  
-    if (result.isCancelled) {
-      throw 'User cancelled the login process';
+  handleFacebookSignIn = async () => {
+    try {
+      const result = await authService.signInWithFacebook();
+      
+      if (result.success && result.user) {
+        // Console logs for user to see in frontend
+        console.log('========================================');
+        console.log('✅ FACEBOOK SIGN-IN SUCCESS');
+        console.log('========================================');
+        console.log('📱 Firebase UID:', result.user.uid);
+        console.log('📧 Email:', result.user.email);
+        console.log('👤 Display Name:', result.user.displayName);
+        
+        // Log backend response if available
+        if (result.backendResponse) {
+          console.log('🎫 Backend Token:', result.backendResponse.token || 'Not received');
+          console.log('🔄 Refresh Token:', result.backendResponse.refreshToken || 'Not received');
+          console.log('👤 Backend User ID:', result.backendResponse.user?.id || 'Not received');
+        }
+        console.log('========================================');
+        
+        this.props.navigation?.navigate("Home");
+        Alert.alert('Success', 'Signed in with Facebook successfully!');
+      } else {
+        // Only show error if it wasn't a cancellation
+        if (result.error && result.error !== 'Sign in was cancelled') {
+          Alert.alert('Error', result.error || 'Failed to sign in with Facebook');
+        }
+      }
+    } catch (error: any) {
+      console.error('❌ Facebook Sign-In Error:', error);
+      Alert.alert('Error', error?.message || 'Failed to sign in with Facebook');
     }
-  
-    const data = await AccessToken.getCurrentAccessToken();
-    if (!data) {
-      throw 'Something went wrong obtaining access token';
-    }
-
-    this.props.navigation?.navigate("Home")
-  
-    const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
-  
-    return auth().signInWithCredential(facebookCredential);
-  }
+  };
 
 
   render() {
@@ -210,10 +236,7 @@ export default class LoginScreen extends Component<Props, State> {
                   title={t("ContinueWithFacebook")}
                   variant="social"
                   imageUrl={Facebookicon}
-                  onPress={() => {
-                    // Handle Facebook sign in
-                    this.onFacebookButtonPress()
-                  }}
+                  onPress={this.handleFacebookSignIn}
                   customStyle={{backgroundColor: 'white'}}
                   textStyle={{color: '#000000'}}
                 />

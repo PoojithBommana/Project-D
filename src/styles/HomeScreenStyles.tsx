@@ -1,6 +1,5 @@
-import { StyleSheet, Dimensions } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
+import { StyleSheet } from 'react-native';
+import { wp, hp, rf, rs } from '../utils/responsive';
 
 /**
  * HomeScreen Styles
