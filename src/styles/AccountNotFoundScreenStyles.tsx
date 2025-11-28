@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
     fontFamily: 'OpenSans-Bold',
     color: '#000000',
     textAlign: 'center',
@@ -74,7 +73,6 @@ const styles = StyleSheet.create({
   createAccountButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
     fontFamily: 'OpenSans-Bold',
   },
   tryDifferentMethodButton: {
@@ -85,7 +83,6 @@ const styles = StyleSheet.create({
   tryDifferentMethodButtonText: {
     color: '#000000',
     fontSize: 16,
-    fontWeight: 'bold',
     fontFamily: 'OpenSans-SemiBold',
   },
 });
