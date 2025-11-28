@@ -3,11 +3,11 @@ import { View, Text, SafeAreaView, StatusBar, Alert, TouchableOpacity, Image } f
 import Swiper from 'react-native-deck-swiper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import ProfileCard from '../../components/ProfileCard';
-import { Profile, SwipeAction } from '../../types/Profile';
 import { profileService } from '../../services/ProfileService';
 import { Usericon, Discovericon, Likedicon, Chatsicon } from '../../assets/index';
 import { t } from '../../config/i18n';
 import styles from '../../styles/HomeScreenStyles';
+import { Profile, SwipeAction } from '../../utils/Types';
 
 interface State {
   profiles: Profile[];
