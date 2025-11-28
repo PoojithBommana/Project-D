@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { wp, hp, rf, rs } from '../utils/responsive';
+import { wp, hp, rf, rs } from '../utils/Responsive';
 
 const styles = StyleSheet.create({
   container: {

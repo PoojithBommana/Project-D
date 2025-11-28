@@ -13,7 +13,7 @@ export default function MainNavigation() {
         headerShown: false,
         animation: 'slide_from_right',
       }}
-      initialRouteName='AuthNavigation'
+      initialRouteName='SplashScreen'
     >
       <Stack.Screen name="SplashScreen" component={SplashScreen} />
       <Stack.Screen name="AuthNavigation" component={AuthNavigation} />

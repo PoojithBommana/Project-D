@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { wp, hp, rf, rs } from '../utils/responsive';
+import { wp, hp, rf, rs } from '../utils/Responsive';
 
 /**
  * LoginScreen Styles
@@ -31,7 +31,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: rf(24),
-    fontWeight: '300',
     fontFamily: 'OpenSans-Bold',
     color: '#000000',
     marginBottom: hp(11),
@@ -41,7 +40,6 @@ const styles = StyleSheet.create({
     fontFamily: 'OpenSans-Regular',
     color: '#000000',
     lineHeight: rf(24),
-    fontWeight: "200",
     marginBottom: hp(40),
   },
   phoneInputContainer: {
@@ -60,7 +58,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: hp(8),
     marginLeft: wp(5),
-    fontWeight: "100",
   },
   countryCodeButton: {
     flexDirection: 'row',
@@ -120,14 +117,12 @@ const styles = StyleSheet.create({
   continueButtonText: {
     color: '#FFFFFF',
     fontSize: rf(18),
-    fontWeight: 'bold',
     fontFamily: 'OpenSans-Bold',
   },
   privacyText: {
     fontSize: rf(12),
     fontFamily: 'OpenSans-Regular',
     color: '#000000',
-    fontWeight: "500",
     marginTop: hp(20),
     paddingHorizontal: wp(20),
   },
@@ -155,7 +150,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: rf(20),
-    fontWeight: 'bold',
     fontFamily: 'OpenSans-Bold',
     color: '#000000',
   },

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { wp, hp, rf, rs } from '../utils/responsive';
+import { wp, hp, rf, rs } from '../utils/Responsive';
 
 /**
  * HomeScreen Styles
@@ -27,7 +27,6 @@ const styles = StyleSheet.create({
     fontFamily: 'OpenSans-Bold',
     color: '#000000',
     letterSpacing: 1,
-    fontWeight: 'bold',
     paddingTop: 20,
     marginTop: 20,
     textAlign: 'center',

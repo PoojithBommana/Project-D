@@ -166,7 +166,7 @@ export default class LoginScreen extends Component<Props, State> {
           ref={(ref) => {
             this.videoRef = ref;
           }}
-          source={require('./../../assets/backgroundvideo.mp4')}
+          source={require('./../../assets/videos/backgroundvideo.mp4')}
           style={styles.backgroundVideo}
           resizeMode="cover"
           repeat={false}
