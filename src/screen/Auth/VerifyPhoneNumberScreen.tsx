@@ -16,6 +16,7 @@ import { validateOTP } from '../../utils/Validation';
 import { showErrorAlert, showSuccessAlert, handleAPIError } from '../../utils/ErrorHandler';
 import { DEFAULT_COUNTRY_CODE } from '../../constants/CountryCodes';
 import { t } from '../../config/i18n';
+import { splashScreenController } from '../../controllers/SplashScreenController';
 import styles from '../../styles/VerifyPhoneNumberScreenStyles';
 
 interface Props {
@@ -121,6 +122,13 @@ export default class VerifyPhoneNumberScreen extends Component<Props, State> {
       });
 
       if (response.success) {
+        // Store tokens if provided
+        if (response.token) {
+          await splashScreenController.storeToken(response.token);
+        }
+        if (response.refreshToken) {
+          await splashScreenController.storeRefreshToken(response.refreshToken);
+        }
         
         showSuccessAlert(t('PhoneNumberVerified'), t('Success'));
         
