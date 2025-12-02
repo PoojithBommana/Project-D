@@ -14,6 +14,12 @@ export type AuthStackParamList = {
   };
   AccountNotFound: undefined;
   Home:undefined
+  TabNavigation:any
+  People:undefined
+  Likes:undefined
+  AI:undefined
+  Chat:undefined
+  Profile:undefined
 };
 
 const AuthNavigationStack = createNativeStackNavigator<AuthStackParamList>()

@@ -18,7 +18,7 @@ interface State {
   activeTab: 'profile' | 'discover' | 'people' | 'liked' | 'chats';
 }
 
-export default class HomeScreen extends Component<{}, State> {
+export default class PeopleScreen extends Component<{}, State> {
   private swiperRef: Swiper<Profile> | null = null;
 
   constructor(props: {}) {
@@ -358,7 +358,7 @@ export default class HomeScreen extends Component<{}, State> {
         </View>
 
         {/* Bottom Navigation Bar */}
-        <View style={styles.bottomNav}>
+        {/* <View style={styles.bottomNav}>
           <TouchableOpacity
             style={styles.navItem}
             onPress={() => this.setState({ activeTab: 'profile' })}
@@ -456,7 +456,7 @@ export default class HomeScreen extends Component<{}, State> {
               this.state.activeTab === 'chats' && styles.navLabelActive
             ]}>{t("Chats")}</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </SafeAreaView>
     );
   }
