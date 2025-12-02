@@ -12,7 +12,7 @@ export default function SplashScreenController() {
     try {
       const res = await AsyncStorage.getItem('authToken');
       if (res !== null) {
-        navigation.navigate('Home');
+        navigation.navigate('TabNavigation');
       } else {
         navigation.navigate('AuthNavigation');
       }

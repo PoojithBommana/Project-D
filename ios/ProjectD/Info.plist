@@ -61,6 +61,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>We need your camera access</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This is for Mic permission</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We need location of the user to access the address for product delivery</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

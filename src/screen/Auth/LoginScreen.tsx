@@ -75,13 +75,14 @@ export default class LoginScreen extends Component<Props, State> {
 
   handleGoogleSignIn = async () => {
     try {
-      const result = await authService.signInWithGoogle();
+      const result:any = await authService.signInWithGoogle();
       
       if (result.success && result.user) {
-        if (result.backendResponse && 'token' in result.backendResponse && result.backendResponse.token) {
-          await AsyncStorage.setItem("authToken", `${result.backendResponse.token}`);
-        }
-        this.props.navigation?.navigate("Home");
+        // if (result.backendResponse && 'token' in result.backendResponse && result.backendResponse.token) {
+        //   await AsyncStorage.setItem("authToken", `${result.backendResponse.token}`);
+        // }
+        await AsyncStorage.setItem("authToken", `${result.backendResponse?.token}`);
+        this.props.navigation?.navigate("TabNavigation");
         Alert.alert('Success', 'Signed in with Google successfully!');
       } else {
         // Only show error if it wasn't a cancellation
@@ -99,8 +100,8 @@ export default class LoginScreen extends Component<Props, State> {
       const result = await authService.signInWithFacebook();
       
       if (result.success && result.user) {
-      
-        this.props.navigation?.navigate("Home");
+        await AsyncStorage.setItem("authToken", `Token`);
+        this.props.navigation?.navigate("TabNavigation");
         Alert.alert('Success', 'Signed in with Facebook successfully!');
       } else {
         // Only show error if it wasn't a cancellation
