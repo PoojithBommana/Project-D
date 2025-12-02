@@ -1,16 +1,12 @@
-// API Endpoints
-export const API_ENDPOINTS:any = {
-  // Authentication endpoints
+export const API_ENDPOINTS: any = {
   AUTH: {
     SEND_OTP: '/auth/send-otp',
     VERIFY_OTP: '/auth/verify-otp',
     RESEND_OTP: '/auth/resend-otp',
-    GOOGLE_LOGIN: '/auth/google-login',
-    FACEBOOK_LOGIN: '/auth/facebook-login',
+    SOCIAL_LOGIN: '/api/auth/social-login/',
     LOGOUT: '/auth/logout',
-    REFRESH_TOKEN: '/auth/refresh-token',
+    REFRESH_TOKEN: '/api/token/refresh/',
   },
-  // Profile endpoints
   PROFILE: {
     GET_PROFILES: '/profiles',
     GET_PROFILE: '/profiles/:id',

@@ -1,24 +1,7 @@
-/**
- * AuthService
- * 
- * Service layer for authentication operations.
- * Combines Firebase authentication with backend API calls.
- * 
- * Features:
- * - Phone number OTP sending (via AuthController)
- * - OTP verification (via AuthController)
- * - OTP resend (via AuthController)
- * - Google Sign-In (Firebase + Backend API)
- * - Facebook Sign-In (Firebase + Backend API)
- * - Error handling
- * - Type safety
- */
-
 import { GoogleAuthProvider, FacebookAuthProvider, getAuth, signInWithCredential, FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { authController, GoogleLoginRequest, GoogleLoginResponse, FacebookLoginRequest, FacebookLoginResponse } from '../controllers/AuthController';
-import { splashScreenController } from '../controllers/SplashScreenController';
+import { authController, SocialLoginResponse } from '../controllers/AuthController';
+import { storeToken, storeRefreshToken } from '../utils/tokenStorage';
 
-// Lazy import GoogleSignin to avoid initialization errors
 let GoogleSignin: any;
 try {
   GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
@@ -26,7 +9,6 @@ try {
   console.warn('Google Sign-In module not available:', error);
 }
 
-// Lazy import Facebook SDK to avoid initialization errors
 let LoginManager: any;
 let AccessToken: any;
 try {
@@ -37,7 +19,6 @@ try {
   console.warn('Facebook SDK module not available:', error);
 }
 
-// Re-export types from AuthController for convenience
 export type {
   SendOTPRequest,
   SendOTPResponse,
@@ -45,39 +26,25 @@ export type {
   VerifyOTPResponse,
 } from '../controllers/AuthController';
 
-export interface GoogleSignInResponse {
+export interface SocialSignInResponse {
   success: boolean;
   user?: FirebaseAuthTypes.User;
-  backendResponse?: GoogleLoginResponse;
+  backendResponse?: SocialLoginResponse | null;
   error?: string;
 }
 
-export interface FacebookSignInResponse {
-  success: boolean;
-  user?: FirebaseAuthTypes.User;
-  backendResponse?: FacebookLoginResponse;
-  error?: string;
+export interface GoogleSignInResponse extends SocialSignInResponse {
+  backendResponse?: SocialLoginResponse | null;
 }
 
-/**
- * AuthService Class
- * 
- * Handles all authentication-related API operations.
- * Future-ready for backend integration.
- */
+export interface FacebookSignInResponse extends SocialSignInResponse {
+  backendResponse?: SocialLoginResponse | null;
+}
+
 class AuthService {
-  private baseURL: string;
   private webClientId: string = '168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com';
   private googleSignInConfigured: boolean = false;
 
-  constructor() {
-    // TODO: Replace with actual API base URL from environment config
-    this.baseURL = 'https://api.dilmil.com'; // Placeholder
-  }
-
-  /**
-   * Configures Google Sign-In (lazy initialization)
-   */
   private configureGoogleSignIn(): void {
     if (!GoogleSignin) {
       throw new Error('Google Sign-In module is not available. Please ensure the native module is properly linked.');
@@ -91,39 +58,20 @@ class AuthService {
     }
   }
 
-  /**
-   * Sends OTP to the provided phone number
-   * Uses AuthController for API call
-   */
   async sendOTP(request: { countryCode: string; phoneNumber: string }) {
     return authController.sendOTP(request);
   }
 
-  /**
-   * Verifies the OTP code
-   * Uses AuthController for API call
-   */
   async verifyOTP(request: { otp: string; countryCode: string; phoneNumber: string; sessionId?: string }) {
     return authController.verifyOTP(request);
   }
 
-  /**
-   * Resends OTP to the provided phone number
-   * Uses AuthController for API call
-   */
   async resendOTP(request: { countryCode: string; phoneNumber: string }) {
     return authController.resendOTP(request);
   }
 
-  /**
-   * Signs in with Google
-   * 1. Authenticates with Firebase
-   * 2. Sends Google login data to backend API
-   * Returns Firebase user and backend response on success
-   */
   async signInWithGoogle(): Promise<GoogleSignInResponse> {
     try {
-      // Check if GoogleSignin is available
       if (!GoogleSignin) {
         return {
           success: false,
@@ -131,123 +79,53 @@ class AuthService {
         };
       }
 
-      // Configure Google Sign-In if not already configured
       this.configureGoogleSignIn();
-      
-      // Check if your device supports Google Play
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      
-      // Get the users ID token
       const signInResult = await GoogleSignin.signIn();
-      
-      // Debug: Log the full sign-in result to see structure
-      console.log('========================================');
-      console.log('🔍 GOOGLE SIGN-IN RESULT DEBUG');
-      console.log('========================================');
-      console.log('Full signInResult:', JSON.stringify(signInResult, null, 2));
-      console.log('signInResult.data:', signInResult.data);
-      console.log('signInResult.data?.idToken:', signInResult.data?.idToken);
-      console.log('signInResult.idToken:', (signInResult as any).idToken);
-      console.log('========================================');
 
-      // Try the new style of google-sign in result, from v13+ of that module
       let idToken = signInResult.data?.idToken;
       
-      // For compatibility with old and new google-signin result types, check both locations
       if (!idToken) {
         idToken = (signInResult as any).idToken;
       }
       
-      // Also try to get token using getTokens() method if available
       if (!idToken && GoogleSignin.getTokens) {
         try {
           const tokens = await GoogleSignin.getTokens();
           idToken = tokens.idToken;
-          console.log('✅ Got ID Token from getTokens() method');
         } catch (error) {
-          console.log('⚠️ getTokens() failed:', error);
+          console.log('getTokens() failed:', error);
         }
       }
 
       if (!idToken) {
-        console.error('❌ ERROR: No ID token found in signInResult');
-        console.error('signInResult structure:', signInResult);
         throw new Error('No ID token found');
       }
-      
-      console.log('✅ ID Token found! Length:', idToken.length);
-      console.log('✅ ID Token (first 50 chars):', idToken.substring(0, 50) + '...');
 
-      // Create a Google credential with the token
       const googleCredential = GoogleAuthProvider.credential(idToken);
-
-      // Sign-in the user with Firebase
       const userCredential = await signInWithCredential(getAuth(), googleCredential);
       const firebaseUser = userCredential.user;
+      const firebaseIdToken = await firebaseUser.getIdToken();
 
-      // Prepare Google login data for backend
-      // Firebase UID is the unique identifier that backend will use to access user data
-      // This UID matches what you see in Firebase Console (Users section)
-      const googleLoginData: GoogleLoginRequest = {
-        idToken: idToken,                    // Google ID token for backend verification
-        uid: firebaseUser.uid,               // Firebase User UID (REQUIRED - primary identifier for backend)
-        email: firebaseUser.email || undefined,
-        name: firebaseUser.displayName || undefined,
-        photoURL: firebaseUser.photoURL || undefined,
-      };
-      
-      // Console logs for debugging - visible in frontend
-      console.log('========================================');
-      console.log('🔐 GOOGLE LOGIN - USER DATA');
-      console.log('========================================');
-      console.log('📱 Firebase UID:', firebaseUser.uid);
-      console.log('🎫 Google ID Token (FULL):', idToken);
-      console.log('🎫 Google ID Token (Length):', idToken.length);
-      console.log('🎫 Google ID Token (First 100 chars):', idToken.substring(0, 100));
-      console.log('🎫 Google ID Token (Last 50 chars):', '...' + idToken.substring(idToken.length - 50));
-      console.log('📧 Email:', firebaseUser.email);
-      console.log('👤 Name:', firebaseUser.displayName);
-      console.log('🖼️  Photo URL:', firebaseUser.photoURL);
-      console.log('========================================');
-
-      // Send Google login data to backend API
-      // Note: Backend failure doesn't block Firebase auth
-      let backendResponse: GoogleLoginResponse | undefined;
+      let backendResponse: SocialLoginResponse | null = null;
       try {
-        backendResponse = await authController.googleLogin(googleLoginData);
+        backendResponse = await authController.socialLogin(firebaseIdToken);
         
-        if (!backendResponse.success) {
-          // Backend unavailable - Firebase auth still works
-          console.warn('⚠️ Backend Google login failed (non-blocking):', backendResponse.error);
-          console.log('✅ Firebase authentication succeeded. User can continue using the app.');
+        if (!backendResponse) {
+          console.warn('Backend social login failed (non-blocking): Backend server unavailable');
         } else {
-          console.log('========================================');
-          console.log('✅ BACKEND RESPONSE');
-          console.log('========================================');
-          console.log('🎫 Backend Token:', backendResponse.token || 'Not provided');
-          console.log('🔄 Refresh Token:', backendResponse.refreshToken || 'Not provided');
-          console.log('👤 Backend User ID:', backendResponse.user?.id || 'Not provided');
-          console.log('========================================');
-          
-          // Store tokens for future use
-          if (backendResponse.token) {
-            await splashScreenController.storeToken(backendResponse.token);
+          if (backendResponse.access) {
+            await storeToken(backendResponse.access);
           }
-          if (backendResponse.refreshToken) {
-            await splashScreenController.storeRefreshToken(backendResponse.refreshToken);
+          if (backendResponse.refresh) {
+            await storeRefreshToken(backendResponse.refresh);
           }
         }
       } catch (error) {
-        // Even if backend call fails completely, Firebase auth succeeded
         console.warn('Backend API call failed (non-blocking):', error);
-        backendResponse = {
-          success: false,
-          error: 'Backend server unavailable',
-        };
+        backendResponse = null;
       }
 
-      // Always return success if Firebase auth succeeded
-      // Backend sync can be retried later
       return {
         success: true,
         user: firebaseUser,
@@ -256,7 +134,6 @@ class AuthService {
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
       
-      // Handle user cancellation
       if (error.code === 'SIGN_IN_CANCELLED') {
         return {
           success: false,
@@ -271,15 +148,8 @@ class AuthService {
     }
   }
 
-  /**
-   * Signs in with Facebook
-   * 1. Authenticates with Firebase
-   * 2. Sends Facebook login data to backend API
-   * Returns Firebase user and backend response on success
-   */
   async signInWithFacebook(): Promise<FacebookSignInResponse> {
     try {
-      // Check if Facebook SDK is available
       if (!LoginManager || !AccessToken) {
         return {
           success: false,
@@ -287,16 +157,13 @@ class AuthService {
         };
       }
 
-      // Attempt login with permissions
       let result;
       try {
         result = await LoginManager.logInWithPermissions(['email', 'public_profile']);
       } catch (loginError: any) {
-        // Catch Facebook SDK errors (like "App not active")
         const errorMessage = loginError?.message || loginError?.toString() || String(loginError);
         console.error('Facebook LoginManager error:', errorMessage);
         
-        // Check for "App not active" error
         if (errorMessage.includes('App not active') || 
             errorMessage.includes('not accessible') ||
             errorMessage.includes('app is not accessible')) {
@@ -306,11 +173,9 @@ class AuthService {
           };
         }
         
-        // Re-throw to be caught by outer catch
         throw loginError;
       }
 
-      // Check if user cancelled
       if (result.isCancelled) {
         return {
           success: false,
@@ -318,7 +183,6 @@ class AuthService {
         };
       }
 
-      // Get access token
       let data;
       try {
         data = await AccessToken.getCurrentAccessToken();
@@ -347,70 +211,30 @@ class AuthService {
         };
       }
 
-      // Create Facebook credential for Firebase
       const facebookCredential = FacebookAuthProvider.credential(data.accessToken);
-
-      // Sign in with Firebase
       const userCredential = await signInWithCredential(getAuth(), facebookCredential);
       const firebaseUser = userCredential.user;
+      const firebaseIdToken = await firebaseUser.getIdToken();
 
-      // Console logs for debugging
-      console.log('========================================');
-      console.log('✅ FACEBOOK SIGN-IN SUCCESS');
-      console.log('========================================');
-      console.log('📱 Firebase UID:', firebaseUser.uid);
-      console.log('📧 Email:', firebaseUser.email);
-      console.log('👤 Display Name:', firebaseUser.displayName);
-      console.log('🖼️  Photo URL:', firebaseUser.photoURL);
-      console.log('========================================');
-
-      // Prepare Facebook login data for backend
-      const facebookLoginData: FacebookLoginRequest = {
-        accessToken: data.accessToken,
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || undefined,
-        name: firebaseUser.displayName || undefined,
-        photoURL: firebaseUser.photoURL || undefined,
-      };
-
-      // Send Facebook login data to backend API
-      // Note: Backend failure doesn't block Firebase auth
-      let backendResponse: FacebookLoginResponse | undefined;
+      let backendResponse: SocialLoginResponse | null = null;
       try {
-        backendResponse = await authController.facebookLogin(facebookLoginData);
+        backendResponse = await authController.socialLogin(firebaseIdToken);
 
-        if (!backendResponse.success) {
-          // Backend unavailable - Firebase auth still works
-          console.warn('⚠️ Backend Facebook login failed (non-blocking):', backendResponse.error);
-          console.log('✅ Firebase authentication succeeded. User can continue using the app.');
+        if (!backendResponse) {
+          console.warn('Backend social login failed (non-blocking): Backend server unavailable');
         } else {
-          console.log('========================================');
-          console.log('✅ BACKEND RESPONSE');
-          console.log('========================================');
-          console.log('🎫 Backend Token:', backendResponse.token || 'Not provided');
-          console.log('🔄 Refresh Token:', backendResponse.refreshToken || 'Not provided');
-          console.log('👤 Backend User ID:', backendResponse.user?.id || 'Not provided');
-          console.log('========================================');
-          
-          // Store tokens for future use
-          if (backendResponse.token) {
-            await splashScreenController.storeToken(backendResponse.token);
+          if (backendResponse.access) {
+            await storeToken(backendResponse.access);
           }
-          if (backendResponse.refreshToken) {
-            await splashScreenController.storeRefreshToken(backendResponse.refreshToken);
+          if (backendResponse.refresh) {
+            await storeRefreshToken(backendResponse.refresh);
           }
         }
       } catch (error) {
-        // Even if backend call fails completely, Firebase auth succeeded
         console.warn('Backend API call failed (non-blocking):', error);
-        backendResponse = {
-          success: false,
-          error: 'Backend server unavailable',
-        };
+        backendResponse = null;
       }
 
-      // Always return success if Firebase auth succeeded
-      // Backend sync can be retried later
       return {
         success: true,
         user: firebaseUser,
@@ -419,15 +243,11 @@ class AuthService {
     } catch (error: any) {
       console.error('Error signing in with Facebook:', error);
       
-      // Extract error message from various possible formats
       const errorMessage = error?.message || 
                           error?.toString() || 
                           error?.error?.message ||
                           String(error);
-      
-      console.error('Full error details:', JSON.stringify(error, null, 2));
 
-      // Handle specific Facebook errors
       if (errorMessage.includes('App not active') || 
           errorMessage.includes('not accessible') ||
           errorMessage.includes('app is not accessible') ||
@@ -445,7 +265,6 @@ class AuthService {
         };
       }
 
-      // Check for Firebase auth errors
       if (error?.code?.startsWith('auth/')) {
         return {
           success: false,
@@ -460,9 +279,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Signs out from Google
-   */
   async signOutFromGoogle(): Promise<void> {
     try {
       if (!GoogleSignin) {
@@ -476,9 +292,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Signs out from Facebook
-   */
   async signOutFromFacebook(): Promise<void> {
     try {
       if (LoginManager) {
@@ -492,6 +305,4 @@ class AuthService {
   }
 }
 
-// Export singleton instance
 export const authService = new AuthService();
-
