@@ -1,9 +1,11 @@
 import React from 'react';
 import LottieView from 'lottie-react-native';
 import SplashScreenController from '../../controllers/SplashScreenController';
+import { View } from 'react-native';
 
 export default function SplashScreen() {
-  const {} = SplashScreenController()
+  SplashScreenController();
+  
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <LottieView

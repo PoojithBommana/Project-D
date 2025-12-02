@@ -1,21 +1,8 @@
-/**
- * AuthController
- * 
- * Controller for all authentication-related API calls.
- * Handles communication with backend authentication endpoints.
- * 
- * Features:
- * - Send OTP
- * - Verify OTP
- * - Resend OTP
- * - Google Login
- * - Facebook Login
- * - Logout
- */
+import { API_ENDPOINTS } from '../config/endpoints';
+import { postApiCall } from '../config/apiCall';
 
-import { API_BASE_URL, API_ENDPOINTS, getDefaultHeaders, getAuthHeaders, API_TIMEOUT, ENABLE_BACKEND_API } from '../config/endpoints';
+const ENABLE_BACKEND_API = true;
 
-// Request Interfaces
 export interface SendOTPRequest {
   countryCode: string;
   phoneNumber: string;
@@ -28,23 +15,16 @@ export interface VerifyOTPRequest {
   sessionId?: string;
 }
 
-export interface GoogleLoginRequest {
-  idToken: string;        // Google ID token for backend verification
-  uid: string;            // Firebase User UID (REQUIRED - primary identifier)
-  email?: string;          // User email from Firebase
-  name?: string;          // User display name from Firebase
-  photoURL?: string;      // User profile photo URL from Firebase
+export interface SocialLoginRequest {
+  id_token: string;
 }
 
-export interface FacebookLoginRequest {
-  accessToken: string;
-  email?: string;
-  name?: string;
-  photoURL?: string;
-  uid?: string;
+export interface SocialLoginResponse {
+  access: string;
+  refresh: string;
+  user_id: number;
 }
 
-// Response Interfaces
 export interface SendOTPResponse {
   success: boolean;
   message?: string;
@@ -64,6 +44,23 @@ export interface VerifyOTPResponse {
     name?: string;
   };
   error?: string;
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
+  firebaseIdToken?: string;
+  uid: string;
+  email?: string;
+  name?: string;
+  photoURL?: string;
+}
+
+export interface FacebookLoginRequest {
+  accessToken: string;
+  email?: string;
+  name?: string;
+  photoURL?: string;
+  uid?: string;
 }
 
 export interface GoogleLoginResponse {
@@ -102,86 +99,33 @@ export interface LogoutResponse {
   error?: string;
 }
 
-/**
- * AuthController Class
- * 
- * Handles all authentication API operations
- */
 class AuthController {
-  private baseURL: string;
-
-  constructor() {
-    this.baseURL = API_BASE_URL;
-  }
-
-  /**
-   * Makes an API request with timeout and error handling
-   */
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-    try {
-      const url = `${this.baseURL}${endpoint}`;
-      console.log(`[API] Making request to: ${url}`);
-      
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          ...getDefaultHeaders(),
-          ...options.headers,
-        },
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      // Handle specific error types
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout. Please check your internet connection.');
-      }
-      
-      // Network errors
-      if (error.message?.includes('Network request failed') || 
-          error.message?.includes('Failed to fetch') ||
-          error.message?.includes('NetworkError')) {
-        throw new Error('Network error: Unable to connect to server. Please check your internet connection or ensure the backend server is running.');
-      }
-      
-      // Re-throw with better message
-      if (error instanceof Error) {
-        throw error;
-      }
-      
-      throw new Error('An unexpected error occurred');
-    }
-  }
-
-  /**
-   * Sends OTP to the provided phone number
-   */
   async sendOTP(request: SendOTPRequest): Promise<SendOTPResponse> {
     try {
-      const response = await this.makeRequest<SendOTPResponse>(
-        API_ENDPOINTS.AUTH.SEND_OTP,
-        {
-          method: 'POST',
-          body: JSON.stringify(request),
-        }
-      );
-      return response;
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'SEND_OTP', request);
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          message: apiResponse?.response?.ResponseMessage,
+          sessionId: apiResponse?.response?.sessionId,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to send OTP',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to send OTP',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to send OTP',
+        };
+      }
     } catch (error) {
       console.error('Error sending OTP:', error);
       return {
@@ -191,19 +135,34 @@ class AuthController {
     }
   }
 
-  /**
-   * Verifies the OTP code
-   */
   async verifyOTP(request: VerifyOTPRequest): Promise<VerifyOTPResponse> {
     try {
-      const response = await this.makeRequest<VerifyOTPResponse>(
-        API_ENDPOINTS.AUTH.VERIFY_OTP,
-        {
-          method: 'POST',
-          body: JSON.stringify(request),
-        }
-      );
-      return response;
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'VERIFY_OTP', request);
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          message: apiResponse?.response?.ResponseMessage,
+          token: apiResponse?.response?.token,
+          refreshToken: apiResponse?.response?.refreshToken,
+          user: apiResponse?.response?.user,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to verify OTP',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to verify OTP',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to verify OTP',
+        };
+      }
     } catch (error) {
       console.error('Error verifying OTP:', error);
       return {
@@ -213,19 +172,32 @@ class AuthController {
     }
   }
 
-  /**
-   * Resends OTP to the provided phone number
-   */
   async resendOTP(request: SendOTPRequest): Promise<SendOTPResponse> {
     try {
-      const response = await this.makeRequest<SendOTPResponse>(
-        API_ENDPOINTS.AUTH.RESEND_OTP,
-        {
-          method: 'POST',
-          body: JSON.stringify(request),
-        }
-      );
-      return response;
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'RESEND_OTP', request);
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          message: apiResponse?.response?.ResponseMessage,
+          sessionId: apiResponse?.response?.sessionId,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to resend OTP',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to resend OTP',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to resend OTP',
+        };
+      }
     } catch (error) {
       console.error('Error resending OTP:', error);
       return {
@@ -235,102 +207,130 @@ class AuthController {
     }
   }
 
-  /**
-   * Sends Google login data to backend
-   * POST /auth/google-login
-   * 
-   * Sends:
-   * - idToken: Google ID token for verification
-   * - uid: Firebase User UID (primary identifier - matches Firebase Console)
-   * - email, name, photoURL: User profile data
-   * 
-   * Returns success: false if backend is unavailable, but doesn't throw
-   */
-  async googleLogin(request: GoogleLoginRequest): Promise<GoogleLoginResponse> {
-    // Skip backend call if disabled
+  async socialLogin(firebaseIdToken: string): Promise<SocialLoginResponse | null> {
     if (!ENABLE_BACKEND_API) {
-      console.log('[API] Backend API disabled. Skipping Google login API call.');
+      console.log('[API] Backend API disabled. Skipping social login API call.');
+      return null;
+    }
+
+    if (!firebaseIdToken || firebaseIdToken.trim().length === 0) {
+      console.error('[API] Firebase ID token is required for social login');
+      throw new Error('Firebase ID token is required');
+    }
+
+    try {
+      const requestBody: SocialLoginRequest = {
+        id_token: firebaseIdToken,
+      };
+
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'SOCIAL_LOGIN', requestBody);
+
+      if (apiResponse?.response?.access && apiResponse?.response?.refresh) {
+        return {
+          access: apiResponse?.response?.access,
+          refresh: apiResponse?.response?.refresh,
+          user_id: apiResponse?.response?.user_id,
+        };
+      } else if (apiResponse?.error) {
+        console.error('[API] Social login error:', apiResponse?.response?.Message || 'Unknown error');
+        return null;
+      } else {
+        console.error('[API] Social login failed: Invalid response format');
+        return null;
+      }
+    } catch (error) {
+      console.error('[API] Error in social login:', error);
+      return null;
+    }
+  }
+
+  async googleLogin(request: GoogleLoginRequest): Promise<GoogleLoginResponse> {
+    console.warn('[API] googleLogin() is deprecated. Use socialLogin() instead.');
+    
+    if (!ENABLE_BACKEND_API) {
       return {
         success: false,
         error: 'Backend API is disabled',
       };
     }
 
-    // Validate required fields
-    if (!request.uid) {
-      console.error('[API] Firebase UID is required for Google login');
+    if (!request.firebaseIdToken) {
       return {
         success: false,
-        error: 'Firebase UID is required',
+        error: 'Firebase ID token is required',
       };
     }
 
     try {
-      console.log('[API] Sending Google login to backend:', {
-        uid: request.uid,
-        email: request.email,
-        hasIdToken: !!request.idToken,
-      });
+      const response = await this.socialLogin(request.firebaseIdToken);
       
-      const response = await this.makeRequest<GoogleLoginResponse>(
-        API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
-        {
-          method: 'POST',
-          body: JSON.stringify(request),
-        }
-      );
-      return response;
+      if (!response) {
+        return {
+          success: false,
+          error: 'Backend server unavailable',
+        };
+      }
+
+      return {
+        success: true,
+        token: response.access,
+        refreshToken: response.refresh,
+        user: {
+          id: response.user_id.toString(),
+          email: request.email || '',
+          name: request.name || '',
+          photoURL: request.photoURL,
+        },
+      };
     } catch (error) {
-      console.error('Error in Google login API:', error);
-      
-      // Return graceful failure - Firebase auth still succeeded
-      // Backend sync can happen later
       return {
         success: false,
-        error: error instanceof Error 
-          ? error.message 
-          : 'Backend server unavailable. Firebase authentication succeeded, but data sync failed.',
-        // Note: Firebase auth still works, just backend sync failed
+        error: error instanceof Error ? error.message : 'Failed to login',
       };
     }
   }
 
-  /**
-   * Sends Facebook login data to backend
-   * POST /auth/facebook-login
-   */
   async facebookLogin(request: FacebookLoginRequest): Promise<FacebookLoginResponse> {
-    try {
-      const response = await this.makeRequest<FacebookLoginResponse>(
-        API_ENDPOINTS.AUTH.FACEBOOK_LOGIN,
-        {
-          method: 'POST',
-          body: JSON.stringify(request),
-        }
-      );
-      return response;
-    } catch (error) {
-      console.error('Error in Facebook login:', error);
+    console.warn('[API] facebookLogin() is deprecated. Use socialLogin() instead.');
+    
+    if (!ENABLE_BACKEND_API) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to login with Facebook',
+        error: 'Backend API is disabled',
       };
     }
+
+    return {
+      success: false,
+      error: 'Please use the new socialLogin() method with Firebase ID token',
+    };
   }
 
-  /**
-   * Logs out the user
-   */
-  async logout(token: string): Promise<LogoutResponse> {
+  async logout(): Promise<LogoutResponse> {
     try {
-      const response = await this.makeRequest<LogoutResponse>(
-        API_ENDPOINTS.AUTH.LOGOUT,
-        {
-          method: 'POST',
-          headers: getAuthHeaders(token),
-        }
-      );
-      return response;
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'LOGOUT', {});
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          message: apiResponse?.response?.ResponseMessage,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to logout',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to logout',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to logout',
+        };
+      }
     } catch (error) {
       console.error('Error logging out:', error);
       return {
@@ -340,19 +340,21 @@ class AuthController {
     }
   }
 
-  /**
-   * Refreshes the authentication token
-   */
-  async refreshToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
+  async refreshToken(refreshToken: string): Promise<{ access: string }> {
     try {
-      const response = await this.makeRequest<{ token: string; refreshToken: string }>(
-        API_ENDPOINTS.AUTH.REFRESH_TOKEN,
-        {
-          method: 'POST',
-          body: JSON.stringify({ refreshToken }),
-        }
-      );
-      return response;
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'REFRESH_TOKEN', { refresh: refreshToken });
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          access: apiResponse?.response?.access,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        throw new Error(apiResponse?.response?.ResponseMessage || 'Failed to refresh token');
+      } else if (apiResponse?.error) {
+        throw new Error(apiResponse?.response?.Message || 'Failed to refresh token');
+      } else {
+        throw new Error('Failed to refresh token');
+      }
     } catch (error) {
       console.error('Error refreshing token:', error);
       throw error;
@@ -360,6 +362,5 @@ class AuthController {
   }
 }
 
-// Export singleton instance
 export const authController = new AuthController();
 

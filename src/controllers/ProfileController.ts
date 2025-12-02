@@ -1,21 +1,9 @@
-/**
- * ProfileController
- * 
- * Controller for all profile-related API calls.
- * Handles communication with backend profile endpoints.
- * 
- * Features:
- * - Fetch profiles
- * - Get profile by ID
- * - Update profile
- * - Submit swipe actions
- * - Get matches
- */
-
-import { API_BASE_URL, API_ENDPOINTS, getAuthHeaders, API_TIMEOUT, ENABLE_BACKEND_API } from '../config/endpoints';
+import { API_ENDPOINTS } from '../config/endpoints';
+import { postApiCall } from '../config/apiCall';
 import { Profile, SwipeAction } from '../types/Profile';
 
-// Request Interfaces
+const ENABLE_BACKEND_API = true;
+
 export interface FetchProfilesRequest {
   page?: number;
   limit?: number;
@@ -37,7 +25,6 @@ export interface UpdateProfileRequest {
   images?: string[];
 }
 
-// Response Interfaces
 export interface FetchProfilesResponse {
   success: boolean;
   profiles?: Profile[];
@@ -88,83 +75,10 @@ export interface GetMatchesResponse {
   error?: string;
 }
 
-/**
- * ProfileController Class
- * 
- * Handles all profile API operations
- */
 class ProfileController {
-  private baseURL: string;
-
-  constructor() {
-    this.baseURL = API_BASE_URL;
-  }
-
-  /**
-   * Makes an API request with timeout and error handling
-   */
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {},
-    token?: string
-  ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-    try {
-      const url = `${this.baseURL}${endpoint}`;
-      console.log(`[API] Making request to: ${url}`);
-      
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          ...getAuthHeaders(token),
-          ...options.headers,
-        },
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      // Handle specific error types
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout. Please check your internet connection.');
-      }
-      
-      // Network errors
-      if (error.message?.includes('Network request failed') || 
-          error.message?.includes('Failed to fetch') ||
-          error.message?.includes('NetworkError')) {
-        throw new Error('Network error: Unable to connect to server. Please check your internet connection or ensure the backend server is running.');
-      }
-      
-      // Re-throw with better message
-      if (error instanceof Error) {
-        throw error;
-      }
-      
-      throw new Error('An unexpected error occurred');
-    }
-  }
-
-  /**
-   * Fetches available profiles for swiping
-   * GET /profiles?page=1&limit=10
-   */
   async fetchProfiles(
-    request: FetchProfilesRequest = {},
-    token?: string
+    request: FetchProfilesRequest = {}
   ): Promise<FetchProfilesResponse> {
-    // Skip backend call if disabled
     if (!ENABLE_BACKEND_API) {
       console.log('[API] Backend API disabled. Returning empty profiles.');
       return {
@@ -175,54 +89,68 @@ class ProfileController {
     }
 
     try {
-      const { page = 1, limit = 10, filters } = request;
-      
-      // Build query string
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+      const apiResponse: any = await postApiCall('GET', 'PROFILE', 'GET_PROFILES', request);
 
-      if (filters) {
-        if (filters.ageMin) params.append('ageMin', filters.ageMin.toString());
-        if (filters.ageMax) params.append('ageMax', filters.ageMax.toString());
-        if (filters.location) params.append('location', filters.location);
-        if (filters.distance) params.append('distance', filters.distance.toString());
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          profiles: apiResponse?.response?.profiles,
+          pagination: apiResponse?.response?.pagination,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to fetch profiles',
+          profiles: [],
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to fetch profiles',
+          profiles: [],
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to fetch profiles',
+          profiles: [],
+        };
       }
-
-      const response = await this.makeRequest<FetchProfilesResponse>(
-        `${API_ENDPOINTS.PROFILE.GET_PROFILES}?${params.toString()}`,
-        {
-          method: 'GET',
-        },
-        token
-      );
-      return response;
     } catch (error) {
       console.error('Error fetching profiles:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch profiles',
-        profiles: [], // Return empty array on error
+        profiles: [],
       };
     }
   }
 
-  /**
-   * Gets a specific profile by ID
-   * GET /profiles/:id
-   */
-  async getProfile(profileId: string, token?: string): Promise<GetProfileResponse> {
+  async getProfile(profileId: string): Promise<GetProfileResponse> {
     try {
-      const endpoint = API_ENDPOINTS.PROFILE.GET_PROFILE.replace(':id', profileId);
-      const response = await this.makeRequest<GetProfileResponse>(
-        endpoint,
-        {
-          method: 'GET',
-        },
-        token
-      );
-      return response;
+      const apiResponse: any = await postApiCall('GET', 'PROFILE', 'GET_PROFILE', { id: profileId });
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          profile: apiResponse?.response?.profile,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to fetch profile',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to fetch profile',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to fetch profile',
+        };
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       return {
@@ -232,26 +160,35 @@ class ProfileController {
     }
   }
 
-  /**
-   * Updates user profile
-   * PUT /profiles/:id
-   */
   async updateProfile(
     profileId: string,
-    request: UpdateProfileRequest,
-    token?: string
+    request: UpdateProfileRequest
   ): Promise<UpdateProfileResponse> {
     try {
-      const endpoint = API_ENDPOINTS.PROFILE.UPDATE_PROFILE.replace(':id', profileId);
-      const response = await this.makeRequest<UpdateProfileResponse>(
-        endpoint,
-        {
-          method: 'PUT',
-          body: JSON.stringify(request),
-        },
-        token
-      );
-      return response;
+      const apiResponse: any = await postApiCall('PUT', 'PROFILE', 'UPDATE_PROFILE', { id: profileId, ...request });
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          message: apiResponse?.response?.ResponseMessage,
+          profile: apiResponse?.response?.profile,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to update profile',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to update profile',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to update profile',
+        };
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       return {
@@ -261,24 +198,35 @@ class ProfileController {
     }
   }
 
-  /**
-   * Submits a swipe action (like, pass, superlike)
-   * POST /profiles/swipe
-   */
   async submitSwipeAction(
-    action: SwipeAction,
-    token?: string
+    action: SwipeAction
   ): Promise<SubmitSwipeResponse> {
     try {
-      const response = await this.makeRequest<SubmitSwipeResponse>(
-        API_ENDPOINTS.PROFILE.SWIPE_ACTION,
-        {
-          method: 'POST',
-          body: JSON.stringify(action),
-        },
-        token
-      );
-      return response;
+      const apiResponse: any = await postApiCall('POST', 'PROFILE', 'SWIPE_ACTION', action);
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          message: apiResponse?.response?.ResponseMessage,
+          isMatch: apiResponse?.response?.isMatch,
+          matchData: apiResponse?.response?.matchData,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to submit swipe action',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to submit swipe action',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to submit swipe action',
+        };
+      }
     } catch (error) {
       console.error('Error submitting swipe action:', error);
       return {
@@ -288,20 +236,31 @@ class ProfileController {
     }
   }
 
-  /**
-   * Gets user's matches
-   * GET /profiles/matches
-   */
-  async getMatches(token?: string): Promise<GetMatchesResponse> {
+  async getMatches(): Promise<GetMatchesResponse> {
     try {
-      const response = await this.makeRequest<GetMatchesResponse>(
-        API_ENDPOINTS.PROFILE.GET_MATCHES,
-        {
-          method: 'GET',
-        },
-        token
-      );
-      return response;
+      const apiResponse: any = await postApiCall('GET', 'PROFILE', 'GET_MATCHES', {});
+
+      if (apiResponse?.response?.ResponseCode == 'Success') {
+        return {
+          success: true,
+          matches: apiResponse?.response?.matches,
+        };
+      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
+        return {
+          success: false,
+          error: apiResponse?.response?.ResponseMessage || 'Failed to fetch matches',
+        };
+      } else if (apiResponse?.error) {
+        return {
+          success: false,
+          error: apiResponse?.response?.Message || 'Failed to fetch matches',
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to fetch matches',
+        };
+      }
     } catch (error) {
       console.error('Error fetching matches:', error);
       return {
@@ -312,6 +271,4 @@ class ProfileController {
   }
 }
 
-// Export singleton instance
 export const profileController = new ProfileController();
-
