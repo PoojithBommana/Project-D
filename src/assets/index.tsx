@@ -4,3 +4,6 @@ export const Chatsicon = require('./chat.png');
 export const Discovericon = require('./discovery.png');
 export const Likedicon = require('./Like.png');
 export const Usericon = require('./user.png');
+export const Staricon = require('./star.png');
+export const Backicon = require('./back.png');
+export const Checkicon = require('./check.png');

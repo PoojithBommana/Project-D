@@ -1,0 +1,150 @@
+import { StyleSheet } from 'react-native';
+import { wp, hp, rf, rs } from '../utils/responsive';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#90CAF9',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#E8F4F8',
+    paddingTop: hp(60),
+    paddingHorizontal: wp(24),
+    paddingBottom: hp(40),
+  },
+  titleContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: rs(16),
+    paddingVertical: hp(20),
+    paddingHorizontal: wp(24),
+    marginBottom: hp(32),
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: rf(22),
+    fontFamily: 'Inter',
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  profileCard: {
+    flex: 1,
+    backgroundColor: '#C8E6C9',
+    borderRadius: rs(24),
+    padding: wp(24),
+    marginBottom: hp(32),
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    minHeight: hp(400),
+  },
+  profileImageContainer: {
+    marginBottom: hp(40),
+  },
+  profileImagePlaceholder: {
+    width: rf(120),
+    height: rf(120),
+    borderRadius: rf(60),
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bubblesContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  bubble: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: rs(12),
+    paddingVertical: hp(8),
+    paddingHorizontal: wp(12),
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bubbleTopLeft: {
+    top: hp(20),
+    left: wp(20),
+  },
+  bubbleTopRight: {
+    top: hp(20),
+    right: wp(20),
+  },
+  bubbleLeft: {
+    top: '50%',
+    left: wp(10),
+    transform: [{ translateY: -hp(20) }],
+  },
+  bubbleRight: {
+    top: '50%',
+    right: wp(10),
+    transform: [{ translateY: -hp(20) }],
+  },
+  bubbleBottomLeft: {
+    bottom: hp(80),
+    left: wp(20),
+  },
+  bubbleBottomRight: {
+    bottom: hp(80),
+    right: wp(20),
+  },
+  bubbleText: {
+    fontSize: rf(14),
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    color: '#000000',
+    marginLeft: wp(8),
+  },
+  progressBarContainer: {
+    position: 'absolute',
+    bottom: hp(20),
+    left: wp(24),
+    right: wp(24),
+    height: hp(8),
+    backgroundColor: '#FFFFFF',
+    borderRadius: rs(4),
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+    borderRadius: rs(4),
+  },
+  progressCheckmark: {
+    position: 'absolute',
+    left: '25%',
+    width: rf(20),
+    height: rf(20),
+    borderRadius: rf(10),
+    backgroundColor: '#4CAF50',
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ translateX: -rf(10) }],
+  },
+  continueButton: {
+    width: '100%',
+    height: hp(56),
+    backgroundColor: '#4A90E2',
+    borderRadius: rs(28),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    fontSize: rf(18),
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+});
+
+export default styles;
+

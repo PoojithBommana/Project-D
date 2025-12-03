@@ -1,193 +1,146 @@
 import { StyleSheet } from 'react-native';
 import { wp, hp, rf, rs } from '../utils/responsive';
 
-/**
- * LoginScreen Styles
- * 
- * Organized styling for the Phone Number Login screen.
- * Uses the same theme as AccountNotFoundScreen (white background, clean design).
- */
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: wp(16),
-    paddingTop: hp(10),
-    height: hp(60),
+  backgroundVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    width: '100%',
+    height: '100%',
   },
-  backButton: {
-    padding: rs(8),
-    justifyContent: 'center',
-    alignItems: 'center',
+  overlayContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: wp(20),
-    paddingTop: hp(40),
+    justifyContent: 'space-between',
   },
-  title: {
-    fontSize: rf(24),
-    fontFamily: 'OpenSans-Bold',
-    color: '#000000',
-    marginBottom: hp(11),
-  },
-  description: {
-    fontSize: rf(15),
-    fontFamily: 'OpenSans-Regular',
-    color: '#000000',
-    lineHeight: rf(24),
-    marginBottom: hp(40),
-  },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  topSection: {
+    alignItems: 'center',
+    paddingTop: hp(50),
     marginTop: hp(20),
-    gap: wp(10),
-    marginLeft: wp(6),
-  },
-  inputFieldContainer: {
-    alignItems: 'flex-start',
-  },
-  inputLabel: {
-    fontSize: rf(13),
-    fontFamily: 'OpenSans-SemiBold',
-    color: '#000000',
-    marginBottom: hp(8),
-    marginLeft: wp(5),
-  },
-  countryCodeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: rs(12),
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(16),
-    borderWidth: rs(1),
-    borderColor: 'black',
-    minWidth: wp(100),
-  },
-  countryAbbreviation: {
-    fontSize: rf(16),
-    fontFamily: 'OpenSans-SemiBold',
-    color: '#000000',
-    marginRight: wp(6),
-  },
-  countryCodeDisplay: {
-    fontSize: rf(16),
-    fontFamily: 'OpenSans-SemiBold',
-    color: '#000000',
-    marginRight: wp(8),
-  },
-  dropdownIcon: {
-    marginLeft: wp(4),
-  },
-  phoneInputWrapper: {
-    width: wp(220),
-    backgroundColor: '#FFFFFF',
-    borderRadius: rs(12),
-    borderWidth: rs(1),
-    borderBottomWidth: rs(3),
-    borderColor: '#000000',
-  },
-  phoneInput: {
-    fontSize: rf(15),
-    fontFamily: 'OpenSans-Regular',
-    color: '#000000',
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(16),
-    height: hp(52),
-    backgroundColor: 'transparent',
-  },
-  bottomContainer: {
     paddingHorizontal: wp(20),
-    paddingBottom: hp(40),
-    alignItems: 'center',
-    width: '100%',
   },
-  continueButton: {
-    width: '100%',
-    backgroundColor: 'black',
-    borderRadius: rs(30),
-    paddingVertical: hp(15),
-  },
-  continueButtonText: {
+  appTitle: {
+    fontSize: rf(52),
+    fontFamily: 'Inter',
+    fontWeight: '900',
     color: '#FFFFFF',
-    fontSize: rf(18),
-    fontFamily: 'OpenSans-Bold',
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 4, height: 4 },
+    textShadowRadius: 0,
+    letterSpacing: rs(5),
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    includeFontPadding: false,
   },
-  privacyText: {
-    fontSize: rf(12),
-    fontFamily: 'OpenSans-Regular',
-    color: '#000000',
-    marginTop: hp(20),
-    paddingHorizontal: wp(20),
+  appTitleContainer: {
+    transform: [{ rotate: '2deg' }],
   },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+  bottomOverlay: {
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    borderTopLeftRadius: rs(40),
+    borderTopRightRadius: rs(40),
+    paddingTop: hp(30),
+    paddingBottom: hp(40),
+    paddingHorizontal: wp(24),
+    marginTop: 'auto',
+    overflow: 'hidden',
   },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: rs(20),
-    borderTopRightRadius: rs(20),
-    maxHeight: hp(596), // 70% of typical screen height
-    paddingBottom: hp(20),
-  },
-  modalHeader: {
+  metricsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: wp(20),
-    paddingVertical: hp(16),
-    borderBottomWidth: rs(1),
-    borderBottomColor: '#E0E0E0',
+    marginBottom: hp(32),
+    gap: wp(16),
   },
-  modalTitle: {
-    fontSize: rf(20),
-    fontFamily: 'OpenSans-Bold',
-    color: '#000000',
-  },
-  modalCloseButton: {
-    padding: rs(4),
-  },
-  countryCodeList: {
-    paddingHorizontal: wp(20),
-  },
-  countryCodeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: hp(16),
-    borderBottomWidth: rs(1),
-    borderBottomColor: '#F0F0F0',
-  },
-  countryCodeText: {
-    fontSize: rf(16),
-    fontFamily: 'OpenSans-SemiBold',
-    color: '#000000',
-    marginLeft: wp(12),
-    width: wp(60),
-  },
-  countryName: {
-    fontSize: rf(16),
-    fontFamily: 'OpenSans-Regular',
-    color: '#666666',
-    marginLeft: wp(12),
+  metricBox: {
     flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: rs(16),
+    paddingVertical: hp(16),
+    paddingHorizontal: wp(16),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  errorText: {
+  metricIcon: {
+    width: rf(24),
+    height: rf(24),
+    marginBottom: hp(8),
+  },
+  metricValue: {
+    fontSize: rf(24),
+    fontFamily: 'Inter',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: hp(4),
+  },
+  metricLabel: {
     fontSize: rf(12),
-    fontFamily: 'OpenSans-Regular',
-    color: '#FF0000',
-    marginTop: hp(4),
-    marginLeft: wp(5),
+    fontFamily: 'Inter',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.9,
+  },
+  headingContainer: {
+    alignItems: 'center',
+    marginBottom: hp(28),
+  },
+  heading: {
+    fontSize: rf(32),
+    fontFamily: 'Inter sans-serif',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: rs(0.5),
+  },
+  getStartedButton: {
+    width: '100%',
+    height: hp(56),
+    backgroundColor: '#fcd6e3',
+    borderRadius: rs(28),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: hp(20),
+    shadowColor: '#fcd6e3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  getStartedButtonText: {
+    fontSize: rf(18),
+    fontFamily: 'Inter',
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: rs(0.5),
+  },
+  termsContainer: {
+    alignItems: 'center',
+    marginTop: hp(8),
+  },
+  termsText: {
+    fontSize: rf(12),
+    fontFamily: 'Inter',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.85,
+    lineHeight: rf(18),
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
+    fontFamily: 'Inter',
+    fontWeight: '600',
   },
 });
 
 export default styles;
-

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { postApiCall } from '../config/apiCall';
+import { hasToken, isOnboardingComplete } from '../utils/tokenStorage';
 
 export default function SplashScreenController() {
   const [isLoading, setIsLoading] = useState();
@@ -10,19 +11,26 @@ export default function SplashScreenController() {
   const navigation: any = useNavigation();
   const checkUserStatus = async () => {
     try {
-      const res = await AsyncStorage.getItem('authToken');
-      if (res !== null) {
-        navigation.navigate('TabNavigation');
+      const tokenExists = await hasToken();
+      const authToken = await AsyncStorage.getItem('authToken');
+      
+      if (tokenExists || authToken) {
+        const onboardingComplete = await isOnboardingComplete();
+        
+        if (onboardingComplete) {
+          navigation.navigate('TabNavigation');
+        } else {
+          navigation.navigate('OnboardingNavigation');
+        }
       } else {
         navigation.navigate('AuthNavigation');
       }
-    } catch (error) {}
+    } catch (error) {
+      navigation.navigate('AuthNavigation');
+    }
   };
-  const removeToken = async() => {
-    await AsyncStorage.removeItem('authToken');
-  }
+  
   useEffect(() => {
-    // removeToken()
     setTimeout(() => {
       checkUserStatus();
     }, 3000);

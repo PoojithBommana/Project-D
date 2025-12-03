@@ -1,25 +1,24 @@
-import { Text, View, SafeAreaView, Animated, Alert } from 'react-native';
+import { Text, View, SafeAreaView, Alert, TouchableOpacity, StatusBar, Animated, Image } from 'react-native';
 import React, { Component } from 'react';
-import { StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
-// Facebook login is now handled by AuthService
-import styles from '../../styles/LaunchScreenStyles';
-import CustomButton from '../../components/CustomButton';
-import { Facebookicon , Googleicon } from '../../assets/index';
-import { t } from '../../config/i18n';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import styles from '../../styles/LoginScreenStyles';
 import { authService } from '../../services/AuthService';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { rf } from '../../utils/responsive';
+import { Staricon } from '../../assets/index';
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
 }
 
 interface State {
-  dropdownVisible: boolean;
-  dropdownAnimation: Animated.Value;
+  buttonScale: Animated.Value;
+  overlayOpacity: Animated.Value;
+  metricsOpacity: Animated.Value;
 }
 
 export default class LoginScreen extends Component<Props, State> {
@@ -28,110 +27,70 @@ export default class LoginScreen extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      dropdownVisible: false,
-      dropdownAnimation: new Animated.Value(0),
+      buttonScale: new Animated.Value(1),
+      overlayOpacity: new Animated.Value(0),
+      metricsOpacity: new Animated.Value(0),
     };
-    this.videoRef = React.createRef()
   }
 
   componentDidMount(): void {
     GoogleSignin.configure({
       webClientId: '168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com',
-      scopes:[
-        'https://www.googleapis.com/auth/calendar'
-      ]
+      scopes: ['https://www.googleapis.com/auth/calendar'],
     });
+
+    Animated.parallel([
+      Animated.timing(this.state.overlayOpacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(this.state.metricsOpacity, {
+        toValue: 1,
+        duration: 1000,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }
 
-  toggleDropdown = () => {
-    const { dropdownVisible, dropdownAnimation } = this.state;
-
-    if (!dropdownVisible) {
-      // Open dropdown with smooth animation
-      Animated.spring(dropdownAnimation, {
+  handleGetStarted = async () => {
+    Animated.sequence([
+      Animated.spring(this.state.buttonScale, {
+        toValue: 0.95,
+        useNativeDriver: true,
+      }),
+      Animated.spring(this.state.buttonScale, {
         toValue: 1,
-        tension: 50,
-        friction: 8,
         useNativeDriver: true,
-      }).start();
-      this.setState({ dropdownVisible: true });
-    } else {
-      // Close dropdown
-      Animated.spring(dropdownAnimation, {
-        toValue: 0,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }).start(() => {
-        this.setState({ dropdownVisible: false });
-      });
-    }
-  };
+      }),
+    ]).start();
 
-
-  handleContinueWithMobile = () => {
-    this.props.navigation?.navigate('RegisterScreen');
-  };
-
-  handleGoogleSignIn = async () => {
     try {
-      const result:any = await authService.signInWithGoogle();
-      
+      const result: any = await authService.signInWithGoogle();
+
       if (result.success && result.user) {
-        // if (result.backendResponse && 'token' in result.backendResponse && result.backendResponse.token) {
-        //   await AsyncStorage.setItem("authToken", `${result.backendResponse.token}`);
-        // }
-        await AsyncStorage.setItem("authToken", `${result.backendResponse?.token}`);
-        this.props.navigation?.navigate("TabNavigation");
-        Alert.alert('Success', 'Signed in with Google successfully!');
+        await AsyncStorage.setItem('authToken', `${result.backendResponse?.token}`);
+        this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
       } else {
-        // Only show error if it wasn't a cancellation
         if (result.error && result.error !== 'Sign in was cancelled') {
           Alert.alert('Error', result.error || 'Failed to sign in with Google');
         }
       }
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to sign in with Google');
+      Alert.alert('Error', error?.message || 'Failed to sign in');
     }
   };
 
-  handleFacebookSignIn = async () => {
-    try {
-      const result = await authService.signInWithFacebook();
-      
-      if (result.success && result.user) {
-        await AsyncStorage.setItem("authToken", `Token`);
-        this.props.navigation?.navigate("TabNavigation");
-        Alert.alert('Success', 'Signed in with Facebook successfully!');
-      } else {
-        // Only show error if it wasn't a cancellation
-        if (result.error && result.error !== 'Sign in was cancelled') {
-          Alert.alert('Error', result.error || 'Failed to sign in with Facebook');
-        }
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to sign in with Facebook');
-    }
+  handleTermsPress = () => {
+    Alert.alert('Terms & Conditions', 'Terms and conditions content');
   };
 
+  handlePrivacyPress = () => {
+    Alert.alert('Privacy Policy', 'Privacy policy content');
+  };
 
   render() {
-    
-    const dropdownTranslateY = this.state.dropdownAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [10, 0], 
-    });
-
-    const dropdownOpacity = this.state.dropdownAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-    });
-
-    const dropdownScale = this.state.dropdownAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.95, 1],
-    });
-
     return (
       <View style={styles.container}>
         <Video
@@ -148,87 +107,81 @@ export default class LoginScreen extends Component<Props, State> {
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
           onEnd={() => {
-           
             this.videoRef?.seek(0);
           }}
         />
         <SafeAreaView style={styles.overlayContainer}>
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-        
+
           <View style={styles.contentContainer}>
-            
             <View style={styles.topSection}>
-              <Text style={styles.logo}>{t("DilMil")}</Text>
+              <View style={styles.appTitleContainer}>
+                <Text style={styles.appTitle}>DILMIL</Text>
+              </View>
             </View>
 
-          
-            <View style={styles.bottomContainer}>
-              <Text style={styles.mainMessage}>{t('IndianHeartsMeet')}</Text>
-              
-              <View style={styles.buttonWrapper}>
-                <CustomButton
-                  title={t("QuickSignIn")}
-                  variant="primary"
-                  onPress={() => {
-                 
-                  }}
-                />
-              </View>
-
-              <View style={styles.buttonWrapper}>
-                <CustomButton
-                  title={t("ContinueWithOtherMethods")}
-                  variant="borderless"
-                  onPress={this.toggleDropdown}
-                />
-              </View>
-
-              <Animated.View 
+            <Animated.View
+              style={[
+                styles.bottomOverlay,
+                {
+                  opacity: this.state.overlayOpacity,
+                },
+              ]}
+            >
+              <Animated.View
                 style={[
-                  styles.dropdownContainer,
+                  styles.metricsContainer,
                   {
-                    opacity: dropdownOpacity,
-                    transform: [
-                      { translateY: dropdownTranslateY },
-                      { scale: dropdownScale }
-                    ],
-                    pointerEvents: this.state.dropdownVisible ? 'auto' : 'none',
-                  }
+                    opacity: this.state.metricsOpacity,
+                  },
                 ]}
               >
-                <CustomButton
-                  title={t("ContinueWithGoogle")}
-                  variant="social"
-                  imageUrl={Googleicon}
-                  onPress={this.handleGoogleSignIn}
-                  customStyle={{backgroundColor: 'white'}}
-                  textStyle={{color: '#000000'}}
-                />
-                <CustomButton
-                  title={t("ContinueWithFacebook")}
-                  variant="social"
-                  imageUrl={Facebookicon}
-                  onPress={this.handleFacebookSignIn}
-                  customStyle={{backgroundColor: 'white'}}
-                  textStyle={{color: '#000000'}}
-                />
-                <CustomButton
-                  title={t("ContinueWithMobileNumber")}
-                  variant="social"
-                  iconName="phone"
-                  iconColor="#000000"
-                  onPress={this.handleContinueWithMobile}
-                  customStyle={{backgroundColor: 'white'}}
-                  textStyle={{color: '#000000'}}
-                />
+                <View style={styles.metricBox}>
+                  <Image source={Staricon} style={styles.metricIcon} resizeMode="contain" />
+                  <Text style={styles.metricValue}>4.4</Text>
+                  <Text style={styles.metricLabel}>Rating</Text>
+                </View>
+
+                <View style={styles.metricBox}>
+                  <Icon name="heart" size={rf(24)} color="#FF6B9D" style={styles.metricIcon} />
+                  <Text style={styles.metricValue}>2.4M</Text>
+                  <Text style={styles.metricLabel}>Successful{'\n'}Dates</Text>
+                </View>
+              </Animated.View>
+
+              <View style={styles.headingContainer}>
+                <Text style={styles.heading}>Find your vibe</Text>
+              </View>
+
+              <Animated.View
+                style={{
+                  transform: [{ scale: this.state.buttonScale }],
+                }}
+              >
+                <TouchableOpacity
+                  style={styles.getStartedButton}
+                  onPress={this.handleGetStarted}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Get Started"
+                >
+                  <Text style={styles.getStartedButtonText}>Get Started</Text>
+                </TouchableOpacity>
               </Animated.View>
 
               <View style={styles.termsContainer}>
                 <Text style={styles.termsText}>
-                  {t("TermsAndPrivacy")}
+                  By clicking you accept our{' '}
+                  <Text style={styles.termsLink} onPress={this.handleTermsPress}>
+                    Terms
+                  </Text>{' '}
+                  &{' '}
+                  <Text style={styles.termsLink} onPress={this.handlePrivacyPress}>
+                    Privacy policy
+                  </Text>
                 </Text>
               </View>
-            </View>
+            </Animated.View>
           </View>
         </SafeAreaView>
       </View>

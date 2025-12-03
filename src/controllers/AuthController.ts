@@ -232,14 +232,27 @@ class AuthController {
           user_id: apiResponse?.response?.user_id,
         };
       } else if (apiResponse?.error) {
-        console.error('[API] Social login error:', apiResponse?.response?.Message || 'Unknown error');
+        const errorMessage = apiResponse?.response?.Message || 
+                           apiResponse?.response?.message || 
+                           'Backend server unavailable';
+        
+        if (errorMessage.includes('Network') || errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED')) {
+          console.warn('[API] Social login failed (non-blocking):', errorMessage);
+        } else {
+          console.warn('[API] Social login error (non-blocking):', errorMessage);
+        }
         return null;
       } else {
-        console.error('[API] Social login failed: Invalid response format');
+        console.warn('[API] Social login failed (non-blocking): Invalid response format');
         return null;
       }
-    } catch (error) {
-      console.error('[API] Error in social login:', error);
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.toString() || 'Unknown error';
+      if (errorMessage.includes('Network') || errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED')) {
+        console.warn('[API] Social login network error (non-blocking):', errorMessage);
+      } else {
+        console.warn('[API] Social login error (non-blocking):', errorMessage);
+      }
       return null;
     }
   }
