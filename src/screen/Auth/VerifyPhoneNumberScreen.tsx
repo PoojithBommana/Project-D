@@ -134,7 +134,7 @@ export default class VerifyPhoneNumberScreen extends Component<Props, State> {
         
       
         setTimeout(() => {
-          this.props.navigation?.getParent()?.navigate('Home');
+          this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
         }, 500);
       } else {
      

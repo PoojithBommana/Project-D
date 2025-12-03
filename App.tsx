@@ -11,6 +11,8 @@ export type RootStackParamList = {
   };
   Home: undefined;
   AccountNotFound: undefined;
+  OnboardingNavigation: undefined;
+  TabNavigation: undefined;
 };
 const AppNavigator: React.FC = () => {
   return (

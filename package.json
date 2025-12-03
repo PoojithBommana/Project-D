@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@callstack/liquid-glass": "^0.6.0",
     "@cometchat/calls-sdk-react-native": "^4.4.0",
     "@cometchat/chat-sdk-react-native": "^4.0.17",
     "@cometchat/chat-uikit-react-native": "^5.2.3",

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AUTH_TOKEN_KEY = '@auth_token';
 const REFRESH_TOKEN_KEY = '@refresh_token';
+const ONBOARDING_COMPLETE_KEY = '@onboarding_complete';
 
 export const storeToken = async (token: string): Promise<void> => {
   try {
@@ -58,5 +59,35 @@ export const hasToken = async (): Promise<boolean> => {
   } catch (error) {
     console.error('[TokenStorage] Error checking token:', error);
     return false;
+  }
+};
+
+export const setOnboardingComplete = async (): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    console.log('[TokenStorage] Onboarding marked as complete');
+  } catch (error) {
+    console.error('[TokenStorage] Error setting onboarding complete:', error);
+    throw error;
+  }
+};
+
+export const isOnboardingComplete = async (): Promise<boolean> => {
+  try {
+    const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
+    return value === 'true';
+  } catch (error) {
+    console.error('[TokenStorage] Error checking onboarding status:', error);
+    return false;
+  }
+};
+
+export const clearOnboardingStatus = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+    console.log('[TokenStorage] Onboarding status cleared');
+  } catch (error) {
+    console.error('[TokenStorage] Error clearing onboarding status:', error);
+    throw error;
   }
 };

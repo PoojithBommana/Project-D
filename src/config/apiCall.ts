@@ -2,9 +2,9 @@ import axios from 'axios';
 import { API_ENDPOINTS } from './endpoints';
 
 export const API_BASE_URL = __DEV__
-  ? 'https://api.dilmil.com' // Development - Update with your backend URL
-  : 'https://api.dilmil.com'; // Production
-const Base_URL = '';
+  ? 'https://api.dilmil.com'
+  : 'https://api.dilmil.com';
+const Base_URL = API_BASE_URL;
 
 export const getApiUrl = (category: string, endpoint: string) => {
   if (!Base_URL) {
@@ -75,23 +75,22 @@ export const postApiCall = async (
       statusText: responseData.statusText,
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error));
     if (error?.response) {
       return {
         error: true,
-        response: error?.response?.data || { Message: error?.message },
+        response: error?.response?.data || { Message: error?.message || 'Server error' },
         statusCode: error?.response?.status,
         statusText: error?.response?.statusText,
       };
     } else if (error.request) {
       return {
         error: true,
-        message: '',
+        response: { Message: 'Network error: Unable to reach server' },
       };
     } else {
       return {
         error: true,
-        response: { Message: error?.message },
+        response: { Message: error?.message || 'Unknown error occurred' },
       };
     }
   }

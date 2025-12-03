@@ -20,6 +20,7 @@ export type AuthStackParamList = {
   AI:undefined
   Chat:undefined
   Profile:undefined
+  UserOnboarding:undefined
 };
 
 const AuthNavigationStack = createNativeStackNavigator<AuthStackParamList>()
