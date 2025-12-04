@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#E8F4F8',
+    backgroundColor: '#FFFCF1',
     paddingTop: hp(60),
     paddingHorizontal: wp(24),
     paddingBottom: hp(40),
@@ -38,17 +38,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
     minHeight: hp(400),
+    overflow: 'hidden',
   },
-  profileImageContainer: {
-    marginBottom: hp(40),
-  },
-  profileImagePlaceholder: {
-    width: rf(120),
-    height: rf(120),
-    borderRadius: rf(60),
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+  profileImageBackground: {
+    position: 'absolute',
+    top: hp(40),
+    left: '50%',
+    transform: [{ translateX: -rf(80) }],
+    width: rf(160),
+    height: rf(200),
+    borderRadius: rs(20),
   },
   bubblesContainer: {
     position: 'absolute',
@@ -70,30 +69,36 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   bubbleTopLeft: {
-    top: hp(20),
+    top: hp(50),
     left: wp(20),
+    zIndex: 10,
   },
   bubbleTopRight: {
-    top: hp(20),
+    top: hp(50),
     right: wp(20),
+    zIndex: 10,
   },
   bubbleLeft: {
     top: '50%',
     left: wp(10),
     transform: [{ translateY: -hp(20) }],
+    zIndex: 10,
   },
   bubbleRight: {
     top: '50%',
     right: wp(10),
     transform: [{ translateY: -hp(20) }],
+    zIndex: 10,
   },
   bubbleBottomLeft: {
-    bottom: hp(80),
+    bottom: hp(100),
     left: wp(20),
+    zIndex: 10,
   },
   bubbleBottomRight: {
-    bottom: hp(80),
+    bottom: hp(100),
     right: wp(20),
+    zIndex: 10,
   },
   bubbleText: {
     fontSize: rf(14),

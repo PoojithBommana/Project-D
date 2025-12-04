@@ -2,6 +2,46 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/fonts/GTMaruBlack.ttf",
+      "sha1": "d8a9a2eaefe184429d242408768e293ab677f709"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruBlackOblique.ttf",
+      "sha1": "a7db4476e3059626048ebe6881864cd6899add32"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruBold.ttf",
+      "sha1": "95cda48bdf0c9ad1ebf1c9263341d7a72ad53d82"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruBoldOblique.ttf",
+      "sha1": "7a5c5db3e773d796b85f7dc4ed9277a3a542fd7e"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruLight.ttf",
+      "sha1": "c78ab0559ca0ce0940a8e54c89a52a7d52ecb861"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruLightOblique.ttf",
+      "sha1": "0c91ba12db09797eca1c7f4e8a12869dac52286d"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruMedium.ttf",
+      "sha1": "1050c81749c0bee9bc0f58bba3332790e5e089bf"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruMediumOblique.ttf",
+      "sha1": "5d04a00e571c10626af9c28ff35db9c9aeaa8f80"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruRegular.ttf",
+      "sha1": "a25f8fba7d0d920b5db9713d056517ca3e9ddfab"
+    },
+    {
+      "path": "src/assets/fonts/GTMaruRegularOblique.ttf",
+      "sha1": "0df10c68db8348d47a39e25562a80145b0768e68"
+    },
+    {
       "path": "src/assets/fonts/OpenSans-Bold.ttf",
       "sha1": "c7e6b913f990299fcc5928f4581727972e869727"
     },
