@@ -166,7 +166,6 @@ export default function AccountSelectionScreen({ navigation }: Props) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContentWrapper}>
-            <View style={styles.modalBlurLayer} />
             <View style={styles.modalContent}>
             <View style={styles.modalIconContainer}>
               <View style={styles.modalIcon}>

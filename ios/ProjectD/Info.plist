@@ -97,6 +97,16 @@
 		<string>Poppins-Medium.ttf</string>
 		<string>Poppins-Regular.ttf</string>
 		<string>Poppins-SemiBold.ttf</string>
+		<string>GTMaruBlack.ttf</string>
+		<string>GTMaruBlackOblique.ttf</string>
+		<string>GTMaruBold.ttf</string>
+		<string>GTMaruBoldOblique.ttf</string>
+		<string>GTMaruLight.ttf</string>
+		<string>GTMaruLightOblique.ttf</string>
+		<string>GTMaruMedium.ttf</string>
+		<string>GTMaruMediumOblique.ttf</string>
+		<string>GTMaruRegular.ttf</string>
+		<string>GTMaruRegularOblique.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

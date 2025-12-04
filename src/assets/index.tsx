@@ -7,3 +7,4 @@ export const Usericon = require('./user.png');
 export const Staricon = require('./star.png');
 export const Backicon = require('./back.png');
 export const Checkicon = require('./check.png');
+export const Girlimage = require('./girlimage.png');

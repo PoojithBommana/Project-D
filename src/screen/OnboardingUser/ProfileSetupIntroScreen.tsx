@@ -6,12 +6,14 @@ import {
   SafeAreaView,
   StatusBar,
   Animated,
+  Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/ProfileSetupIntroStyles';
+import { Girlimage } from '../../assets';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'ProfileSetupIntroScreen'>;
@@ -26,7 +28,7 @@ export default function ProfileSetupIntroScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#90CAF9" />
+      <StatusBar barStyle="light-content" backgroundColor="#FFFCF1" />
       
       <View style={styles.container}>
         <View style={styles.titleContainer}>
@@ -34,12 +36,8 @@ export default function ProfileSetupIntroScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.profileCard}>
-          <View style={styles.profileImageContainer}>
-            <View style={styles.profileImagePlaceholder}>
-              <Icon name="user" size={rf(80)} color="#4A90E2" />
-            </View>
-          </View>
-
+          <Image source={Girlimage} style={styles.profileImageBackground} resizeMode="cover" />
+          
           <View style={styles.bubblesContainer}>
             <View style={[styles.bubble, styles.bubbleTopLeft]}>
               <Icon name="briefcase" size={rf(20)} color="#4A90E2" />
@@ -72,7 +70,12 @@ export default function ProfileSetupIntroScreen({ navigation }: Props) {
             </View>
           </View>
 
-         
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${progress}%` }]} />
+            <View style={styles.progressCheckmark}>
+              <Icon name="check" size={rf(12)} color="#FFFFFF" />
+            </View>
+          </View>
         </View>
 
         <TouchableOpacity
