@@ -14,4 +14,7 @@ export const API_ENDPOINTS: any = {
     SWIPE_ACTION: '/profiles/swipe',
     GET_MATCHES: '/profiles/matches',
   },
+  MUSIC: {
+    FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
+  },
 };

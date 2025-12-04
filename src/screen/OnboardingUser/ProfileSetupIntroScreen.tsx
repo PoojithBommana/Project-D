@@ -13,7 +13,7 @@ import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation'
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/ProfileSetupIntroStyles';
-import { Girlimage } from '../../assets';
+import { Setupprofileimage } from '../../assets';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'ProfileSetupIntroScreen'>;
@@ -32,50 +32,11 @@ export default function ProfileSetupIntroScreen({ navigation }: Props) {
       
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Let's set up your DilMil profile!</Text>
+          <Text style={styles.title}>Let's set up your DilMil profile!!!</Text>
         </View>
 
-        <View style={styles.profileCard}>
-          <Image source={Girlimage} style={styles.profileImageBackground} resizeMode="cover" />
-          
-          <View style={styles.bubblesContainer}>
-            <View style={[styles.bubble, styles.bubbleTopLeft]}>
-              <Icon name="briefcase" size={rf(20)} color="#4A90E2" />
-              <Text style={styles.bubbleText}>Work</Text>
-            </View>
-
-            <View style={[styles.bubble, styles.bubbleTopRight]}>
-              <Icon name="graduation-cap" size={rf(20)} color="#4A90E2" />
-              <Text style={styles.bubbleText}>College</Text>
-            </View>
-
-            <View style={[styles.bubble, styles.bubbleLeft]}>
-              <Icon name="venus-mars" size={rf(20)} color="#4A90E2" />
-              <Text style={styles.bubbleText}>Gender</Text>
-            </View>
-
-            <View style={[styles.bubble, styles.bubbleRight]}>
-              <Icon name="birthday-cake" size={rf(20)} color="#4A90E2" />
-              <Text style={styles.bubbleText}>DOB</Text>
-            </View>
-
-            <View style={[styles.bubble, styles.bubbleBottomLeft]}>
-              <Icon name="music" size={rf(20)} color="#4A90E2" />
-              <Text style={styles.bubbleText}>Playlist</Text>
-            </View>
-
-            <View style={[styles.bubble, styles.bubbleBottomRight]}>
-              <Icon name="film" size={rf(20)} color="#4A90E2" />
-              <Text style={styles.bubbleText}>Movies</Text>
-            </View>
-          </View>
-
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${progress}%` }]} />
-            <View style={styles.progressCheckmark}>
-              <Icon name="check" size={rf(12)} color="#FFFFFF" />
-            </View>
-          </View>
+        <View style={styles.imageContainer}>
+          <Image source={Setupprofileimage} style={styles.girlimage} resizeMode="contain" />
         </View>
 
         <TouchableOpacity

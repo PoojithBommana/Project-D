@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,9 @@ interface Props {
   route?: {
     params: {
       firstName: string;
+      lastName: string;
+      username: string;
+      gender: string;
       age: number;
       location: string;
       photo?: string;
@@ -33,14 +36,33 @@ interface Props {
 export default function OnboardingStep5({ navigation, route }: Props) {
   const [bio, setBio] = useState('');
   const [isButtonActive, setIsButtonActive] = useState(false);
+  const buttonScale = useRef(new Animated.Value(1)).current;
 
   const handleInputChange = (text: string) => {
     setBio(text);
     setIsButtonActive(text.trim().length >= 10);
   };
 
+  const animateButtonPress = () => {
+    Animated.sequence([
+      Animated.spring(buttonScale, {
+        toValue: 0.95,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }),
+    ]).start();
+  };
+
   const handleContinue = async () => {
     if (bio.trim().length >= 10) {
+      animateButtonPress();
       const onboardingData = {
         firstName: route?.params?.firstName || '',
         age: route?.params?.age || 0,
@@ -119,26 +141,32 @@ export default function OnboardingStep5({ navigation, route }: Props) {
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                isButtonActive ? styles.continueButtonActive : styles.continueButtonDisabled,
-              ]}
-              onPress={handleContinue}
-              disabled={!isButtonActive}
-              activeOpacity={0.8}
+            <Animated.View
+              style={{
+                transform: [{ scale: buttonScale }],
+              }}
             >
-              <Text
+              <TouchableOpacity
                 style={[
-                  styles.continueButtonText,
-                  isButtonActive
-                    ? styles.continueButtonTextActive
-                    : styles.continueButtonTextDisabled,
+                  styles.continueButton,
+                  isButtonActive ? styles.continueButtonActive : styles.continueButtonDisabled,
                 ]}
+                onPress={handleContinue}
+                disabled={!isButtonActive}
+                activeOpacity={1}
               >
-                Complete
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.continueButtonText,
+                    isButtonActive
+                      ? styles.continueButtonTextActive
+                      : styles.continueButtonTextDisabled,
+                  ]}
+                >
+                  Complete
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
