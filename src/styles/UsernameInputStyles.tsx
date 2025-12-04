@@ -22,7 +22,6 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     backgroundColor: '#FDFF8E',
-    width: '15%',
     borderTopLeftRadius: 30,
     borderBottomLeftRadius: 30,
   },
@@ -44,6 +43,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: hp(24),
   },
+  inputWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
   inputField: {
     width: '100%',
     height: hp(56),
@@ -52,69 +55,29 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FEFFAF',
     paddingHorizontal: wp(16),
+    paddingRight: wp(50),
     fontSize: rf(16),
     fontFamily: 'GTMaruBold',
     color: '#000000',
   },
-  inputPlaceholder: {
-    color: '#999999',
-  },
-  privacyContainer: {
-    marginTop: hp(16),
-    marginBottom: hp(32),
-  },
-  privacyRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  checkbox: {
-    width: rs(20),
-    height: rs(20),
-    borderRadius: rs(4),
-    borderWidth: rs(2),
-    borderColor: '#FEFFAF',
-    marginRight: wp(12),
-    marginTop: rs(2),
+  checkmarkContainer: {
+    position: 'absolute',
+    right: wp(16),
+    top: '50%',
+    transform: [{ translateY: -rf(12) }],
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'visible',
   },
-  checkboxChecked: {
-    backgroundColor: '#FEFFAF',
+  checkmarkIcon: {
+    width: rf(24),
+    height: rf(24),
   },
-  checkboxUnchecked: {
-    backgroundColor: 'transparent',
-  },
-  checkboxIcon: {
-    width: rf(37),
-    height: rf(30),
-    marginLeft: wp(5),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 1.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  privacyTextContainer: {
-    flex: 1,
-    paddingRight: wp(8),
-  },
-  privacyText: {
-    fontSize: rf(15),
+  errorText: {
+    fontSize: rf(14),
     fontFamily: 'GTMaruBold',
-    color: '#999999',
-    lineHeight: rf(22),
-  },
-  privacyExample: {
-    fontSize: rf(15),
-    fontFamily: 'Inter',
-    fontWeight: '400',
-    color: '#666666',
-    marginTop: hp(4),
-    lineHeight: rf(22),
+    color: '#FF0000',
+    marginTop: hp(8),
+    marginLeft: wp(4),
   },
   buttonContainer: {
     marginTop: hp(24),
@@ -127,23 +90,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     backgroundColor: '#FDFF8E',
     borderRadius: rs(12),
-   
     justifyContent: 'center',
     alignItems: 'center',
   },
-  continueButtonActive: {
-    backgroundColor: '#FDFF8E',
-  },
-
   continueButtonText: {
     fontSize: rf(18),
     fontFamily: 'GTMaruBold',
     color: 'black',
   },
-  continueButtonTextActive: {
-    color: 'black',
-  },
-
 });
 
 export default styles;
+

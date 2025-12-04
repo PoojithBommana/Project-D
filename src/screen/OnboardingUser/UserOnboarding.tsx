@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { Checkicon } from '../../assets';
 import { rf } from '../../utils/responsive';
 import styles from '../../styles/UserOnboardingStyles';
 
@@ -22,41 +24,110 @@ interface Props {
 
 export default function UserOnboarding({ navigation }: Props) {
   const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [showOnlyFirstLetter, setShowOnlyFirstLetter] = useState(false);
   const [isButtonActive, setIsButtonActive] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const firstNameInputRef = useRef<TextInput>(null);
+  const lastNameInputRef = useRef<TextInput>(null);
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const checkboxScale = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
-  const handleInputChange = (text: string) => {
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleFirstNameChange = (text: string) => {
     setFirstName(text);
-    setIsButtonActive(text.trim().length > 0);
+    updateButtonState(text, lastName);
+  };
+
+  const handleLastNameChange = (text: string) => {
+    setLastName(text);
+    updateButtonState(firstName, text);
+  };
+
+  const updateButtonState = (first: string, last: string) => {
+    setIsButtonActive(first.trim().length > 0 && last.trim().length > 0);
+  };
+
+  const animateButtonPress = () => {
+    Animated.sequence([
+      Animated.spring(buttonScale, {
+        toValue: 0.95,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }),
+    ]).start();
+  };
+
+  const animateCheckboxPress = () => {
+    Animated.sequence([
+      Animated.spring(checkboxScale, {
+        toValue: 0.9,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }),
+      Animated.spring(checkboxScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }),
+    ]).start();
   };
 
   const togglePrivacyOption = () => {
+    animateCheckboxPress();
     setShowOnlyFirstLetter(!showOnlyFirstLetter);
   };
 
   const handleContinue = () => {
-    if (firstName.trim().length > 0) {
-      navigation?.navigate('OnboardingStep2', {
-        firstName: firstName.trim(),
-        showOnlyFirstLetter,
-      });
+    if (firstName.trim().length > 0 && lastName.trim().length > 0) {
+      animateButtonPress();
+      setTimeout(() => {
+        navigation?.navigate('UsernameInputScreen', {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          showOnlyFirstLetter,
+        });
+      }, 150);
     }
   };
 
   const getPrivacyExample = () => {
     if (firstName.trim().length > 0) {
-      const firstLetter = firstName.trim()[0].toUpperCase();
-      return `${firstName.trim()} shown as ${firstLetter}`;
+      return `:${firstName.trim()} shown as ${firstName.trim()}`;
     }
-    return ':Ria shown as R';
+    return ':Ria shown as Ria';
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#E8F4F8"
+        backgroundColor="#FFFCF1"
         translucent={false}
       />
       <KeyboardAvoidingView
@@ -68,95 +139,122 @@ export default function UserOnboarding({ navigation }: Props) {
           <Animated.View style={[styles.progressBar]} />
         </View>
 
-        <View style={styles.contentContainer}>
+        <Animated.View 
+          style={[
+            styles.contentContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
           <View style={styles.headingContainer}>
             <Text style={styles.heading}>
-              👋 What's your first name?
+            Hey there!{'\n'}What should we call you?
             </Text>
           </View>
 
           <View style={styles.inputContainer}>
             <TextInput
-              ref={inputRef}
+              ref={firstNameInputRef}
               style={styles.inputField}
               placeholder="Your first name"
               placeholderTextColor="#999999"
               value={firstName}
-              onChangeText={handleInputChange}
+              onChangeText={handleFirstNameChange}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={() => lastNameInputRef.current?.focus()}
+              accessibilityLabel="First name input"
+              accessibilityHint="Enter your first name"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              ref={lastNameInputRef}
+              style={styles.inputField}
+              placeholder="Your last name"
+              placeholderTextColor="#999999"
+              value={lastName}
+              onChangeText={handleLastNameChange}
               autoCapitalize="words"
               autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={handleContinue}
-              accessibilityLabel="First name input"
-              accessibilityHint="Enter your first name"
+              accessibilityLabel="Last name input"
+              accessibilityHint="Enter your last name"
             />
           </View>
 
           <TouchableOpacity
             style={styles.privacyContainer}
             onPress={togglePrivacyOption}
-            activeOpacity={0.7}
+            activeOpacity={1}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: showOnlyFirstLetter }}
-            accessibilityLabel="Show only the first letter on profile"
+            accessibilityLabel="Show your first name on profile"
           >
             <View style={styles.privacyRow}>
-              <View
+              <Animated.View
                 style={[
                   styles.checkbox,
                   showOnlyFirstLetter
                     ? styles.checkboxChecked
                     : styles.checkboxUnchecked,
+                  {
+                    transform: [{ scale: checkboxScale }],
+                  },
                 ]}
               >
                 {showOnlyFirstLetter && (
-                  <Icon
-                    name="check"
-                    size={rf(12)}
+                  <Image
+                    source={Checkicon}
                     style={styles.checkboxIcon}
+                    resizeMode="contain"
                   />
                 )}
-              </View>
-
+              </Animated.View>
               <View style={styles.privacyTextContainer}>
                 <Text style={styles.privacyText}>
-                  Show only the first letter on profile
+                We’ll flash your first name on your profile—keep it cute!
                 </Text>
-                <Text style={styles.privacyExample}>
-                  (💡 {getPrivacyExample()})
-                </Text>
+               
               </View>
             </View>
           </TouchableOpacity>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                isButtonActive
-                  ? styles.continueButtonActive
-                  : styles.continueButtonDisabled,
-              ]}
-              onPress={handleContinue}
-              disabled={!isButtonActive}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Continue"
-              accessibilityState={{ disabled: !isButtonActive }}
+            <Animated.View
+              style={{
+                transform: [{ scale: buttonScale }],
+              }}
             >
-              <Text
+              <TouchableOpacity
                 style={[
-                  styles.continueButtonText,
-                  isButtonActive
-                    ? styles.continueButtonTextActive
-                    : styles.continueButtonTextDisabled,
+                  styles.continueButton,
+                  
                 ]}
+                onPress={handleContinue}
+                disabled={!isButtonActive}
+                activeOpacity={1}
+                accessibilityRole="button"
+                accessibilityLabel="Continue"
+                accessibilityState={{ disabled: !isButtonActive }}
               >
-                Continue
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.continueButtonText,
+                 
+                  ]}
+                >
+                  Continue
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
