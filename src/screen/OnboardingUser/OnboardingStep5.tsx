@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
-import { rf } from '../../utils/responsive';
-import { setOnboardingComplete } from '../../utils/tokenStorage';
+import { rf ,hp} from '../../utils/responsive';
+// import { setOnboardingComplete } from '../../utils/tokenStorage';
 import styles from '../../styles/OnboardingStyles';
 
 interface Props {
@@ -75,7 +75,7 @@ export default function OnboardingStep5({ navigation, route }: Props) {
       console.log('Onboarding complete:', onboardingData);
       
       try {
-        await setOnboardingComplete();
+        // await setOnboardingComplete();
         navigation?.getParent()?.navigate('TabNavigation');
       } catch (error) {
         console.error('Error marking onboarding as complete:', error);

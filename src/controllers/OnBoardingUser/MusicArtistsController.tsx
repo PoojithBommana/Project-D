@@ -1,5 +1,5 @@
-import { API_ENDPOINTS } from '../config/endpoints';
-import { getExternalApiCall } from '../config/apiCall';
+import { API_ENDPOINTS } from '../../config/endpoints';
+import { getExternalApiCall } from '../../config/apiCall';
 
 export interface Playlist {
   id: string;

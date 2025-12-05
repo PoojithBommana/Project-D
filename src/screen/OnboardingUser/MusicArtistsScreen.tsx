@@ -19,7 +19,7 @@ import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation'
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/MusicArtistsScreenStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { musicService, Playlist } from '../../services/MusicService';
+// import { musicService, Playlist } from '../../services/MusicService';
 import { Lightbulbicon } from '../../assets';
 
 interface Props {
@@ -46,8 +46,8 @@ interface Artist {
 export default function MusicArtistsScreen({ navigation, route }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [displayedPlaylists, setDisplayedPlaylists] = useState<Playlist[]>([]);
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [displayedPlaylists, setDisplayedPlaylists] = useState<any[]>([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -73,24 +73,24 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
   }, []);
 
   const fetchPlaylists = async () => {
-    setLoadingPlaylists(true);
-    try {
-      const response = await musicService.fetchFeaturedPlaylists();
-      console.log('=== Featured Playlists API Response ===');
-      console.log(JSON.stringify(response, null, 2));
-      console.log('=======================================');
+    // setLoadingPlaylists(true);
+    // try {
+    //   const response = await musicService.fetchFeaturedPlaylists();
+    //   console.log('=== Featured Playlists API Response ===');
+    //   console.log(JSON.stringify(response, null, 2));
+    //   console.log('=======================================');
       
-      if (response.success && response.playlists) {
-        setPlaylists(response.playlists);
-        setDisplayedPlaylists(response.playlists);
-      } else {
-        console.error('Failed to fetch playlists:', response.error);
-      }
-    } catch (error) {
-      console.error('Error fetching playlists:', error);
-    } finally {
-      setLoadingPlaylists(false);
-    }
+    //   if (response.success && response.playlists) {
+    //     setPlaylists(response.playlists);
+    //     setDisplayedPlaylists(response.playlists);
+    //   } else {
+    //     console.error('Failed to fetch playlists:', response.error);
+    //   }
+    // } catch (error) {
+    //   console.error('Error fetching playlists:', error);
+    // } finally {
+    //   setLoadingPlaylists(false);
+    // }
   };
 
   const handleShuffle = () => {
@@ -124,7 +124,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleAddPlaylist = (playlist: Playlist) => {
+  const handleAddPlaylist = (playlist:any) => {
     // Convert playlist to artist format for selection
     const artist: Artist = {
       id: playlist.id,
@@ -198,51 +198,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
     );
   };
 
-  const renderPopularArtist = ({ item }: { item: Artist }) => {
-    const isSelected = selectedArtists.some(a => a.id === item.id);
-    const imageUrl = item.imageUrl || item.image;
-    
-    return (
-      <TouchableOpacity
-        style={styles.popularArtistCard}
-        onPress={() => !isSelected && handleAddArtist(item)}
-        disabled={isSelected}
-        activeOpacity={0.7}
-      >
-        <View style={styles.popularArtistImageContainer}>
-          {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl }}
-              style={styles.popularArtistImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.popularArtistImagePlaceholder}>
-              <Text style={styles.popularArtistInitial}>{item.name.charAt(0)}</Text>
-            </View>
-          )}
-          {!isSelected && (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => handleAddArtist(item)}
-            >
-              <Icon name="add" size={rs(16)} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-          {isSelected && (
-            <View style={styles.addedBadge}>
-              <Icon name="check" size={rs(16)} color="#FFFFFF" />
-            </View>
-          )}
-        </View>
-        <Text style={styles.popularArtistName} numberOfLines={1}>
-          {item.name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderPopularPlaylist = ({ item }: { item: Playlist }) => {
+  const renderPopularPlaylist = ({ item }: { item: any }) => {
     const isSelected = selectedArtists.some(a => a.id === item.id);
     const playlistImage = item.images && item.images.length > 0 ? item.images[0].url : null;
     

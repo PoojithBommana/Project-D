@@ -13,7 +13,6 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import CustomButton from '../../components/CustomButton';
-import { authService } from '../../services/AuthService';
 import { validatePhoneNumber, validateCountryCode } from '../../utils/Validation';
 import { showErrorAlert, handleAPIError } from '../../utils/ErrorHandler';
 import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE } from '../../constants/CountryCodes';
@@ -88,32 +87,32 @@ export default class RegisterScreen extends Component<Props, State> {
    
     this.setState({ loading: true, phoneNumberError: undefined });
 
-    try {
+    // try {
     
-      const response = await authService.sendOTP({
-        countryCode,
-        phoneNumber: phoneNumber.trim(),
-      });
+    //   const response = await authService.sendOTP({
+    //     countryCode,
+    //     phoneNumber: phoneNumber.trim(),
+    //   });
 
-      if (response.success) {
+    //   if (response.success) {
       
-        this.props.navigation?.navigate('VerifyPhoneNumberScreen', {
-          countryCode,
-          phoneNumber: phoneNumber.trim(),
-        });
-      } else {
+    //     this.props.navigation?.navigate('VerifyPhoneNumberScreen', {
+    //       countryCode,
+    //       phoneNumber: phoneNumber.trim(),
+    //     });
+    //   } else {
       
-        const errorMessage = handleAPIError(response.error || t('FailedToSendOTP'));
-        showErrorAlert(errorMessage, t('UnableToSendOTP'));
-      }
-    } catch (error) {
+    //     const errorMessage = handleAPIError(response.error || t('FailedToSendOTP'));
+    //     showErrorAlert(errorMessage, t('UnableToSendOTP'));
+    //   }
+    // } catch (error) {
     
-      const errorMessage = handleAPIError(error);
-      showErrorAlert(errorMessage, t('Error'));
-    } finally {
+    //   const errorMessage = handleAPIError(error);
+    //   showErrorAlert(errorMessage, t('Error'));
+    // } finally {
     
-      this.setState({ loading: false });
-    }
+    //   this.setState({ loading: false });
+    // }
   };
 
 

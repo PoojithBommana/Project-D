@@ -14,24 +14,11 @@ interface ProfileCardProps {
   onActionPress?: (action: 'like' | 'pass' | 'superlike') => void;
 }
 
-/**
- * ProfileCard Component
- * 
- * Displays a single user profile card with image, name, age, and action buttons.
- * Designed to be used within a swipeable deck.
- * 
- * Features:
- * - Profile image display
- * - User name and age
- * - Action buttons (like, super like, pass)
- * - Future-ready for additional profile information
- */
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onActionPress }) => {
   const primaryImage = profile.images && profile.images.length > 0 ? profile.images[0] : null;
 
   return (
     <View style={[styles.card, { width: CARD_WIDTH, height: CARD_HEIGHT }]}>
-      {/* Profile Image */}
       {primaryImage ? (
         <View style={styles.profileImage} pointerEvents="none">
           <Image 
@@ -46,7 +33,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onActionPress }) => 
         </View>
       )}
 
-      {/* Gradient Overlay for better text readability */}
       <View style={styles.gradientOverlay} pointerEvents="none" />
 
       {/* Profile Info Overlay */}

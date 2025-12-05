@@ -1,6 +1,6 @@
 import React from 'react';
 import LottieView from 'lottie-react-native';
-import SplashScreenController from '../../controllers/SplashScreenController';
+import SplashScreenController from '../../controllers/Auth/SplashScreenController';
 import { View } from 'react-native';
 
 export default function SplashScreen() {
