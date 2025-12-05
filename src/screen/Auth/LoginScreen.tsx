@@ -1,4 +1,4 @@
-import { Text, View, SafeAreaView, Alert, TouchableOpacity, StatusBar, Animated, Image } from 'react-native';
+import { Text, View, SafeAreaView, Alert, TouchableOpacity, StatusBar, Animated, Image, Platform } from 'react-native';
 import React, { Component } from 'react';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { rf } from '../../utils/responsive';
 import { Staricon } from '../../assets/index';
 import { authService } from '../../services/AuthService';
+
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
@@ -55,16 +56,23 @@ export default class LoginScreen extends Component<Props, State> {
   }
 
   handleGetStarted = async () => {
-    Animated.sequence([
-      Animated.spring(this.state.buttonScale, {
-        toValue: 0.95,
-        useNativeDriver: true,
-      }),
-      Animated.spring(this.state.buttonScale, {
-        toValue: 1,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Wait for animation to complete before calling sign-in
+    await new Promise<void>((resolve) => {
+      Animated.sequence([
+        Animated.spring(this.state.buttonScale, {
+          toValue: 0.95,
+          useNativeDriver: true,
+        }),
+        Animated.spring(this.state.buttonScale, {
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Wait additional time for Android Activity to be ready
+        setTimeout(() => resolve(), Platform.OS === 'android' ? 200 : 100);
+      });
+    });
+    
     try {
       const result: any = await authService.signInWithGoogle();
 

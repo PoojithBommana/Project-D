@@ -1,4 +1,5 @@
 import { GoogleAuthProvider, FacebookAuthProvider, getAuth, signInWithCredential, FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { Platform, AppState } from 'react-native';
 import { authController, SocialLoginResponse } from '../controllers/AuthController';
 
 let GoogleSignin: any;
@@ -15,8 +16,13 @@ try {
   LoginManager = FBSDK.LoginManager;
   AccessToken = FBSDK.AccessToken;
 } catch (error) {
+  
   console.warn('Facebook SDK module not available:', error);
+
 }
+
+
+
 
 export interface SocialSignInResponse {
   success: boolean;
@@ -73,7 +79,59 @@ class AuthService {
 
       this.configureGoogleSignIn();
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const signInResult = await GoogleSignin.signIn();
+      
+      // Ensure app is active and Activity is ready (Android)
+      if (Platform.OS === 'android') {
+        // Wait for app to be in foreground
+        if (AppState.currentState !== 'active') {
+          await new Promise<void>((resolve) => {
+            const subscription = AppState.addEventListener('change', (nextAppState) => {
+              if (nextAppState === 'active') {
+                subscription.remove();
+                resolve();
+              }
+            });
+            // Timeout after 2 seconds
+            setTimeout(() => {
+              subscription.remove();
+              resolve();
+            }, 2000);
+          });
+        }
+        
+        // Wait for Activity to be ready using requestAnimationFrame
+        await new Promise<void>(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setTimeout(() => resolve(), 500);
+            });
+          });
+        });
+      }
+      
+      // Retry mechanism for Android Activity null error
+      let signInResult;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          signInResult = await GoogleSignin.signIn();
+          break; // Success, exit loop
+        } catch (error: any) {
+          if (error?.message?.includes('activity is null') && Platform.OS === 'android' && retries < maxRetries - 1) {
+            retries++;
+            // Wait longer before retry
+            await new Promise<void>(resolve => {
+              requestAnimationFrame(() => {
+                setTimeout(() => resolve(), 200 * retries);
+              });
+            });
+            continue;
+          }
+          throw error; // Re-throw if not activity null error or max retries reached
+        }
+      }
 
       let idToken = signInResult.data?.idToken;
       

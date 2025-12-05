@@ -9,7 +9,7 @@ export default function SplashScreenController() {
   const checkUserStatus = async () => {
     try {
       const authToken = await AsyncStorage.getItem('authToken');
-      if (authToken !==null) {
+      if (!authToken) {
         navigation.navigate('TabNavigation');
       } else {
         navigation.navigate('AuthNavigation');
