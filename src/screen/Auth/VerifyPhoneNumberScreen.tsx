@@ -11,12 +11,12 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
-import { authService } from '../../services/AuthService';
+// import { authService } from '../../services/AuthService';
 import { validateOTP } from '../../utils/Validation';
 import { showErrorAlert, showSuccessAlert, handleAPIError } from '../../utils/ErrorHandler';
 import { DEFAULT_COUNTRY_CODE } from '../../constants/CountryCodes';
 import { t } from '../../config/i18n';
-import { storeToken, storeRefreshToken } from '../../utils/tokenStorage';
+// import { storeToken, storeRefreshToken } from '../../utils/tokenStorage';
 import styles from '../../styles/VerifyPhoneNumberScreenStyles';
 
 interface Props {
@@ -113,49 +113,49 @@ export default class VerifyPhoneNumberScreen extends Component<Props, State> {
 
     this.setState({ verifying: true, otpError: undefined });
 
-    try {
+    // try {
  
-      const response = await authService.verifyOTP({
-        otp,
-        countryCode,
-        phoneNumber,
-      });
+    //   const response = await authService.verifyOTP({
+    //     otp,
+    //     countryCode,
+    //     phoneNumber,
+    //   });
 
-      if (response.success) {
-        // Store tokens if provided
-        if (response.token) {
-          await storeToken(response.token);
-        }
-        if (response.refreshToken) {
-          await storeRefreshToken(response.refreshToken);
-        }
+    //   if (response.success) {
+    //     // Store tokens if provided
+    //     if (response.token) {
+    //       await storeToken(response.token);
+    //     }
+    //     if (response.refreshToken) {
+    //       await storeRefreshToken(response.refreshToken);
+    //     }
         
-        showSuccessAlert(t('PhoneNumberVerified'), t('Success'));
+    //     showSuccessAlert(t('PhoneNumberVerified'), t('Success'));
         
       
-        setTimeout(() => {
-          this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
-        }, 500);
-      } else {
+    //     setTimeout(() => {
+    //       this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
+    //     }, 500);
+    //   } else {
      
-        const errorMessage = handleAPIError(response.error || t('InvalidOTPCode'));
-        this.setState({ otpError: errorMessage });
+    //     const errorMessage = handleAPIError(response.error || t('InvalidOTPCode'));
+    //     this.setState({ otpError: errorMessage });
         
       
-        this.setState({ otpCode: ['', '', '', '', '', ''] });
-        setTimeout(() => {
-          this.state.otpRefs[0].current?.focus();
-        }, 100);
-      }
-    } catch (error) {
+    //     this.setState({ otpCode: ['', '', '', '', '', ''] });
+    //     setTimeout(() => {
+    //       this.state.otpRefs[0].current?.focus();
+    //     }, 100);
+    //   }
+    // } catch (error) {
     
-      const errorMessage = handleAPIError(error);
-      showErrorAlert(errorMessage, t('VerificationError'));
-      this.setState({ otpError: errorMessage });
-    } finally {
+    //   const errorMessage = handleAPIError(error);
+    //   showErrorAlert(errorMessage, t('VerificationError'));
+    //   this.setState({ otpError: errorMessage });
+    // } finally {
     
-      this.setState({ verifying: false });
-    }
+    //   this.setState({ verifying: false });
+    // }
   };
 
   handleResendOTP = async () => {
@@ -167,35 +167,35 @@ export default class VerifyPhoneNumberScreen extends Component<Props, State> {
    
     this.setState({ loading: true, otpError: undefined });
 
-    try {
+    // try {
      
-      const response = await authService.resendOTP({
-        countryCode,
-        phoneNumber,
-      });
+    //   const response = await authService.resendOTP({
+    //     countryCode,
+    //     phoneNumber,
+    //   });
 
-      if (response.success) {
-        showSuccessAlert(t('OTPResent'), t('OTPResentTitle'));
+    //   if (response.success) {
+    //     showSuccessAlert(t('OTPResent'), t('OTPResentTitle'));
         
       
-        this.setState({ otpCode: ['', '', '', '', '', ''] });
+    //     this.setState({ otpCode: ['', '', '', '', '', ''] });
         
-        setTimeout(() => {
-          this.state.otpRefs[0].current?.focus();
-        }, 100);
-      } else {
+    //     setTimeout(() => {
+    //       this.state.otpRefs[0].current?.focus();
+    //     }, 100);
+    //   } else {
        
-        const errorMessage = handleAPIError(response.error || t('FailedToResendOTP'));
-        showErrorAlert(errorMessage, t('UnableToResendOTP'));
-      }
-    } catch (error) {
+    //     const errorMessage = handleAPIError(response.error || t('FailedToResendOTP'));
+    //     showErrorAlert(errorMessage, t('UnableToResendOTP'));
+    //   }
+    // } catch (error) {
      
-      const errorMessage = handleAPIError(error);
-      showErrorAlert(errorMessage, t('Error'));
-    } finally {
+    //   const errorMessage = handleAPIError(error);
+    //   showErrorAlert(errorMessage, t('Error'));
+    // } finally {
    
-      this.setState({ loading: false });
-    }
+    //   this.setState({ loading: false });
+    // }
   };
 
   render() {

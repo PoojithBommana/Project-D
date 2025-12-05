@@ -5,11 +5,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import styles from '../../styles/LoginScreenStyles';
-import { authService } from '../../services/AuthService';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { rf } from '../../utils/responsive';
 import { Staricon } from '../../assets/index';
+import { authService } from '../../services/AuthService';
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
@@ -65,7 +65,6 @@ export default class LoginScreen extends Component<Props, State> {
         useNativeDriver: true,
       }),
     ]).start();
-
     try {
       const result: any = await authService.signInWithGoogle();
 

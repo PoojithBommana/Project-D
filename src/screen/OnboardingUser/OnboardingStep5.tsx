@@ -9,8 +9,14 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
+<<<<<<< HEAD
 import { rf, wp, rs } from '../../utils/responsive';
 import styles from '../../styles/OnboardingStep5Styles';
+=======
+import { rf ,hp} from '../../utils/responsive';
+// import { setOnboardingComplete } from '../../utils/tokenStorage';
+import styles from '../../styles/OnboardingStyles';
+>>>>>>> 5af2cc5d241ab9ac23c96084a83c200186be3c34
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'OnboardingStep5'>;
@@ -87,6 +93,35 @@ export default function OnboardingStep5({ navigation, route }: Props) {
     );
   };
 
+<<<<<<< HEAD
+=======
+  const handleContinue = async () => {
+    if (bio.trim().length >= 10) {
+      animateButtonPress();
+      const onboardingData = {
+        firstName: route?.params?.firstName || '',
+        age: route?.params?.age || 0,
+        location: route?.params?.location || '',
+        photo: route?.params?.photo,
+        bio: bio.trim(),
+        showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      };
+
+      console.log('Onboarding complete:', onboardingData);
+      
+      try {
+        // await setOnboardingComplete();
+        navigation?.getParent()?.navigate('TabNavigation');
+      } catch (error) {
+        console.error('Error marking onboarding as complete:', error);
+        navigation?.getParent()?.navigate('TabNavigation');
+      }
+    }
+  };
+
+  const progress = 75;
+
+>>>>>>> 5af2cc5d241ab9ac23c96084a83c200186be3c34
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={false} />

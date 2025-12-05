@@ -1,6 +1,5 @@
 import { GoogleAuthProvider, FacebookAuthProvider, getAuth, signInWithCredential, FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { authController, SocialLoginResponse } from '../controllers/AuthController';
-import { storeToken, storeRefreshToken } from '../utils/tokenStorage';
 
 let GoogleSignin: any;
 try {
@@ -18,13 +17,6 @@ try {
 } catch (error) {
   console.warn('Facebook SDK module not available:', error);
 }
-
-export type {
-  SendOTPRequest,
-  SendOTPResponse,
-  VerifyOTPRequest,
-  VerifyOTPResponse,
-} from '../controllers/AuthController';
 
 export interface SocialSignInResponse {
   success: boolean;
@@ -114,12 +106,12 @@ class AuthService {
         if (!backendResponse) {
           console.warn('Backend social login failed (non-blocking): Backend server unavailable');
         } else {
-          if (backendResponse.access) {
-            await storeToken(backendResponse.access);
-          }
-          if (backendResponse.refresh) {
-            await storeRefreshToken(backendResponse.refresh);
-          }
+          // if (backendResponse.access) {
+          //   await storeToken(backendResponse.access);
+          // }
+          // if (backendResponse.refresh) {
+          //   await storeRefreshToken(backendResponse.refresh);
+          // }
         }
       } catch (error) {
         console.warn('Backend API call failed (non-blocking):', error);
@@ -223,12 +215,12 @@ class AuthService {
         if (!backendResponse) {
           console.warn('Backend social login failed (non-blocking): Backend server unavailable');
         } else {
-          if (backendResponse.access) {
-            await storeToken(backendResponse.access);
-          }
-          if (backendResponse.refresh) {
-            await storeRefreshToken(backendResponse.refresh);
-          }
+          // if (backendResponse.access) {
+          //   await storeToken(backendResponse.access);
+          // }
+          // if (backendResponse.refresh) {
+          //   await storeRefreshToken(backendResponse.refresh);
+          // }
         }
       } catch (error) {
         console.warn('Backend API call failed (non-blocking):', error);
