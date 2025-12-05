@@ -30,6 +30,7 @@ export type OnboardingStackParamList = {
   PromptsScreen: { firstName: string; lastName: string; username: string; gender: string; age: number; location: string; photos?: string[]; showOnlyFirstLetter: boolean };
   DatingPreferencesScreen: { firstName: string; lastName: string; username: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean };
   OnboardingStep5: { firstName: string; lastName: string; username: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean };
+  ChatScreen:undefined
 };
 
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();

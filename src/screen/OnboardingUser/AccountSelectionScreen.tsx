@@ -32,11 +32,12 @@ export default function AccountSelectionScreen({ navigation }: Props) {
   };
 
   const handleContinue = () => {
-    if (selectedAccount === 'new') {
-      setShowModal(true);
-    } else {
-      navigation?.navigate('ProfileSetupIntroScreen');
-    }
+    navigation?.navigate('ChatScreen');
+    // if (selectedAccount === 'new') {
+    //   setShowModal(true);
+    // } else {
+    //   navigation?.navigate('ChatScreen');
+    // }
   };
 
   const handleModalContinue = () => {

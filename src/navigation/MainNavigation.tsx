@@ -5,6 +5,8 @@ import AuthNavigation from './AuthNavigation';
 import ProfileScreen from '../screen/Dashboard/ProfileScreen';
 import TabNavigation from './TabNavigation';
 import OnboardingNavigation from './OnboardingNavigation';
+import Messages from '../screen/Dashboard/chat/Message';
+import ChatScreen from '../screen/Dashboard/chat/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +23,8 @@ export default function MainNavigation() {
       <Stack.Screen name="AuthNavigation" component={AuthNavigation} />
       <Stack.Screen name="OnboardingNavigation" component={OnboardingNavigation} />
       <Stack.Screen name='TabNavigation' component={TabNavigation} />
+      <Stack.Screen name='Messages' component={Messages} />
+      <Stack.Screen name='ChatScreen' component={ChatScreen} />
     </Stack.Navigator>
   );
 }

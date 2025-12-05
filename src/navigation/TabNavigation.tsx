@@ -5,7 +5,7 @@ import HomeScreen from '../screen/Dashboard/PeopleScreen';
 import PeopleScreen from '../screen/Dashboard/PeopleScreen';
 import LikesScreen from '../screen/Dashboard/LikesScreen';
 import AIScreen from '../screen/Dashboard/AIScreen';
-import ChatScreen from '../screen/Dashboard/ChatScreen';
+import ChatScreen from '../screen/Dashboard/chat/ChatScreen';
 import ProfileScreen from '../screen/Dashboard/ProfileScreen';
 
 
