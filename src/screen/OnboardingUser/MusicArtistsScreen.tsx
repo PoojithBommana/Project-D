@@ -139,19 +139,17 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
   };
 
   const handleContinue = () => {
-    if (selectedArtists.length > 0) {
-      animateButtonPress();
-      setTimeout(() => {
-        navigation?.navigate('OnboardingStep3', {
-          firstName: route?.params?.firstName || '',
-          lastName: route?.params?.lastName || '',
-          username: route?.params?.username || '',
-          gender: route?.params?.gender || '',
-          age: route?.params?.age || 0,
-          showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
-        });
-      }, 150);
-    }
+    animateButtonPress();
+    setTimeout(() => {
+      navigation?.navigate('OnboardingStep3', {
+        firstName: route?.params?.firstName || '',
+        lastName: route?.params?.lastName || '',
+        username: route?.params?.username || '',
+        gender: route?.params?.gender || '',
+        age: route?.params?.age || 0,
+        showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      });
+    }, 150);
   };
 
   const progress = 70; // Progress percentage
@@ -349,24 +347,11 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
                 }}
               >
                 <TouchableOpacity
-                  style={[
-                    styles.continueButton,
-                    selectedArtists.length > 0
-                      ? styles.continueButtonActive
-                      : styles.continueButtonDisabled,
-                  ]}
+                  style={styles.continueButtonActive}
                   onPress={handleContinue}
-                  disabled={selectedArtists.length === 0}
                   activeOpacity={0.8}
                 >
-                  <Text
-                    style={[
-                      styles.continueButtonText,
-                      selectedArtists.length > 0
-                        ? styles.continueButtonTextActive
-                        : styles.continueButtonTextDisabled,
-                    ]}
-                  >
+                  <Text style={styles.continueButtonTextActive}>
                     Continue
                   </Text>
                 </TouchableOpacity>

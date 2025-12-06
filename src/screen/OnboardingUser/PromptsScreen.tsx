@@ -25,7 +25,7 @@ import {
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/PromptsScreenStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Plusicon } from '../../assets';
+import { Plusicon, Checkicon } from '../../assets';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'PromptsScreen'>;
@@ -33,7 +33,7 @@ interface Props {
     params: {
       firstName: string;
       lastName: string;
-      username: string;
+      username?: string;
       gender: string;
       age: number;
       location: string;
@@ -45,6 +45,10 @@ interface Props {
 
 export default function PromptsScreen({ navigation, route }: Props) {
   const [bio, setBio] = useState('');
+  const [username, setUsername] = useState(route?.params?.username || '');
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [isUsernameValid, setIsUsernameValid] = useState(!!route?.params?.username);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -52,6 +56,27 @@ export default function PromptsScreen({ navigation, route }: Props) {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const bioInputRef = useRef<TextInput>(null);
+  const usernameInputRef = useRef<TextInput>(null);
+
+  // Simulate username availability check
+  const checkUsernameAvailability = async (text: string) => {
+    if (text.trim().length === 0) {
+      setIsUsernameAvailable(null);
+      setIsUsernameValid(false);
+      return;
+    }
+
+    setIsChecking(true);
+    // Simulate API call delay
+    setTimeout(() => {
+      // For now, simulate: username is available if length > 3
+      // In real implementation, this would be an API call to check DB
+      const isAvailable = text.trim().length > 3;
+      setIsUsernameAvailable(isAvailable);
+      setIsUsernameValid(isAvailable);
+      setIsChecking(false);
+    }, 500);
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -87,6 +112,11 @@ export default function PromptsScreen({ navigation, route }: Props) {
       }
     );
 
+    // Check username availability if username is provided from route
+    if (route?.params?.username && route.params.username.length > 0) {
+      checkUsernameAvailability(route.params.username);
+    }
+
     return () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
@@ -108,6 +138,11 @@ export default function PromptsScreen({ navigation, route }: Props) {
         friction: 10,
       }),
     ]).start();
+  };
+
+  const handleUsernameChange = (text: string) => {
+    setUsername(text);
+    checkUsernameAvailability(text);
   };
 
   const handleSelectProfilePhoto = () => {
@@ -137,12 +172,15 @@ export default function PromptsScreen({ navigation, route }: Props) {
   };
 
   const handleContinue = () => {
+    if (!isUsernameValid) {
+      return;
+    }
     animateButtonPress();
     setTimeout(() => {
       navigation?.navigate('DatingPreferencesScreen', {
         firstName: route?.params?.firstName || '',
         lastName: route?.params?.lastName || '',
-        username: route?.params?.username || '',
+        username: username.trim() || route?.params?.username || '',
         gender: route?.params?.gender || '',
         age: route?.params?.age || 0,
         location: route?.params?.location || '',
@@ -192,6 +230,44 @@ export default function PromptsScreen({ navigation, route }: Props) {
               <Text style={styles.subheading}>
               We keep your photos safe and private
               </Text>
+            </View>
+
+            {/* Username Section */}
+            <View style={styles.usernameSection}>
+              <Text style={styles.sectionLabel}>Username</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  ref={usernameInputRef}
+                  style={[
+                    styles.usernameInput,
+                    isUsernameAvailable === false && styles.usernameInputError,
+                  ]}
+                  placeholder="Choose your username"
+                  placeholderTextColor="#999999"
+                  value={username}
+                  onChangeText={handleUsernameChange}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={() => bioInputRef.current?.focus()}
+                  accessibilityLabel="Username input"
+                  accessibilityHint="Enter your username"
+                />
+                {isUsernameAvailable === true && !isChecking && (
+                  <View style={styles.checkmarkContainer}>
+                    <Image
+                      source={Checkicon}
+                      style={styles.checkmarkIcon}
+                      resizeMode="contain"
+                    />
+                  </View>
+                )}
+              </View>
+              {isUsernameAvailable === false && !isChecking && (
+                <Text style={styles.errorText}>
+                  Username is not available
+                </Text>
+              )}
             </View>
 
             {/* Profile Photo Container */}
@@ -249,11 +325,22 @@ export default function PromptsScreen({ navigation, route }: Props) {
             }}
           >
             <TouchableOpacity
-              style={styles.continueButton}
+              style={[
+                styles.continueButton,
+                !isUsernameValid && styles.continueButtonDisabled,
+              ]}
               onPress={handleContinue}
+              disabled={!isUsernameValid}
               activeOpacity={0.8}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text
+                style={[
+                  styles.continueButtonText,
+                  !isUsernameValid && styles.continueButtonTextDisabled,
+                ]}
+              >
+                Continue
+              </Text>
             </TouchableOpacity>
           </Animated.View>
         </View>

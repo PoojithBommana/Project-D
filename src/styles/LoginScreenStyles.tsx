@@ -44,16 +44,29 @@ const styles = StyleSheet.create({
   appTitleContainer: {
     transform: [{ rotate: '2deg' }],
   },
+  bottomOverlayContainer: {
+    width: '100%',
+    marginTop: 'auto',
+    alignItems: 'center',
+    paddingHorizontal: wp(20),
+    paddingTop: hp(20),
+    paddingBottom: hp(20),
+  },
   bottomOverlay: {
     width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    borderTopLeftRadius: rs(40),
-    borderTopRightRadius: rs(40),
+    borderRadius: rs(30),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    overflow: 'hidden',
+  },
+  glassFallback: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  gradientOverlay: {
     paddingTop: hp(30),
     paddingBottom: hp(40),
     paddingHorizontal: wp(24),
-    marginTop: 'auto',
-    overflow: 'hidden',
+    width: '100%',
   },
   metricsContainer: {
     flexDirection: 'row',
@@ -63,7 +76,7 @@ const styles = StyleSheet.create({
   },
   metricBox: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: rs(16),
     paddingVertical: hp(16),
     paddingHorizontal: wp(16),
@@ -105,8 +118,8 @@ const styles = StyleSheet.create({
   getStartedButton: {
     width: '100%',
     height: hp(56),
-    backgroundColor: '#fcd6e3',
-    borderRadius: rs(28),
+    backgroundColor: '#FDFF8D',
+    borderRadius: rs(19),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: hp(20),
@@ -118,8 +131,8 @@ const styles = StyleSheet.create({
   },
   getStartedButtonText: {
     fontSize: rf(18),
-    fontFamily: 'Inter',
-    fontWeight: '700',
+    fontFamily: 'GTMaruBold',
+    
     color: '#000000',
     letterSpacing: rs(0.5),
   },
@@ -140,6 +153,31 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     fontFamily: 'Inter',
     fontWeight: '600',
+  },
+  loaderOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  dotSpinnerContainer: {
+    width: rf(50),
+    height: rf(50),
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  dot: {
+    position: 'absolute',
+    width: rf(6),
+    height: rf(14),
+    borderRadius: rf(3),
+    backgroundColor: '#FFFFFF',
   },
 });
 

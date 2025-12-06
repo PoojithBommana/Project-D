@@ -53,6 +53,48 @@ const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: rf(20),
   },
+  usernameSection: {
+    marginBottom: hp(32),
+  },
+  inputWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
+  usernameInput: {
+    width: '100%',
+    height: hp(56),
+    backgroundColor: '#FFFFFF',
+    borderRadius: rs(12),
+    borderWidth: rs(2),
+    borderColor: '#FEFFAF',
+    paddingHorizontal: wp(16),
+    paddingRight: wp(50),
+    fontSize: rf(16),
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
+  },
+  usernameInputError: {
+    borderColor: '#FF0000',
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    right: wp(16),
+    top: '50%',
+    transform: [{ translateY: -rf(12) }],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkmarkIcon: {
+    width: rf(24),
+    height: rf(24),
+  },
+  errorText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruBold',
+    color: '#FF0000',
+    marginTop: hp(8),
+    marginLeft: wp(4),
+  },
   photoSection: {
     marginBottom: hp(32),
   },
@@ -132,6 +174,12 @@ const styles = StyleSheet.create({
     fontSize: rf(18),
     fontFamily: 'GTMaruBold',
     color: '#000000',
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#E0E0E0',
+  },
+  continueButtonTextDisabled: {
+    color: '#999999',
   },
 });
 

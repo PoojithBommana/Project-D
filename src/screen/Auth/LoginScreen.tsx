@@ -1,15 +1,15 @@
-import { Text, View, SafeAreaView, Alert, TouchableOpacity, StatusBar, Animated, Image, Platform } from 'react-native';
+import { Text, View, SafeAreaView, Alert, TouchableOpacity, StatusBar, Animated, Image, Platform, ActivityIndicator } from 'react-native';
 import React, { Component } from 'react';
 import Video from 'react-native-video';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import styles from '../../styles/LoginScreenStyles';
-import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { rf } from '../../utils/responsive';
 import { Staricon } from '../../assets/index';
-import { authService } from '../../services/AuthService';
+import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
+import LinearGradient from 'react-native-linear-gradient';
 
 
 interface Props {
@@ -21,6 +21,9 @@ interface State {
   overlayOpacity: Animated.Value;
   metricsOpacity: Animated.Value;
 }
+
+// Video URL - replace with your video link
+const BACKGROUND_VIDEO_URL = 'https://res.cloudinary.com/dqataciy5/video/upload/v1764917492/Untitled_design_eawzux.mp4';
 
 export default class LoginScreen extends Component<Props, State> {
   private videoRef: any = null;
@@ -56,7 +59,7 @@ export default class LoginScreen extends Component<Props, State> {
   }
 
   handleGetStarted = async () => {
-    // Wait for animation to complete before calling sign-in
+    // Wait for animation to complete before navigating
     await new Promise<void>((resolve) => {
       Animated.sequence([
         Animated.spring(this.state.buttonScale, {
@@ -68,25 +71,12 @@ export default class LoginScreen extends Component<Props, State> {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // Wait additional time for Android Activity to be ready
-        setTimeout(() => resolve(), Platform.OS === 'android' ? 200 : 100);
+        setTimeout(() => resolve(), 100);
       });
     });
     
-    try {
-      const result: any = await authService.signInWithGoogle();
-
-      if (result.success && result.user) {
-        await AsyncStorage.setItem('authToken', `${result.backendResponse?.token}`);
-        this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
-      } else {
-        if (result.error && result.error !== 'Sign in was cancelled') {
-          Alert.alert('Error', result.error || 'Failed to sign in with Google');
-        }
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to sign in');
-    }
+    // Navigate to AuthOptionsScreen instead of directly signing in
+    this.props.navigation?.navigate('AuthOptionsScreen');
   };
 
   handleTermsPress = () => {
@@ -104,18 +94,15 @@ export default class LoginScreen extends Component<Props, State> {
           ref={(ref) => {
             this.videoRef = ref;
           }}
-          source={require('./../../assets/videos/backgroundvideo.mp4')}
+          source={{ uri: BACKGROUND_VIDEO_URL }}
           style={styles.backgroundVideo}
           resizeMode="cover"
-          repeat={false}
+          repeat={true}
           muted={true}
           paused={false}
           playInBackground={false}
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
-          onEnd={() => {
-            this.videoRef?.seek(0);
-          }}
         />
         <SafeAreaView style={styles.overlayContainer}>
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
@@ -129,65 +116,95 @@ export default class LoginScreen extends Component<Props, State> {
 
             <Animated.View
               style={[
-                styles.bottomOverlay,
+                styles.bottomOverlayContainer,
                 {
                   opacity: this.state.overlayOpacity,
                 },
               ]}
             >
-              <Animated.View
-                style={[
-                  styles.metricsContainer,
-                  {
-                    opacity: this.state.metricsOpacity,
-                  },
-                ]}
-              >
-                <View style={styles.metricBox}>
-                  <Image source={Staricon} style={styles.metricIcon} resizeMode="contain" />
-                  <Text style={styles.metricValue}>4.4</Text>
-                  <Text style={styles.metricLabel}>Rating</Text>
-                </View>
-
-                <View style={styles.metricBox}>
-                  <Icon name="heart" size={rf(24)} color="#FF6B9D" style={styles.metricIcon} />
-                  <Text style={styles.metricValue}>2.4M</Text>
-                  <Text style={styles.metricLabel}>Successful{'\n'}Dates</Text>
-                </View>
-              </Animated.View>
-
-              <View style={styles.headingContainer}>
-                <Text style={styles.heading}>Find your vibe</Text>
-              </View>
-
-              <Animated.View
-                style={{
-                  transform: [{ scale: this.state.buttonScale }],
-                }}
-              >
-                <TouchableOpacity
-                  style={styles.getStartedButton}
-                  onPress={this.handleGetStarted}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Get Started"
+              {isLiquidGlassSupported ? (
+                <LiquidGlassView
+                  style={styles.bottomOverlay}
+                  effect="regular"
+                  tintColor="rgba(255, 255, 255, 0.1)"
+                  colorScheme="light"
+                  interactive={true}
                 >
-                  <Text style={styles.getStartedButtonText}>Get Started</Text>
-                </TouchableOpacity>
-              </Animated.View>
+                  <LinearGradient
+                    colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.gradientOverlay}
+                  >
+                    <Animated.View
+                      style={{
+                        transform: [{ scale: this.state.buttonScale }],
+                      }}
+                    >
+                      <TouchableOpacity
+                        style={styles.getStartedButton}
+                        onPress={this.handleGetStarted}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Get Started"
+                      >
+                        <Text style={styles.getStartedButtonText}>Get Started</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
 
-              <View style={styles.termsContainer}>
-                <Text style={styles.termsText}>
-                  By clicking you accept our{' '}
-                  <Text style={styles.termsLink} onPress={this.handleTermsPress}>
-                    Terms
-                  </Text>{' '}
-                  &{' '}
-                  <Text style={styles.termsLink} onPress={this.handlePrivacyPress}>
-                    Privacy policy
-                  </Text>
-                </Text>
-              </View>
+                    <View style={styles.termsContainer}>
+                      <Text style={styles.termsText}>
+                        By clicking you accept our{' '}
+                        <Text style={styles.termsLink} onPress={this.handleTermsPress}>
+                          Terms
+                        </Text>{' '}
+                        &{' '}
+                        <Text style={styles.termsLink} onPress={this.handlePrivacyPress}>
+                          Privacy policy
+                        </Text>
+                      </Text>
+                    </View>
+                  </LinearGradient>
+                </LiquidGlassView>
+              ) : (
+                <View style={[styles.bottomOverlay, styles.glassFallback]}>
+                  <LinearGradient
+                    colors={['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.08)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.gradientOverlay}
+                  >
+                    <Animated.View
+                      style={{
+                        transform: [{ scale: this.state.buttonScale }],
+                      }}
+                    >
+                      <TouchableOpacity
+                        style={styles.getStartedButton}
+                        onPress={this.handleGetStarted}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Get Started"
+                      >
+                        <Text style={styles.getStartedButtonText}>Get Started</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+
+                    <View style={styles.termsContainer}>
+                      <Text style={styles.termsText}>
+                        By clicking you accept our{' '}
+                        <Text style={styles.termsLink} onPress={this.handleTermsPress}>
+                          Terms
+                        </Text>{' '}
+                        &{' '}
+                        <Text style={styles.termsLink} onPress={this.handlePrivacyPress}>
+                          Privacy policy
+                        </Text>
+                      </Text>
+                    </View>
+                  </LinearGradient>
+                </View>
+              )}
             </Animated.View>
           </View>
         </SafeAreaView>

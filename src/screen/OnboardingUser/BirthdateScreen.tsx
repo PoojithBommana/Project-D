@@ -30,7 +30,7 @@ interface Props {
     params: {
       firstName: string;
       lastName: string;
-      username: string;
+      username?: string;
       gender: string;
       showOnlyFirstLetter: boolean;
     };
@@ -282,7 +282,7 @@ export default function OnboardingStep2({ navigation, route }: Props) {
         navigation?.navigate('NotificationPermissionScreen', {
           firstName: route?.params?.firstName || '',
           lastName: route?.params?.lastName || '',
-          username: route?.params?.username || '',
+          username: route?.params?.username,
           gender: route?.params?.gender || '',
           age: age,
           showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,

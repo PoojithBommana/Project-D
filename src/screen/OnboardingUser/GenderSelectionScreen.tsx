@@ -23,7 +23,7 @@ interface Props {
     params: {
       firstName: string;
       lastName: string;
-      username: string;
+      username?: string;
       showOnlyFirstLetter: boolean;
     };
   };
@@ -68,6 +68,30 @@ export default function GenderSelectionScreen({ navigation, route }: Props) {
     ]).start();
   }, []);
 
+  // Animate popup when it becomes visible
+  useEffect(() => {
+    if (showConfirmationPopup) {
+      // Reset animation values - start with visible opacity and smaller scale
+      popupScale.setValue(0.8);
+      popupOpacity.setValue(1); // Make it visible immediately
+      // Start animation after a small delay to ensure modal is rendered
+      const timer = setTimeout(() => {
+        Animated.spring(popupScale, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }).start();
+      }, 50);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Reset when modal closes
+      popupScale.setValue(0.8);
+      popupOpacity.setValue(0);
+    }
+  }, [showConfirmationPopup]);
+
   const animateOptionPress = (value: string) => {
     Animated.sequence([
       Animated.spring(optionScales[value], {
@@ -111,20 +135,6 @@ export default function GenderSelectionScreen({ navigation, route }: Props) {
     if (selectedGender) {
       animateButtonPress();
       setShowConfirmationPopup(true);
-      // Animate popup appearance
-      Animated.parallel([
-        Animated.spring(popupScale, {
-          toValue: 1,
-          tension: 50,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-        Animated.timing(popupOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
     }
   };
 
@@ -143,10 +153,13 @@ export default function GenderSelectionScreen({ navigation, route }: Props) {
       }),
     ]).start(() => {
       setShowConfirmationPopup(false);
+      // Reset animation values after closing
+      popupScale.setValue(0.8);
+      popupOpacity.setValue(0);
       navigation?.navigate('OnboardingStep2', {
         firstName: route?.params?.firstName || '',
         lastName: route?.params?.lastName || '',
-        username: route?.params?.username || '',
+        username: route?.params?.username,
         gender: selectedGender,
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
       });
@@ -168,6 +181,9 @@ export default function GenderSelectionScreen({ navigation, route }: Props) {
       }),
     ]).start(() => {
       setShowConfirmationPopup(false);
+      // Reset animation values after closing
+      popupScale.setValue(0.8);
+      popupOpacity.setValue(0);
     });
   };
 
@@ -260,7 +276,7 @@ export default function GenderSelectionScreen({ navigation, route }: Props) {
                 ]}
                 onPress={handleContinue}
                 disabled={!selectedGender}
-                activeOpacity={1}
+                activeOpacity={0.8}
                 accessibilityRole="button"
                 accessibilityLabel="Continue"
                 accessibilityState={{ disabled: !selectedGender }}

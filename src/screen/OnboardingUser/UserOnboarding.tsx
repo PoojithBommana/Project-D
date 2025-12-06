@@ -107,7 +107,7 @@ export default function UserOnboarding({ navigation }: Props) {
     if (firstName.trim().length > 0 && lastName.trim().length > 0) {
       animateButtonPress();
       setTimeout(() => {
-        navigation?.navigate('UsernameInputScreen', {
+        navigation?.navigate('GenderSelectionScreen', {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           showOnlyFirstLetter,

@@ -28,98 +28,65 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: wp(24),
-    paddingTop: hp(20),
-    paddingBottom: hp(20),
-    justifyContent: 'space-between',
+    paddingTop: hp(40),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerContainer: {
-    marginBottom: hp(24),
+  mapContainer: {
+    width: '100%',
+    height: hp(350),
+    marginBottom: hp(0),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapImage: {
+    width: '100%',
+    height: '100%',
+  },
+  textContainer: {
+    alignItems: 'center',
+    marginBottom: hp(100),
+    paddingHorizontal: wp(20),
   },
   heading: {
     fontSize: rf(24),
     fontFamily: 'GTMaruBold',
     color: '#000000',
-    marginBottom: hp(8),
+    textAlign: 'center',
+    marginBottom: hp(16),
     lineHeight: rf(32),
   },
   subheading: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruRegular',
-    color: '#666666',
-    lineHeight: rf(20),
-  },
-  goalsContainer: {
-    flex: 1,
-    gap: hp(12),
-    justifyContent: 'center',
-    marginBottom: hp(20),
-  },
-  goalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: rs(12),
-    padding: wp(16),
-    borderWidth: 2,
-    borderColor: '#FDFF8D',
-   
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  goalCardSelected: {
-    borderColor: '#FDFF8D',
-    backgroundColor: '#FDFF8D',
-  },
-  goalEmoji: {
-    fontSize: rf(28),
-    marginRight: wp(16),
-  },
-  goalTextContainer: {
-    flex: 1,
-  },
-  goalTitle: {
     fontSize: rf(16),
-    fontFamily: 'GTMaruBold',
-    color: '#000000',
-    marginBottom: hp(4),
-  },
-  goalDescription: {
-    fontSize: rf(12),
     fontFamily: 'GTMaruRegular',
     color: '#666666',
-    lineHeight: rf(16),
+    textAlign: 'center',
+    lineHeight: rf(24),
   },
   buttonContainer: {
+    width: '100%',
     marginTop: hp(20),
   },
-  continueButton: {
+  allowButton: {
     width: '100%',
     height: hp(56),
     borderRadius: rs(28),
+    backgroundColor: '#FDFF8D',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
     shadowColor: '#FDFF8D',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  continueButtonActive: {
-    backgroundColor: '#FDFF8D',
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#E8E8E8',
-  },
-  continueButtonText: {
+  allowButtonText: {
     fontSize: rf(18),
     fontFamily: 'GTMaruBold',
-    letterSpacing: rs(0.5),
-  },
-  continueButtonTextActive: {
     color: '#000000',
-  },
-  continueButtonTextDisabled: {
-    color: '#999999',
+    letterSpacing: rs(0.5),
   },
 });
 
 export default styles;
+

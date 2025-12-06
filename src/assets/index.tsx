@@ -17,3 +17,4 @@ export const Workinggirl = require('./Workinggirl.png');
 export const Plusicon = require('./Plusicon.png');
 export const Wrongicon = require('./Wrongicon.png');
 export const Lightbulbicon = require('./Bulbicon.png');
+export const Mapicon = require('./Mapsicon.png')
