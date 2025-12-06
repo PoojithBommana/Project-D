@@ -7,7 +7,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import styles from '../../styles/LoginScreenStyles';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { rf } from '../../utils/responsive';
-import { Staricon } from '../../assets/index';
+import { Applogoicon, Staricon, Bgvideo } from '../../assets/index';
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -21,10 +21,7 @@ interface State {
   overlayOpacity: Animated.Value;
   metricsOpacity: Animated.Value;
 }
-
-// Video URL - replace with your video link
-const BACKGROUND_VIDEO_URL = 'https://res.cloudinary.com/dqataciy5/video/upload/v1764917492/Untitled_design_eawzux.mp4';
-
+ 
 export default class LoginScreen extends Component<Props, State> {
   private videoRef: any = null;
 
@@ -94,7 +91,7 @@ export default class LoginScreen extends Component<Props, State> {
           ref={(ref) => {
             this.videoRef = ref;
           }}
-          source={{ uri: BACKGROUND_VIDEO_URL }}
+          source={Bgvideo}
           style={styles.backgroundVideo}
           resizeMode="cover"
           repeat={true}
@@ -110,7 +107,8 @@ export default class LoginScreen extends Component<Props, State> {
           <View style={styles.contentContainer}>
             <View style={styles.topSection}>
               <View style={styles.appTitleContainer}>
-                <Text style={styles.appTitle}>DILMIL</Text>
+                <Text style={styles.appTitle}>snixx</Text>
+                <Text style={styles.appTitleSub}>connections that hit different</Text>
               </View>
             </View>
 
@@ -126,12 +124,20 @@ export default class LoginScreen extends Component<Props, State> {
                 <LiquidGlassView
                   style={styles.bottomOverlay}
                   effect="regular"
-                  tintColor="rgba(255, 255, 255, 0.1)"
+                  tintColor="rgba(255, 255, 255, 0.2)"
                   colorScheme="light"
                   interactive={true}
                 >
+                  <View pointerEvents="none" style={styles.sheenOverlay}>
+                    <LinearGradient
+                      colors={['rgba(255,255,255,0.45)', 'rgba(255,255,255,0.12)', 'transparent']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={styles.sheenGradient}
+                    />
+                  </View>
                   <LinearGradient
-                    colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
+                    colors={['rgba(255, 255, 255, 0.18)', 'rgba(255, 255, 255, 0.08)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.gradientOverlay}
@@ -168,8 +174,16 @@ export default class LoginScreen extends Component<Props, State> {
                 </LiquidGlassView>
               ) : (
                 <View style={[styles.bottomOverlay, styles.glassFallback]}>
+                  <View pointerEvents="none" style={styles.sheenOverlay}>
+                    <LinearGradient
+                      colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.1)', 'transparent']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={styles.sheenGradient}
+                    />
+                  </View>
                   <LinearGradient
-                    colors={['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.08)']}
+                    colors={['rgba(255, 255, 255, 0.2)', 'rgba(255, 255, 255, 0.1)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.gradientOverlay}

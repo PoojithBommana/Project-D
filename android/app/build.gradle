@@ -118,3 +118,48 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// Replace Android launcher icons with src/assets/Snixxappicon.png on each build
+def appResDir = file("$projectDir/src/main/res")
+def sourceIcon = file("$rootDir/../src/assets/Snixxappicon.png")
+def mipmapDirs = [
+        "mipmap-mdpi",
+        "mipmap-hdpi",
+        "mipmap-xhdpi",
+        "mipmap-xxhdpi",
+        "mipmap-xxxhdpi",
+]
+
+tasks.register("replaceLauncherIcons") {
+    doLast {
+        if (!sourceIcon.exists()) {
+            println("[replaceLauncherIcons] Source icon not found at: ${sourceIcon}. Skipping replacement.")
+            return
+        }
+        mipmapDirs.each { dirName ->
+            def targetDir = new File(appResDir, dirName)
+            if (!targetDir.exists()) {
+                targetDir.mkdirs()
+            }
+            copy {
+                from sourceIcon
+                into targetDir
+                rename { String fileName -> "ic_launcher.png" }
+            }
+            copy {
+                from sourceIcon
+                into targetDir
+                rename { String fileName -> "ic_launcher_round.png" }
+            }
+        }
+        println("[replaceLauncherIcons] Replaced launcher icons in ${mipmapDirs} with ${sourceIcon}.")
+    }
+}
+
+// Ensure icons are replaced before resources are merged
+afterEvaluate {
+    def preBuildTask = tasks.findByName("preBuild")
+    if (preBuildTask != null) {
+        preBuildTask.dependsOn replaceLauncherIcons
+    }
+}

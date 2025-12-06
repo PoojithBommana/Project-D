@@ -18,7 +18,7 @@ import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation'
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/DatingPreferencesScreenStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Boyicon, Girlicon } from '../../assets';
+import { Boyicon, Girlicon, Nonbinaryicon } from '../../assets';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'DatingPreferencesScreen'>;
@@ -427,7 +427,7 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
                 activeOpacity={0.7}
               >
                 <View style={styles.nonBinaryIconContainer}>
-                  <Icon name="person" size={rs(32)} color={selectedGenders.includes('Non-Binary') ? '#000000' : '#666666'} />
+                  <Image source={Nonbinaryicon} style={styles.genderIcon} resizeMode="contain" />
                 </View>
                 <Text style={[
                   styles.genderButtonText,
