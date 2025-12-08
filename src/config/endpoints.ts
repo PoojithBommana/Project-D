@@ -3,9 +3,9 @@ export const API_ENDPOINTS: any = {
     SEND_OTP: '/auth/send-otp',
     VERIFY_OTP: '/auth/verify-otp',
     RESEND_OTP: '/auth/resend-otp',
-    SOCIAL_LOGIN: '/api/auth/social-login/',
+    SOCIAL_LOGIN: '/auth/login/',
     LOGOUT: '/auth/logout',
-    REFRESH_TOKEN: '/api/token/refresh/',
+    REFRESH_TOKEN: '/auth/token/refresh/',
   },
   PROFILE: {
     GET_PROFILES: '/profiles',

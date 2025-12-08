@@ -223,7 +223,15 @@ class AuthController {
         id_token: firebaseIdToken,
       };
 
-      const apiResponse: any = await postApiCall('POST', 'AUTH', 'SOCIAL_LOGIN', requestBody);
+      // Send ID token in body (backend expects JSON: { id_token })
+      console.log('[API] socialLogin payload:', requestBody);
+      const apiResponse: any = await postApiCall(
+        'POST',
+        'AUTH',
+        'SOCIAL_LOGIN',
+        requestBody,
+      );
+      console.log('[API] socialLogin response:', apiResponse);
 
       if (apiResponse?.response?.access && apiResponse?.response?.refresh) {
         return {

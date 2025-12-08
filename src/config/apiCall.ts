@@ -2,8 +2,8 @@ import axios from 'axios';
 import { API_ENDPOINTS } from './endpoints';
 
 export const API_BASE_URL = __DEV__
-  ? 'https://api.dilmil.com'
-  : 'https://api.dilmil.com';
+  ? 'https://snixx-backend.onrender.com'
+  : 'https://snixx-backend.onrender.com';
 const Base_URL = API_BASE_URL;
 
 export const getApiUrl = (category: string, endpoint: string) => {
@@ -30,10 +30,11 @@ api.interceptors.response.use(response => {
 export default api;
 
 export const postApiCall = async (
-  method:string,
+  method: string,
   screenName: string,
   endpoint: string,
   params: any,
+  authToken?: string,
 ) => {
   try {
     const commonParams = {
@@ -57,16 +58,20 @@ export const postApiCall = async (
     const finalParams = { ...commonParams, ...params };
     // console.log('Params', commonParams);
     console.log(finalParams, '----->>>finalParams');
+    const headers: Record<string, string> = {
+      method,
+      'Content-Type': 'application/json',
+    };
+
+    // Only attach auth header when a token is provided to avoid invalid/empty tokens
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+
     let responseData = await api.post(
       `${Base_URL}${API_ENDPOINTS[screenName][endpoint]}`,
       finalParams,
-      {
-        headers: {
-          "method":method,
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${''}`,
-        },
-      },
+      { headers },
     );
 
     return {

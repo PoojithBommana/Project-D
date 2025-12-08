@@ -30,8 +30,8 @@ export default function AuthNavigation() {
   return (
     <AuthNavigationStack.Navigator initialRouteName='LoginScreen' screenOptions={{headerShown:false}}>
         <AuthNavigationStack.Screen name='LoginScreen' component={LoginScreen}/>
-        <AuthNavigationStack.Screen name='AuthOptionsScreen' component={AuthOptionsScreen}/>
         <AuthNavigationStack.Screen name='RegisterScreen' component={RegisterScreen}/>
+        <AuthNavigationStack.Screen name='AuthOptionsScreen' component={AuthOptionsScreen}/>
         <AuthNavigationStack.Screen name='VerifyPhoneNumberScreen' component={VerifyPhoneNumberScreen}/>
         <AuthNavigationStack.Screen name='AccountNotFound' component={AccountDetailsNotFound}/>
     </AuthNavigationStack.Navigator>
