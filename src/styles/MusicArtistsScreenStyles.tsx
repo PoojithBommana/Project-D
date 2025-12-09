@@ -325,6 +325,9 @@ const styles = StyleSheet.create({
     borderRadius: rs(12),
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(16),
+
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -348,6 +351,8 @@ const styles = StyleSheet.create({
     fontSize: rf(18),
     fontFamily: 'GTMaruBold',
     color: '#999999',
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(16),
   },
   continueButtonTextActive: {
     color: '#000000',

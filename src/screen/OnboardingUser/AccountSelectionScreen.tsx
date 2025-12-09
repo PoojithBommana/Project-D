@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,43 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/AccountSelectionStyles';
 import { Backicon, Checkicon, Usericon } from '../../assets';
+import { authController } from '../../controllers/AuthController';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'AccountSelectionScreen'>;
+  route?: {
+    params?: {
+      existingUser?: any;
+      firebaseUid?: string;
+      email?: string;
+      phone?: string;
+    };
+  };
 }
 
-export default function AccountSelectionScreen({ navigation }: Props) {
+export default function AccountSelectionScreen({ navigation, route }: Props) {
   const [selectedAccount, setSelectedAccount] = useState<'existing' | 'new'>('existing');
   const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const existingUser = route?.params?.existingUser;
+  const firebaseUid = route?.params?.firebaseUid;
+  const fallbackEmail = route?.params?.email;
+  const fallbackPhone = route?.params?.phone;
+
+  const existingAccountLabel = useMemo(() => {
+    if (!existingUser) return 'Existing account';
+    const name = existingUser.first_name || existingUser.firstName || 'User';
+    const age = existingUser.age ? `, ${existingUser.age}` : '';
+    return `${name}${age}`;
+  }, [existingUser]);
+
+  const existingAccountLogin = useMemo(() => {
+    if (!existingUser) return fallbackPhone || fallbackEmail || 'Login info unavailable';
+    return existingUser.phone || existingUser.email || fallbackPhone || fallbackEmail || 'Login info unavailable';
+  }, [existingUser, fallbackEmail, fallbackPhone]);
 
   const handleExistingAccountSelect = () => {
     setSelectedAccount('existing');
@@ -31,18 +60,83 @@ export default function AccountSelectionScreen({ navigation }: Props) {
     setSelectedAccount('new');
   };
 
-  const handleContinue = () => {
-    navigation?.navigate('ChatScreen');
-    // if (selectedAccount === 'new') {
-    //   setShowModal(true);
-    // } else {
-    //   navigation?.navigate('ChatScreen');
-    // }
+  const handleContinue = async () => {
+    if (selectedAccount === 'new') {
+      setShowModal(true);
+      return;
+    }
+
+    if (!existingUser?.id) {
+      Alert.alert('Select account', 'No existing account details available.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await authController.useExistingAccount(existingUser.id);
+      if (!response.success || !response.access || !response.refresh) {
+        Alert.alert('Could not continue', response.error || 'Please try again.');
+        return;
+      }
+
+      await AsyncStorage.multiSet([
+        ['accessToken', response.access],
+        ['refreshToken', response.refresh],
+        ['userId', String(response.user_id ?? existingUser.id)],
+        ['onboarding_complete', response.onboarding_complete ? 'true' : 'false'],
+      ]);
+
+      if (response.onboarding_complete) {
+        const rootNavigation = (navigation as any)?.getParent()?.getParent();
+        if (rootNavigation) {
+          rootNavigation.navigate('TabNavigation');
+        } else {
+          navigation?.getParent()?.navigate('TabNavigation');
+        }
+      } else {
+        navigation?.navigate('ProfileSetupIntroScreen');
+      }
+    } catch (error) {
+      console.error('Error continuing with existing account:', error);
+      Alert.alert('Something went wrong', 'Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleModalContinue = () => {
+  const handleModalContinue = async () => {
+    if (!firebaseUid) {
+      Alert.alert('Missing info', 'Unable to create a new account right now.');
+      return;
+    }
+
     setShowModal(false);
-    navigation?.navigate('ProfileSetupIntroScreen');
+    setIsSubmitting(true);
+    try {
+      const response = await authController.createNewAccount({
+        firebase_uid: firebaseUid,
+        email: fallbackEmail,
+        phone: fallbackPhone,
+      });
+
+      if (!response.success || !response.access || !response.refresh) {
+        Alert.alert('Could not create account', response.error || 'Please try again.');
+        return;
+      }
+
+      await AsyncStorage.multiSet([
+        ['accessToken', response.access],
+        ['refreshToken', response.refresh],
+        ['onboarding_complete', 'false'],
+      ]);
+
+      navigation?.navigate('ProfileSetupIntroScreen');
+    } catch (error) {
+      console.error('Error creating new account:', error);
+      Alert.alert('Something went wrong', 'Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -85,10 +179,6 @@ export default function AccountSelectionScreen({ navigation }: Props) {
                 )}
               </View>
 
-              <View style={styles.accountHeader}>
-                <Text style={styles.createdDate}>Created 4 days ago</Text>
-              </View>
-
               <View style={styles.accountBody}>
                 <View style={styles.profileImageContainer}>
                   <View style={styles.profileImagePlaceholder}>
@@ -97,8 +187,8 @@ export default function AccountSelectionScreen({ navigation }: Props) {
                 </View>
 
                 <View style={styles.accountInfo}>
-                  <Text style={styles.accountName}>Tej, 19</Text>
-                  <Text style={styles.accountLogin}>Login: +918919926373</Text>
+                  <Text style={styles.accountName}>{existingAccountLabel}</Text>
+                  <Text style={styles.accountLogin}>Login: {existingAccountLogin}</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -137,7 +227,9 @@ export default function AccountSelectionScreen({ navigation }: Props) {
 
                 <View style={styles.accountInfo}>
                   <Text style={styles.newAccountText}>Create a new account</Text>
-                  <Text style={styles.accountLogin}>Login: myselfyours.tej@gmail.com</Text>
+                  <Text style={styles.accountLogin}>
+                    Login: {fallbackEmail || fallbackPhone || 'Use your current login'}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -152,8 +244,11 @@ export default function AccountSelectionScreen({ navigation }: Props) {
               style={styles.continueButton}
               onPress={handleContinue}
               activeOpacity={0.8}
+              disabled={isSubmitting}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text style={styles.continueButtonText}>
+                {isSubmitting ? 'Please wait...' : 'Continue'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

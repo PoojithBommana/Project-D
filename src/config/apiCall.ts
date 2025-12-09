@@ -2,8 +2,8 @@ import axios from 'axios';
 import { API_ENDPOINTS } from './endpoints';
 
 export const API_BASE_URL = __DEV__
-  ? 'https://api.dilmil.com'
-  : 'https://api.dilmil.com';
+  ? 'https://goosewinged-preexclusive-sage.ngrok-free.dev'
+  : 'https://goosewinged-preexclusive-sage.ngrok-free.dev';
 const Base_URL = API_BASE_URL;
 
 export const getApiUrl = (category: string, endpoint: string) => {
@@ -62,9 +62,7 @@ export const postApiCall = async (
       finalParams,
       {
         headers: {
-          "method":method,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${''}`,
         },
       },
     );

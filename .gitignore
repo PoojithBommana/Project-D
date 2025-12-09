@@ -73,3 +73,7 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Large video files
+*.mp4
+src/assets/videos/

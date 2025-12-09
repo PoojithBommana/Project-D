@@ -1,10 +1,3 @@
-/**
- * Country Codes Constants
- * 
- * Centralized list of supported country codes.
- * Easy to maintain and extend.
- */
-
 export interface CountryCode {
   code: string;
   country: string;
@@ -12,9 +5,6 @@ export interface CountryCode {
   flag: string;
 }
 
-/**
- * List of supported country codes
- */
 export const COUNTRY_CODES: CountryCode[] = [
   { code: '+91', country: 'India', abbreviation: 'IN', flag: '🇮🇳' },
   { code: '+1', country: 'USA', abbreviation: 'US', flag: '🇺🇸' },

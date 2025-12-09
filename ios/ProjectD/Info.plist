@@ -64,11 +64,13 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This is for Mic permission</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need location of the user to access the address for product delivery</string>
+	<string>DILMIL needs access to your location to find you matches nearby.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need location of the user to access the address for product delivery</string>
+	<string>DILMIL needs access to your location to find you matches nearby.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need your files access</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Schmooze needs access to your contacts to connect you with friends already on the app.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

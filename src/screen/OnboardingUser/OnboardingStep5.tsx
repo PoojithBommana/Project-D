@@ -1,22 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  KeyboardAvoidingView,
-  Platform,
   Animated,
-  ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
-import { rf } from '../../utils/responsive';
-import { setOnboardingComplete } from '../../utils/tokenStorage';
-import styles from '../../styles/OnboardingStyles';
-
+import { rf, hp, wp, rs } from '../../utils/responsive';
+import styles from '../../styles/OnboardingStep5Styles';
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'OnboardingStep5'>;
   route?: {
@@ -28,59 +22,81 @@ interface Props {
       age: number;
       location: string;
       photo?: string;
+      photos?: string[];
       showOnlyFirstLetter: boolean;
     };
   };
 }
 
+interface DatingGoal {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+}
+
+const datingGoals: DatingGoal[] = [
+  {
+    id: 'casual',
+    title: 'Keep it casual',
+    description: 'Looking for something fun and light',
+    emoji: '🥵',
+  },
+  {
+    id: 'short-term',
+    title: 'Short-term relationship',
+    description: 'Something meaningful but not forever',
+    emoji: '🌚',
+  },
+  {
+    id: 'long-term',
+    title: 'Long-term relationship',
+    description: 'Looking for my forever person',
+    emoji: '👯‍♀️',
+  },
+  {
+    id: 'go-with-flow',
+    title: 'Go with the flow',
+    description: 'Open to whatever comes my way',
+    emoji: '🤷‍♂️',
+  },
+];
+
 export default function OnboardingStep5({ navigation, route }: Props) {
-  const [bio, setBio] = useState('');
-  const [isButtonActive, setIsButtonActive] = useState(false);
-  const buttonScale = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
 
-  const handleInputChange = (text: string) => {
-    setBio(text);
-    setIsButtonActive(text.trim().length >= 10);
-  };
-
-  const animateButtonPress = () => {
-    Animated.sequence([
-      Animated.spring(buttonScale, {
-        toValue: 0.95,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 10,
-      }),
-      Animated.spring(buttonScale, {
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
         toValue: 1,
+        duration: 400,
         useNativeDriver: true,
-        tension: 300,
-        friction: 10,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, []);
 
-  const handleContinue = async () => {
-    if (bio.trim().length >= 10) {
-      animateButtonPress();
-      const onboardingData = {
+  const handleContinue = () => {
+    if (selectedGoal) {
+      (navigation as any)?.navigate('LocationPermissionScreen', {
         firstName: route?.params?.firstName || '',
+        lastName: route?.params?.lastName || '',
+        username: route?.params?.username || '',
+        gender: route?.params?.gender || '',
         age: route?.params?.age || 0,
         location: route?.params?.location || '',
         photo: route?.params?.photo,
-        bio: bio.trim(),
+        photos: route?.params?.photos || [],
+        datingGoal: selectedGoal,
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
-      };
-
-      console.log('Onboarding complete:', onboardingData);
-      
-      try {
-        await setOnboardingComplete();
-        navigation?.getParent()?.navigate('TabNavigation');
-      } catch (error) {
-        console.error('Error marking onboarding as complete:', error);
-        navigation?.getParent()?.navigate('TabNavigation');
-      }
+      });
     }
   };
 
@@ -88,89 +104,80 @@ export default function OnboardingStep5({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#E8F4F8" translucent={false} />
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFCF1" translucent={false} />
+      
+      {/* Progress Bar */}
+      <View style={styles.progressBarContainer}>
+        <Animated.View style={[styles.progressBar, { width: `${progress}%` }]} />
+      </View>
+
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
       >
-        <View style={styles.progressBarContainer}>
-          <Animated.View style={[styles.progressBar, { width: `${progress}%` }]} />
-        </View>
-
-        <ScrollView
-          style={styles.contentContainer}
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.headingContainer}>
-            <Text style={styles.heading}>✍️ Tell us about yourself</Text>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[
-                styles.inputField,
-                {
-                  height: hp(120),
-                  textAlignVertical: 'top',
-                  paddingTop: hp(16),
-                  paddingBottom: hp(16),
-                },
-              ]}
-              placeholder="Write a short bio (min 10 characters)"
-              placeholderTextColor="#999999"
-              value={bio}
-              onChangeText={handleInputChange}
-              multiline
-              maxLength={200}
-              returnKeyType="done"
-            />
-            <Text
-              style={{
-                fontSize: rf(12),
-                fontFamily: 'Inter',
-                fontWeight: '400',
-                color: '#999999',
-                marginTop: hp(8),
-                textAlign: 'right',
-              }}
-            >
-              {bio.length}/200
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.headerContainer}>
+            <Text style={styles.heading}>What are your dating goals?</Text>
+            <Text style={styles.subheading}>
+              Let us know what you're into to find your kind of people.
             </Text>
           </View>
 
-          <View style={styles.buttonContainer}>
-            <Animated.View
-              style={{
-                transform: [{ scale: buttonScale }],
-              }}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.continueButton,
-                  isButtonActive ? styles.continueButtonActive : styles.continueButtonDisabled,
-                ]}
-                onPress={handleContinue}
-                disabled={!isButtonActive}
-                activeOpacity={1}
-              >
-                <Text
+          {/* Dating Goals Cards */}
+          <View style={styles.goalsContainer}>
+            {datingGoals.map((goal) => {
+              const isSelected = selectedGoal === goal.id;
+              return (
+                <TouchableOpacity
+                  key={goal.id}
                   style={[
-                    styles.continueButtonText,
-                    isButtonActive
-                      ? styles.continueButtonTextActive
-                      : styles.continueButtonTextDisabled,
+                    styles.goalCard,
+                    isSelected && styles.goalCardSelected,
                   ]}
+                  onPress={() => setSelectedGoal(goal.id)}
+                  activeOpacity={0.8}
                 >
-                  Complete
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
+                  <Text style={styles.goalEmoji}>{goal.emoji}</Text>
+                  <View style={styles.goalTextContainer}>
+                    <Text style={styles.goalTitle}>{goal.title}</Text>
+                    <Text style={styles.goalDescription}>{goal.description}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          {/* Continue Button */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.continueButton,
+                selectedGoal ? styles.continueButtonActive : styles.continueButtonDisabled,
+              ]}
+              onPress={handleContinue}
+              disabled={!selectedGoal}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.continueButtonText,
+                  selectedGoal
+                    ? styles.continueButtonTextActive
+                    : styles.continueButtonTextDisabled,
+                ]}
+              >
+                Continue
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
     </SafeAreaView>
   );
 }
-
