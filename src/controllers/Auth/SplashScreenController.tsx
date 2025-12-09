@@ -8,12 +8,25 @@ export default function SplashScreenController() {
   
   const checkUserStatus = async () => { 
     try {
-      const authToken = await AsyncStorage.getItem('authToken');
-      if (authToken === null) {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const legacyToken = await AsyncStorage.getItem('authToken'); // backward compatibility
+      const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
+
+      const hasToken = Boolean(accessToken || legacyToken);
+      const isOnboardingDone = onboardingComplete === 'true';
+
+      if (!hasToken) {
         navigation.navigate('AuthNavigation');
-      } else {
-        navigation.navigate('OnboardingNavigation');
+        return;
       }
+
+      if (isOnboardingDone) {
+        navigation.navigate('TabNavigation');
+        return;
+      }
+
+      // Token exists but onboarding not complete: force re-auth
+      navigation.navigate('AuthNavigation');
     } catch (error) {
       console.warn(JSON.stringify(error))
     }

@@ -16,9 +16,10 @@ import OnboardingStep5 from '../screen/OnboardingUser/OnboardingStep5';
 import LocationPermissionScreen from '../screen/OnboardingUser/LocationPermissionScreen';
 import InterestsSelectionScreen from '../screen/OnboardingUser/InterestsSelectionScreen';
 import DevicePermissionsScreen from '../screen/OnboardingUser/DevicePermissionsScreen';
+import LivePhotoScreen from '../screen/OnboardingUser/LivePhotoScreen';
 
 export type OnboardingStackParamList = {
-  AccountSelectionScreen: undefined;
+  AccountSelectionScreen: { existingUser?: any; firebaseUid?: string; email?: string; phone?: string } | undefined;
   ProfileSetupIntroScreen: undefined;
   UserOnboarding: undefined;
   GenderSelectionScreen: { firstName: string; lastName: string; username?: string; showOnlyFirstLetter: boolean };
@@ -34,6 +35,7 @@ export type OnboardingStackParamList = {
   LocationPermissionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
   InterestsSelectionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
   DevicePermissionsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
+  LivePhotoScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
 };
 
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -176,6 +178,14 @@ export default function OnboardingNavigation() {
       <OnboardingStack.Screen 
         name="DevicePermissionsScreen" 
         component={DevicePermissionsScreen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="LivePhotoScreen" 
+        component={LivePhotoScreen}
         options={{
           animation: 'slide_from_right',
           animationDuration: 350,

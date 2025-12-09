@@ -20,9 +20,20 @@ export interface SocialLoginRequest {
 }
 
 export interface SocialLoginResponse {
-  access: string;
-  refresh: string;
-  user_id: number;
+  account_exists?: boolean;
+  existing_user?: any;
+  can_create_new_account?: boolean;
+  is_new?: boolean;
+  access?: string;
+  refresh?: string;
+  user_id?: number;
+  onboarding_complete?: boolean;
+  next_step?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  selfie_photo?: string;
+  message?: string;
 }
 
 export interface SendOTPResponse {
@@ -96,6 +107,29 @@ export interface FacebookLoginResponse {
 export interface LogoutResponse {
   success: boolean;
   message?: string;
+  error?: string;
+}
+
+export interface UseExistingAccountResponse {
+  success: boolean;
+  access?: string;
+  refresh?: string;
+  onboarding_complete?: boolean;
+  user_id?: number;
+  error?: string;
+}
+
+export interface CreateNewAccountRequest {
+  firebase_uid: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface CreateNewAccountResponse {
+  success: boolean;
+  access?: string;
+  refresh?: string;
+  next_step?: string;
   error?: string;
 }
 
@@ -223,40 +257,62 @@ class AuthController {
         id_token: firebaseIdToken,
       };
 
-      // Send ID token in body (backend expects JSON: { id_token })
-      console.log('[API] socialLogin payload:', requestBody);
-      const apiResponse: any = await postApiCall(
-        'POST',
-        'AUTH',
-        'SOCIAL_LOGIN',
-        requestBody,
-      );
-      console.log('[API] socialLogin response:', apiResponse);
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'SOCIAL_LOGIN', requestBody);
+      const data = apiResponse?.response;
 
-      if (apiResponse?.response?.access && apiResponse?.response?.refresh) {
+      if (data?.account_exists === true && data?.existing_user) {
         return {
-          access: apiResponse?.response?.access,
-          refresh: apiResponse?.response?.refresh,
-          user_id: apiResponse?.response?.user_id,
+          account_exists: true,
+          existing_user: data.existing_user,
+          can_create_new_account: data?.can_create_new_account ?? true,
+          message: data?.message,
         };
-      } else if (apiResponse?.error) {
-        const errorMessage = apiResponse?.response?.Message || 
-                           apiResponse?.response?.message || 
-                           'Backend server unavailable';
-        
-        if (errorMessage.includes('Network') || errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED')) {
+      }
+
+      if (data?.access && data?.refresh) {
+        return {
+          account_exists: data?.account_exists ?? false,
+          is_new: data?.is_new ?? true,
+          user_id: data?.user_id,
+          access: data?.access,
+          refresh: data?.refresh,
+          onboarding_complete: data?.onboarding_complete,
+          first_name: data?.first_name,
+          last_name: data?.last_name,
+          email: data?.email,
+          selfie_photo: data?.selfie_photo,
+          next_step: data?.next_step,
+          message: data?.message,
+        };
+      }
+
+      if (apiResponse?.error) {
+        const errorMessage =
+          data?.Message ||
+          data?.message ||
+          'Backend server unavailable';
+
+        if (
+          errorMessage.includes('Network') ||
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('ECONNREFUSED')
+        ) {
           console.warn('[API] Social login failed (non-blocking):', errorMessage);
         } else {
           console.warn('[API] Social login error (non-blocking):', errorMessage);
         }
         return null;
-      } else {
-        console.warn('[API] Social login failed (non-blocking): Invalid response format');
-        return null;
       }
+
+      console.warn('[API] Social login failed (non-blocking): Invalid response format');
+      return null;
     } catch (error: any) {
       const errorMessage = error?.message || error?.toString() || 'Unknown error';
-      if (errorMessage.includes('Network') || errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED')) {
+      if (
+        errorMessage.includes('Network') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('ECONNREFUSED')
+      ) {
         console.warn('[API] Social login network error (non-blocking):', errorMessage);
       } else {
         console.warn('[API] Social login error (non-blocking):', errorMessage);
@@ -297,7 +353,7 @@ class AuthController {
         token: response.access,
         refreshToken: response.refresh,
         user: {
-          id: response.user_id.toString(),
+          id: response.user_id ? response.user_id.toString() : '',
           email: request.email || '',
           name: request.name || '',
           photoURL: request.photoURL,
@@ -327,31 +383,96 @@ class AuthController {
     };
   }
 
-  async logout(): Promise<LogoutResponse> {
+  async useExistingAccount(userId: number): Promise<UseExistingAccountResponse> {
     try {
-      const apiResponse: any = await postApiCall('POST', 'AUTH', 'LOGOUT', {});
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'USE_EXISTING_ACCOUNT', { user_id: userId });
+      const data = apiResponse?.response;
 
-      if (apiResponse?.response?.ResponseCode == 'Success') {
+      if (data?.access && data?.refresh) {
         return {
           success: true,
-          message: apiResponse?.response?.ResponseMessage,
-        };
-      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
-        return {
-          success: false,
-          error: apiResponse?.response?.ResponseMessage || 'Failed to logout',
-        };
-      } else if (apiResponse?.error) {
-        return {
-          success: false,
-          error: apiResponse?.response?.Message || 'Failed to logout',
-        };
-      } else {
-        return {
-          success: false,
-          error: 'Failed to logout',
+          access: data.access,
+          refresh: data.refresh,
+          onboarding_complete: data?.onboarding_complete,
+          user_id: data?.user_id ?? userId,
         };
       }
+
+      const errorMessage =
+        data?.error ||
+        data?.message ||
+        apiResponse?.response?.Message ||
+        'Failed to use existing account';
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    } catch (error) {
+      console.error('Error logging into existing account:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to use existing account',
+      };
+    }
+  }
+
+  async createNewAccount(request: CreateNewAccountRequest): Promise<CreateNewAccountResponse> {
+    try {
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'CREATE_NEW_ACCOUNT', request);
+      const data = apiResponse?.response;
+
+      if (data?.access && data?.refresh) {
+        return {
+          success: true,
+          access: data.access,
+          refresh: data.refresh,
+          next_step: data?.next_step,
+        };
+      }
+
+      const errorMessage =
+        data?.error ||
+        data?.message ||
+        apiResponse?.response?.Message ||
+        'Failed to create new account';
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    } catch (error) {
+      console.error('Error creating new account:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create new account',
+      };
+    }
+  }
+
+  async logout(refreshToken?: string): Promise<LogoutResponse> {
+    try {
+      const payload = refreshToken ? { refresh: refreshToken } : {};
+      const apiResponse: any = await postApiCall('POST', 'AUTH', 'LOGOUT', payload);
+      const data = apiResponse?.response;
+
+      if (data?.message || apiResponse?.statusCode === 200) {
+        return {
+          success: true,
+          message: data?.message || 'Logged out successfully',
+        };
+      }
+
+      const errorMessage =
+        data?.error ||
+        data?.message ||
+        apiResponse?.response?.Message ||
+        'Failed to logout';
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
     } catch (error) {
       console.error('Error logging out:', error);
       return {
@@ -364,18 +485,21 @@ class AuthController {
   async refreshToken(refreshToken: string): Promise<{ access: string }> {
     try {
       const apiResponse: any = await postApiCall('POST', 'AUTH', 'REFRESH_TOKEN', { refresh: refreshToken });
+      const data = apiResponse?.response;
 
-      if (apiResponse?.response?.ResponseCode == 'Success') {
+      if (data?.access) {
         return {
-          access: apiResponse?.response?.access,
+          access: data.access,
         };
-      } else if (apiResponse?.response?.ResponseCode == 'Fail') {
-        throw new Error(apiResponse?.response?.ResponseMessage || 'Failed to refresh token');
-      } else if (apiResponse?.error) {
-        throw new Error(apiResponse?.response?.Message || 'Failed to refresh token');
-      } else {
-        throw new Error('Failed to refresh token');
       }
+
+      const errorMessage =
+        data?.error ||
+        data?.message ||
+        apiResponse?.response?.Message ||
+        'Failed to refresh token';
+
+      throw new Error(errorMessage);
     } catch (error) {
       console.error('Error refreshing token:', error);
       throw error;

@@ -119,7 +119,68 @@ export default class AuthOptionsScreen extends Component<Props, State> {
       const result: any = await authService.signInWithGoogle();
 
       if (result.success && result.user) {
-        await AsyncStorage.setItem('authToken', `${result.backendResponse?.token}`);
+        const backend = result.backendResponse;
+
+        if (backend?.account_exists && backend?.existing_user) {
+          this.setState({ isLoading: false });
+          const rootNavigation = this.props.navigation.getParent()?.getParent();
+          if (rootNavigation) {
+            rootNavigation.navigate('OnboardingNavigation', {
+              screen: 'AccountSelectionScreen',
+              params: {
+                existingUser: backend.existing_user,
+                firebaseUid: result.user?.uid,
+                email: backend.existing_user?.email || result.user?.email,
+                phone: backend.existing_user?.phone || result.user?.phoneNumber,
+              },
+            });
+          } else {
+            this.props.navigation.getParent()?.navigate('OnboardingNavigation', {
+              screen: 'AccountSelectionScreen',
+              params: {
+                existingUser: backend.existing_user,
+                firebaseUid: result.user?.uid,
+                email: backend.existing_user?.email || result.user?.email,
+                phone: backend.existing_user?.phone || result.user?.phoneNumber,
+              },
+            });
+          }
+          return;
+        }
+
+        if (backend?.access && backend?.refresh) {
+          await AsyncStorage.multiSet([
+            ['accessToken', backend.access],
+            ['refreshToken', backend.refresh],
+            ['userId', backend.user_id ? String(backend.user_id) : result.user?.uid || ''],
+            ['onboarding_complete', backend.onboarding_complete ? 'true' : 'false'],
+          ]);
+          this.setState({ isLoading: false });
+
+          if (backend.onboarding_complete) {
+            const rootNavigation = this.props.navigation.getParent()?.getParent();
+            if (rootNavigation) {
+              rootNavigation.navigate('TabNavigation');
+            } else {
+              this.props.navigation.getParent()?.navigate('TabNavigation');
+            }
+            return;
+          }
+
+          const rootNavigation = this.props.navigation.getParent()?.getParent();
+          if (rootNavigation) {
+            rootNavigation.dispatch(
+              CommonActions.navigate({
+                name: 'OnboardingNavigation',
+              })
+            );
+          } else {
+            this.props.navigation.getParent()?.navigate('OnboardingNavigation');
+          }
+          return;
+        }
+
+        this.setState({ isLoading: false });
         const rootNavigation = this.props.navigation.getParent()?.getParent();
         if (rootNavigation) {
           rootNavigation.dispatch(
@@ -394,4 +455,5 @@ export default class AuthOptionsScreen extends Component<Props, State> {
     );
   }
 }
+
 

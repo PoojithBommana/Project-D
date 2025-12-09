@@ -1,0 +1,146 @@
+import { StyleSheet } from 'react-native';
+import { hp, rf, rs, wp } from '../utils/responsive';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFCF1',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: wp(24),
+    paddingTop: hp(48),
+    paddingBottom: hp(32),
+    justifyContent: 'space-between',
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: hp(20),
+    paddingHorizontal: wp(12),
+  },
+  heading: {
+    fontSize: rf(26),
+    fontFamily: 'GTMaruBold',
+    color: '#111111',
+    lineHeight: rf(32),
+    textAlign: 'center',
+    marginBottom: hp(10),
+  },
+  subheading: {
+    fontSize: rf(15),
+    fontFamily: 'GTMaruRegular',
+    color: '#4D4D4D',
+    lineHeight: rf(22),
+    textAlign: 'center',
+  },
+  previewCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: rs(16),
+    padding: wp(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
+    minHeight: hp(280),
+    justifyContent: 'center',
+  },
+  previewPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(24),
+  },
+  previewIconCircle: {
+    width: wp(76),
+    height: wp(76),
+    borderRadius: wp(38),
+    backgroundColor: '#FDFF8D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(16),
+  },
+  previewPlaceholderTitle: {
+    fontSize: rf(17),
+    fontFamily: 'GTMaruBold',
+    color: '#111111',
+    marginBottom: hp(8),
+  },
+  previewPlaceholderSubtitle: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    color: '#5A5A5A',
+    lineHeight: rf(20),
+    textAlign: 'center',
+    paddingHorizontal: wp(10),
+  },
+  previewImageWrapper: {
+    borderRadius: rs(14),
+    overflow: 'hidden',
+    height: hp(260),
+    backgroundColor: '#F7F7F7',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  previewBadge: {
+    position: 'absolute',
+    bottom: hp(12),
+    left: wp(12),
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(8),
+    backgroundColor: '#FDFF8D',
+    borderRadius: rs(12),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
+  previewBadgeText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruBold',
+    color: '#111111',
+  },
+  actionsContainer: {
+    gap: hp(14),
+    marginTop: hp(24),
+  },
+  captureButton: {
+    height: hp(56),
+    backgroundColor: '#FDFF8D',
+    borderRadius: rs(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: wp(10),
+  },
+  captureButtonText: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruBold',
+    color: '#111111',
+  },
+  continueButton: {
+    height: hp(54),
+    backgroundColor: '#111111',
+    borderRadius: rs(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#D6D6D6',
+  },
+  continueButtonText: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruBold',
+    color: '#FFFCF1',
+  },
+  privacyNote: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruRegular',
+    color: '#6B6B6B',
+    textAlign: 'center',
+    lineHeight: rf(18),
+    marginTop: hp(6),
+  },
+});
+
+export default styles;

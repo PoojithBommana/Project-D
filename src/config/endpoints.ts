@@ -4,7 +4,9 @@ export const API_ENDPOINTS: any = {
     VERIFY_OTP: '/auth/verify-otp',
     RESEND_OTP: '/auth/resend-otp',
     SOCIAL_LOGIN: '/auth/login/',
-    LOGOUT: '/auth/logout',
+    USE_EXISTING_ACCOUNT: '/auth/use-existing-account/',
+    CREATE_NEW_ACCOUNT: '/auth/create-new-account/',
+    LOGOUT: '/auth/logout/',
     REFRESH_TOKEN: '/auth/token/refresh/',
   },
   PROFILE: {
@@ -16,5 +18,8 @@ export const API_ENDPOINTS: any = {
   },
   MUSIC: {
     FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
+  },
+  ONBOARDING: {
+    UPDATE: '/auth/onboarding/update/',
   },
 };

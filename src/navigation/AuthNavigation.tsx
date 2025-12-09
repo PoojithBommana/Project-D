@@ -36,4 +36,4 @@ export default function AuthNavigation() {
         <AuthNavigationStack.Screen name='AccountNotFound' component={AccountDetailsNotFound}/>
     </AuthNavigationStack.Navigator>
   )
-}
+} 
