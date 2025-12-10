@@ -8,12 +8,16 @@ export default function SplashScreenController() {
   
   const checkUserStatus = async () => {
     try {
-      const authToken = await AsyncStorage.getItem('authToken');
-      if (authToken !== null) {
-        navigation.navigate('TabNavigation');
-      } else {
-        navigation.navigate('AuthNavigation');
-      }
+      // Skip onboarding and go directly to TabNavigation
+      navigation.navigate('TabNavigation');
+      
+      // Uncomment below if you want to check auth token later
+      // const authToken = await AsyncStorage.getItem('authToken');
+      // if (authToken) {
+      //   navigation.navigate('TabNavigation');
+      // } else {
+      //   navigation.navigate('AuthNavigation');
+      // }
     } catch (error) {
       console.warn(JSON.stringify(error))
     }
