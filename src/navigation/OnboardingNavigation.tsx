@@ -16,12 +16,17 @@ import OnboardingStep5 from '../screen/OnboardingUser/OnboardingStep5';
 import LocationPermissionScreen from '../screen/OnboardingUser/LocationPermissionScreen';
 import InterestsSelectionScreen from '../screen/OnboardingUser/InterestsSelectionScreen';
 import DevicePermissionsScreen from '../screen/OnboardingUser/DevicePermissionsScreen';
+<<<<<<< HEAD
 import LivePhotoScreen from '../screen/OnboardingUser/LivePhotoScreen';
+=======
+import UsernameInputScreen from '../screen/OnboardingUser/UsernameInputScreen';
+>>>>>>> 58bc6b7851b47c7227b8ca02a58841b60765c94c
 
 export type OnboardingStackParamList = {
   AccountSelectionScreen: { existingUser?: any; firebaseUid?: string; email?: string; phone?: string } | undefined;
   ProfileSetupIntroScreen: undefined;
   UserOnboarding: undefined;
+  UsernameInputScreen: { firstName: string; lastName: string; showOnlyFirstLetter: boolean };
   GenderSelectionScreen: { firstName: string; lastName: string; username?: string; showOnlyFirstLetter: boolean };
   OnboardingStep2: { firstName: string; lastName: string; username?: string; gender: string; showOnlyFirstLetter: boolean };
   NotificationPermissionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
@@ -74,6 +79,14 @@ export default function OnboardingNavigation() {
       <OnboardingStack.Screen 
         name="UserOnboarding" 
         component={UserOnboarding}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="UsernameInputScreen" 
+        component={UsernameInputScreen}
         options={{
           animation: 'slide_from_right',
           animationDuration: 350,

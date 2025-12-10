@@ -119,6 +119,9 @@ dependencies {
     }
 }
 
+// Ensure vector icon fonts are bundled on Android
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
 // Replace Android launcher icons with src/assets/Snixxappicon.png on each build
 def appResDir = file("$projectDir/src/main/res")
 def sourceIcon = file("$rootDir/../src/assets/Snixxappicon.png")

@@ -40,54 +40,6 @@
     {
       "path": "src/assets/fonts/GTMaruRegularOblique.ttf",
       "sha1": "0df10c68db8348d47a39e25562a80145b0768e68"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-Bold.ttf",
-      "sha1": "c7e6b913f990299fcc5928f4581727972e869727"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-BoldItalic.ttf",
-      "sha1": "9debf2df5b0781ea1c8c47f094307f716f596503"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-ExtraBold.ttf",
-      "sha1": "725bb4afb0eb261acea24bd8dc6d1fc106fb9890"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-ExtraBoldItalic.ttf",
-      "sha1": "607a8a75c425a86d2cc711660bf795743bf1012f"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-Italic.ttf",
-      "sha1": "2ea6568cd9ed07c8b1f0bbf148dd2ab9a9fc4f0d"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-Light.ttf",
-      "sha1": "6236023a78c3031a26e7093881cceeae50ad036f"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-LightItalic.ttf",
-      "sha1": "2d42e7aedc1ae7b5b69db392d301b2f08a04c91b"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-Medium.ttf",
-      "sha1": "1632123e8a78dd095fb987c0cb2ad05063e0648a"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-MediumItalic.ttf",
-      "sha1": "cf830d27b664edac6d806b1fa75381e57bbd69e1"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-Regular.ttf",
-      "sha1": "576aa669c4ceb3830fde859a4db52916def172af"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-SemiBold.ttf",
-      "sha1": "344041aeaad9e07a186cc3a937df915e5d98936f"
-    },
-    {
-      "path": "src/assets/fonts/OpenSans-SemiBoldItalic.ttf",
-      "sha1": "86464eed204f9a93cf74261b4694a16b2d437d10"
     }
   ]
 }

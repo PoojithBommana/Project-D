@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screen/Auth/SplashScreen';
 import AuthNavigation from './AuthNavigation';
-import ProfileScreen from '../screen/Dashboard/ProfileScreen';
+// import ProfileScreen from '../screen/Dashboard/ProfileScreen';
 import TabNavigation from './TabNavigation';
 import OnboardingNavigation from './OnboardingNavigation';
 

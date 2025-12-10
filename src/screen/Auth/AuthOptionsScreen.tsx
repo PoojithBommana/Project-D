@@ -25,7 +25,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 
 interface Props {
-  navigation: NativeStackNavigationProp<AuthStackParamList, 'AuthOptionsScreen'>;
+  navigation?: NativeStackNavigationProp<AuthStackParamList, 'AuthOptionsScreen'>;
 }
 
 interface State {
@@ -99,7 +99,7 @@ export default class AuthOptionsScreen extends Component<Props, State> {
     setTimeout(() => {
       this.setState({ isLoading: false });
       // Navigate to onboarding after successful verification
-      const rootNavigation = this.props.navigation.getParent()?.getParent();
+      const rootNavigation = this.props.navigation?.getParent()?.getParent();
       if (rootNavigation) {
         rootNavigation.dispatch(
           CommonActions.navigate({
@@ -107,7 +107,7 @@ export default class AuthOptionsScreen extends Component<Props, State> {
           })
         );
       } else {
-        this.props.navigation.getParent()?.navigate('OnboardingNavigation');
+        this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
       }
     }, 1500);
   };
@@ -119,6 +119,7 @@ export default class AuthOptionsScreen extends Component<Props, State> {
       const result: any = await authService.signInWithGoogle();
 
       if (result.success && result.user) {
+<<<<<<< HEAD
         const backend = result.backendResponse;
 
         if (backend?.account_exists && backend?.existing_user) {
@@ -182,6 +183,10 @@ export default class AuthOptionsScreen extends Component<Props, State> {
 
         this.setState({ isLoading: false });
         const rootNavigation = this.props.navigation.getParent()?.getParent();
+=======
+        await AsyncStorage.setItem('authToken', `${result.backendResponse?.token}`);
+        const rootNavigation = this.props.navigation?.getParent()?.getParent();
+>>>>>>> 58bc6b7851b47c7227b8ca02a58841b60765c94c
         if (rootNavigation) {
           rootNavigation.dispatch(
             CommonActions.navigate({
@@ -189,7 +194,7 @@ export default class AuthOptionsScreen extends Component<Props, State> {
             })
           );
         } else {
-          this.props.navigation.getParent()?.navigate('OnboardingNavigation');
+          this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
         }
       } else {
         this.setState({ isLoading: false });
@@ -208,7 +213,7 @@ export default class AuthOptionsScreen extends Component<Props, State> {
   };
 
   handleBack = () => {
-    this.props.navigation.goBack();
+    this.props.navigation?.goBack();
   };
 
   render() {

@@ -1,13 +1,15 @@
-import { Text, View, SafeAreaView, Alert, TouchableOpacity, StatusBar, Animated, Image, Platform, ActivityIndicator } from 'react-native';
+import { Text, View, Alert, TouchableOpacity, StatusBar, Animated, Image, Platform, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { Component } from 'react';
-import Video from 'react-native-video';
+// import Video from 'react-native-video'; // Commented out - bgvideo.mp4 file not found
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import styles from '../../styles/LoginScreenStyles';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { rf } from '../../utils/responsive';
-import { Applogoicon, Staricon, Bgvideo } from '../../assets/index';
+import { Applogoicon, Staricon } from '../../assets/index';
+// import { Bgvideo } from '../../assets/index'; // Commented out - bgvideo.mp4 file not found
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -23,7 +25,7 @@ interface State {
 }
  
 export default class LoginScreen extends Component<Props, State> {
-  private videoRef: any = null;
+  // private videoRef: any = null; // Commented out - bgvideo.mp4 file not found
 
   constructor(props: Props) {
     super(props);
@@ -87,7 +89,8 @@ export default class LoginScreen extends Component<Props, State> {
   render() {
     return (
       <View style={styles.container}>
-        <Video
+        {/* Background video - commented out until bgvideo.mp4 file is added */}
+        {/* <Video
           ref={(ref) => {
             this.videoRef = ref;
           }}
@@ -100,7 +103,7 @@ export default class LoginScreen extends Component<Props, State> {
           playInBackground={false}
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
-        />
+        /> */}
         <SafeAreaView style={styles.overlayContainer}>
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
