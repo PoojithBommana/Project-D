@@ -14,10 +14,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import CustomButton from '../../components/CustomButton';
 import { validatePhoneNumber, validateCountryCode } from '../../utils/Validation';
-import { showErrorAlert, handleAPIError } from '../../utils/ErrorHandler';
+import { showErrorAlert } from '../../utils/ErrorHandler';
 import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE } from '../../constants/CountryCodes';
 import { t } from '../../config/i18n';
-import styles from '../../styles/LoginScreenStyles';
+import styles from '../../styles/RegisterScreenStyles';
 
 interface Props {
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'RegisterScreen'>;
