@@ -2,8 +2,8 @@ import axios from 'axios';
 import { API_ENDPOINTS } from './endpoints';
 
 export const API_BASE_URL = __DEV__
-  ? 'https://api.dilmil.com'
-  : 'https://api.dilmil.com';
+  ? 'https://goosewinged-preexclusive-sage.ngrok-free.dev'
+  : 'https://goosewinged-preexclusive-sage.ngrok-free.dev';
 const Base_URL = API_BASE_URL;
 
 export const getApiUrl = (category: string, endpoint: string) => {
@@ -62,12 +62,55 @@ export const postApiCall = async (
       finalParams,
       {
         headers: {
-          "method":method,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${''}`,
         },
       },
     );
+
+    return {
+      response: responseData.data,
+      statusCode: responseData.status,
+      statusText: responseData.statusText,
+    };
+  } catch (error: any) {
+    if (error?.response) {
+      return {
+        error: true,
+        response: error?.response?.data || { Message: error?.message || 'Server error' },
+        statusCode: error?.response?.status,
+        statusText: error?.response?.statusText,
+      };
+    } else if (error.request) {
+      return {
+        error: true,
+        response: { Message: 'Network error: Unable to reach server' },
+      };
+    } else {
+      return {
+        error: true,
+        response: { Message: error?.message || 'Unknown error occurred' },
+      };
+    }
+  }
+};
+
+export const getApiCall = async (
+  screenName: string,
+  endpoint: string,
+  accessToken?: string,
+) => {
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const responseData = await api.get(API_ENDPOINTS[screenName][endpoint], {
+      headers,
+    });
 
     return {
       response: responseData.data,

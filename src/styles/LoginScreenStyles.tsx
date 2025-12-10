@@ -4,6 +4,7 @@ import { wp, hp, rf, rs } from '../utils/responsive';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFCF1',
   },
   backgroundVideo: {
     position: 'absolute',
@@ -22,27 +23,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
+  appLogo: {
+    width: rf(250),
+    height: rf(100),
+  },
   topSection: {
     alignItems: 'center',
     paddingTop: hp(50),
     marginTop: hp(20),
     paddingHorizontal: wp(20),
+    
   },
   appTitle: {
-    fontSize: rf(52),
-    fontFamily: 'Inter',
-    fontWeight: '900',
-    color: '#FFFFFF',
+    fontSize: rf(60),
+    fontFamily: 'GTMaruBold',
+    color: 'black',
     textShadowColor: '#000000',
     textShadowOffset: { width: 4, height: 4 },
     textShadowRadius: 0,
-    letterSpacing: rs(5),
+    letterSpacing: rs(0.5),
     textAlign: 'center',
-    textTransform: 'uppercase',
     includeFontPadding: false,
   },
   appTitleContainer: {
-    transform: [{ rotate: '2deg' }],
+    transform: [{ rotate: '1deg' }],
   },
   bottomOverlayContainer: {
     width: '100%',
@@ -55,9 +59,15 @@ const styles = StyleSheet.create({
   bottomOverlay: {
     width: '100%',
     borderRadius: rs(30),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
   glassFallback: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -67,6 +77,20 @@ const styles = StyleSheet.create({
     paddingBottom: hp(40),
     paddingHorizontal: wp(24),
     width: '100%',
+  },
+  sheenOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: hp(70),
+    borderTopLeftRadius: rs(30),
+    borderTopRightRadius: rs(30),
+    overflow: 'hidden',
+    zIndex: 1,
+  },
+  sheenGradient: {
+    flex: 1,
   },
   metricsContainer: {
     flexDirection: 'row',
@@ -114,6 +138,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: rs(0.5),
+  },
+  appTitleSub: {
+    fontSize: rf(16),  
+    color: 'black',
+    fontFamily: 'GTMaruRegular',
+    textAlign: 'center',
+    marginTop: hp(1 ),
   },
   getStartedButton: {
     width: '100%',

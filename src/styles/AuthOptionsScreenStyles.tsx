@@ -4,7 +4,7 @@ import { wp, hp, rf, rs } from '../utils/responsive';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFCF1',
   },
   backButton: {
     position: 'absolute',
@@ -49,17 +49,12 @@ const styles = StyleSheet.create({
   },
   glassInput: {
     width: '100%',
-    borderRadius: rs(30),
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: rs(23),
+    borderWidth: 2,
+    borderColor: '#FDFF8D',
     overflow: 'hidden',
     marginBottom: hp(16),
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
   },
   glassFallback: {
     backgroundColor: '#FFFFFF',
@@ -70,6 +65,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: wp(20),
     paddingVertical: hp(18),
+    borderColor: '#FDFF8D',
+    borderRadius: rs(10),
   },
   countryCode: {
     fontSize: rf(18),

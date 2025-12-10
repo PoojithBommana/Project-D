@@ -27,9 +27,14 @@ import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/PhotoSelectionScreenStyles';
 import { Plusicon, Wrongicon, Lightbulbicon } from '../../assets';
 
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+// Enable LayoutAnimation on Android (deprecated in New Architecture, but kept for compatibility)
+// This is a no-op in the New Architecture but doesn't cause errors
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental && !UIManager.hasViewManagerConfig) {
+  try {
   UIManager.setLayoutAnimationEnabledExperimental(true);
+  } catch (e) {
+    // Silently ignore - this is deprecated in New Architecture
+  }
 }
 
 interface Props {

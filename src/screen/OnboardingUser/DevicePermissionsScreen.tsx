@@ -447,13 +447,18 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
   };
 
   const navigateToNext = () => {
-    // Navigate to TabNavigation to complete onboarding
-    const rootNavigation = (navigation as any)?.getParent()?.getParent();
-    if (rootNavigation) {
-      rootNavigation.navigate('TabNavigation');
-    } else {
-      (navigation as any)?.getParent()?.navigate('TabNavigation');
-    }
+    (navigation as any)?.navigate('LivePhotoScreen', {
+      firstName: route?.params?.firstName || '',
+      lastName: route?.params?.lastName || '',
+      username: route?.params?.username,
+      gender: route?.params?.gender || '',
+      age: route?.params?.age || 0,
+      location: route?.params?.location || '',
+      photo: route?.params?.photo,
+      photos: route?.params?.photos || [],
+      datingGoal: route?.params?.datingGoal || '',
+      showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+    });
   };
 
   return (
