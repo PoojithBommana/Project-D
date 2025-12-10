@@ -6,11 +6,7 @@ export default function SplashScreenController() {
 
   const navigation: any = useNavigation();
   
-<<<<<<< HEAD
-  const checkUserStatus = async () => { 
-=======
   const checkUserStatus = useCallback(async () => {
->>>>>>> 58bc6b7851b47c7227b8ca02a58841b60765c94c
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
       const legacyToken = await AsyncStorage.getItem('authToken'); // backward compatibility

@@ -8,10 +8,12 @@ import {
   Animated,
   PanResponder,
   Dimensions,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LinearGradient from 'react-native-linear-gradient';
+import { getApiCall } from '../../../config/apiCall';
 import styles from './PeopleScreenStyles';
 
 const { width, height } = Dimensions.get('window');
@@ -32,14 +34,39 @@ interface Profile {
   interests?: string[];
 }
 
+interface UserProfile {
+  id: number;
+  uid?: string;
+  email?: string;
+  phone?: string;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  bio?: string;
+  photos?: string[];
+  selfie_photo?: string;
+  is_verified?: boolean;
+  hobbies?: string[];
+  known_languages?: string[];
+  dating_goal?: string;
+  interested_in_genders?: string[];
+  interested_age_range?: {
+    min?: number;
+    max?: number;
+  };
+  is_onboarding_complete?: boolean;
+}
+
 export default function PeopleScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   
   const position = useRef(new Animated.ValueXY()).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const nextCardScale = useRef(new Animated.Value(0.96)).current;
-  const nextCardOpacity = useRef(new Animated.Value(1)).current;
   const currentAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const isAnimatingRef = useRef(false);
 
@@ -57,7 +84,7 @@ export default function PeopleScreen() {
     nextCardScale.setValue(0.96);
     setIsAnimating(false);
     isAnimatingRef.current = false;
-  }, [currentIndex]);
+  }, [currentIndex, position, rotate, nextCardScale]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -68,276 +95,67 @@ export default function PeopleScreen() {
     };
   }, []);
 
-  const profiles: Profile[] = useMemo(
-    () => [
-      {
-        id: '1',
-        name: 'Julia',
-        age: 27,
-        image: 'https://images.unsplash.com/photo-1503342217505-b0a15cf70489?q=80&w=800&auto=format&fit=crop',
-        bio: "Hey there 👋 My name is Julia and I'm a fashion photographer. I love going to concerts and festivals.",
-        location: 'California',
-        distance: 5,
-        verified: true,
-        job: 'Fashion Photographer',
-        education: 'UCLA',
-        isNew: true,
-        interests: ['Artists', 'Photography', 'Fashion', 'Music'],
-      },
-      {
-        id: '2',
-        name: 'Amelia',
-        age: 25,
-        image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=800&auto=format&fit=crop',
-        bio: 'Love going to concerts and festivals.',
-        location: 'New York',
-        distance: 8,
-        job: 'Product Designer',
-        education: 'Parsons',
-        interests: ['Music', 'Travel', 'Art'],
-      },
-      {
-        id: '3',
-        name: 'Sophia',
-        age: 29,
-        image: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=800&auto=format&fit=crop',
-        location: 'Boston',
-        distance: 2,
-        job: 'Software Engineer',
-        education: 'MIT',
-        verified: true,
-        interests: ['Tech', 'Coffee', 'Hiking'],
-      },
-      {
-        id: '4',
-        name: 'Ava',
-        age: 26,
-        image: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?q=80&w=800&auto=format&fit=crop',
-        location: 'Seattle',
-        distance: 3,
-        job: 'Architect',
-        interests: ['Design', 'Architecture'],
-      },
-    
-      // ---- 46 Artificially Generated Members Below ---- //
-    
-      {
-        id: '5',
-        name: 'Mia',
-        age: 24,
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop',
-        bio: 'Writer ✍️ Lover of books and sunsets.',
-        location: 'Chicago',
-        distance: 6,
-        job: 'Content Writer',
-        interests: ['Books', 'Tea', 'Travel'],
-      },
-      {
-        id: '6',
-        name: 'Isabella',
-        age: 28,
-        image: 'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?q=80&w=800&auto=format&fit=crop',
-        location: 'San Francisco',
-        job: 'UI/UX Designer',
-        distance: 4,
-        interests: ['Art', 'Design', 'Hiking'],
-        verified: true,
-      },
-      {
-        id: '7',
-        name: 'Charlotte',
-        age: 30,
-        image: 'https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=800&auto=format&fit=crop',
-        location: 'Houston',
-        distance: 10,
-        job: 'Nurse',
-        interests: ['Fitness', 'Cycling'],
-      },
-      {
-        id: '8',
-        name: 'Harper',
-        age: 23,
-        image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=800&auto=format&fit=crop',
-        location: 'Miami',
-        distance: 3,
-        job: 'Barista',
-        interests: ['Coffee', 'Beach', 'Surfing'],
-        isNew: true,
-      },
-      {
-        id: '9',
-        name: 'Evelyn',
-        age: 27,
-        image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=800&auto=format&fit=crop',
-        location: 'Denver',
-        job: 'Data Analyst',
-        distance: 7,
-        verified: true,
-        interests: ['Tech', 'Chess'],
-      },
-      {
-        id: '10',
-        name: 'Abigail',
-        age: 26,
-        image: 'https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?q=80&w=800&auto=format&fit=crop',
-        location: 'Austin',
-        distance: 9,
-        job: 'Marketing Manager',
-        interests: ['Branding', 'Music Festivals'],
-      },
-    
-      {
-        id: '11',
-        name: 'Emily',
-        age: 22,
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=800&auto=format&fit=crop',
-        location: 'Las Vegas',
-        job: 'Student',
-        interests: ['Movies', 'Dance', 'Gaming'],
-      },
-      {
-        id: '12',
-        name: 'Ella',
-        age: 25,
-        image: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=800&auto=format&fit=crop',
-        location: 'Washington',
-        verified: true,
-        job: 'Political Analyst',
-        interests: ['Debates', 'History'],
-      },
-      {
-        id: '13',
-        name: 'Grace',
-        age: 29,
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29339?q=80&w=800&auto=format&fit=crop',
-        location: 'Phoenix',
-        distance: 5,
-        job: 'Event Manager',
-        interests: ['Parties', 'Photography'],
-      },
-      {
-        id: '14',
-        name: 'Chloe',
-        age: 28,
-        image: 'https://images.unsplash.com/photo-1475546651228-74e7450c0a21?q=80&w=800&auto=format&fit=crop',
-        location: 'Philadelphia',
-        distance: 6,
-        interests: ['Cooking', 'Yoga'],
-        education: 'NYU',
-      },
-      {
-        id: '15',
-        name: 'Lily',
-        age: 26,
-        image: 'https://images.unsplash.com/photo-1502767089025-6572583495ef?q=80&w=800&auto=format&fit=crop',
-        location: 'Seattle',
-        job: 'Interior Designer',
-        interests: ['Art', 'Architecture', 'Crafts'],
-      },
-      {
-        id: '16',
-        name: 'Hannah',
-        age: 27,
-        image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=800&auto=format&fit=crop',
-        location: 'Dallas',
-        distance: 4,
-        job: 'Fitness Instructor',
-        verified: true,
-        interests: ['Gym', 'Running'],
-      },
-      {
-        id: '17',
-        name: 'Zoey',
-        age: 24,
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop',
-        location: 'San Diego',
-        distance: 2,
-        isNew: true,
-        job: 'Student',
-        interests: ['Beach', 'Surfing', 'Yoga'],
-      },
-      {
-        id: '18',
-        name: 'Nora',
-        age: 30,
-        image: 'https://images.unsplash.com/photo-1517091421724-005eec06c04b?q=80&w=800&auto=format&fit=crop',
-        location: 'New Jersey',
-        job: 'Chef',
-        interests: ['Cooking', 'Wine', 'Travel'],
-      },
-      {
-        id: '19',
-        name: 'Riley',
-        age: 25,
-        image: 'https://images.unsplash.com/photo-1503341455253-b0e723bb3da0?q=80&w=800&auto=format&fit=crop',
-        location: 'Atlanta',
-        distance: 8,
-        interests: ['Biking', 'Photography'],
-      },
-      {
-        id: '20',
-        name: 'Victoria',
-        age: 31,
-        image: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?q=80&w=800&auto=format&fit=crop',
-        location: 'Orlando',
-        job: 'Lawyer',
-        verified: true,
-      },
-    
-      // Continuing…
-    
-      ...Array.from({ length: 30 }).map((_, i) => ({
-        id: `${21 + i}`,
-        name: `User${21 + i}`,
-        age: 22 + (i % 10),
-        image: `https://images.unsplash.com/photo-15${80 + i}...?auto=format&fit=crop`,
-        location: ['LA', 'NY', 'TX', 'FL', 'Chicago'][i % 5],
-        distance: (i % 12) + 1,
-        job: ['Artist', 'Engineer', 'Doctor', 'Photographer', 'Developer'][i % 5],
-        verified: i % 3 === 0,
-        isNew: i % 4 === 0,
-        interests: ['Music', 'Travel', 'Food', 'Tech'].slice(0, (i % 4) + 1),
-      })),
-    
-    ],
-    []
-  );
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setIsProfileLoading(true);
+        const accessToken = await AsyncStorage.getItem('accessToken');
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => !isAnimatingRef.current,
-        onMoveShouldSetPanResponder: (_, gesture) => {
-          // Only start responding if there's significant movement and not animating
-          return !isAnimatingRef.current && (Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2);
-        },
-        onPanResponderMove: (_, gesture) => {
-          if (isAnimatingRef.current) return;
-          
-          position.setValue({ x: gesture.dx, y: gesture.dy });
-          rotate.setValue(gesture.dx * 0.08);
-          
-          const progress = Math.min(Math.abs(gesture.dx) / 100, 1);
-          nextCardScale.setValue(0.96 + progress * 0.04);
-        },
-        onPanResponderRelease: (_, gesture) => {
-          if (isAnimatingRef.current) return;
-          
-          // Check velocity for faster swipes
-          const isSwipeFast = Math.abs(gesture.vx) > 0.5 || Math.abs(gesture.vy) > 0.5;
-          const swipeThreshold = isSwipeFast ? SWIPE_THRESHOLD * 0.5 : SWIPE_THRESHOLD;
-          
-          if (Math.abs(gesture.dx) > swipeThreshold) {
-            handleSwipe(gesture.dx > 0 ? 'right' : 'left');
-          } else if (gesture.dy < -swipeThreshold) {
-            handleSwipe('up');
-          } else {
-            resetPosition();
-          }
-        },
-      }),
-    []
-  );
+        if (!accessToken) {
+          console.warn('[PeopleScreen] No access token found; skipping profile fetch');
+          setProfiles([]);
+          return;
+        }
+
+        const apiResponse: any = await getApiCall('AUTH', 'GET_PROFILE', accessToken);
+
+        if (apiResponse?.error) {
+          console.warn('[PeopleScreen] Failed to fetch profile', apiResponse?.response);
+          setProfiles([]);
+          return;
+        }
+
+        if (apiResponse?.response?.profile) {
+          const profilePayload = apiResponse.response.profile;
+          setUserProfile(profilePayload);
+
+          const primaryPhoto =
+            profilePayload?.photos?.[0] ||
+            profilePayload?.selfie_photo ||
+            profilePayload?.profile_photo ||
+            '';
+
+          const fullName =
+            `${profilePayload?.first_name || ''} ${profilePayload?.last_name || ''}`.trim() ||
+            profilePayload?.username ||
+            'Profile';
+
+          const mappedProfile: Profile = {
+            id: String(profilePayload?.id ?? profilePayload?.uid ?? 'self'),
+            name: fullName,
+            age: profilePayload?.age || profilePayload?.interested_age_range?.min || 18,
+            image: primaryPhoto || 'https://via.placeholder.com/400x600.png?text=Profile',
+            bio: profilePayload?.bio,
+            location: profilePayload?.currently || profilePayload?.location,
+            verified: Boolean(profilePayload?.is_verified),
+            interests: profilePayload?.hobbies || profilePayload?.known_languages || [],
+          };
+
+          setProfiles(primaryPhoto ? [mappedProfile] : []);
+          setCurrentIndex(0);
+        } else {
+          setProfiles([]);
+        }
+      } catch (error) {
+        console.warn('[PeopleScreen] Error fetching profile', error);
+        setProfiles([]);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const handleSwipe = (direction: 'left' | 'right' | 'up') => {
     if (isAnimatingRef.current || currentIndex >= profiles.length) return;
@@ -420,6 +238,42 @@ export default function PeopleScreen() {
       currentAnimation.current = null;
     });
   };
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !isAnimatingRef.current,
+        onMoveShouldSetPanResponder: (_, gesture) => {
+          // Only start responding if there's significant movement and not animating
+          return !isAnimatingRef.current && (Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2);
+        },
+        onPanResponderMove: (_, gesture) => {
+          if (isAnimatingRef.current) return;
+          
+          position.setValue({ x: gesture.dx, y: gesture.dy });
+          rotate.setValue(gesture.dx * 0.08);
+          
+          const progress = Math.min(Math.abs(gesture.dx) / 100, 1);
+          nextCardScale.setValue(0.96 + progress * 0.04);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (isAnimatingRef.current) return;
+          
+          // Check velocity for faster swipes
+          const isSwipeFast = Math.abs(gesture.vx) > 0.5 || Math.abs(gesture.vy) > 0.5;
+          const swipeThreshold = isSwipeFast ? SWIPE_THRESHOLD * 0.5 : SWIPE_THRESHOLD;
+          
+          if (Math.abs(gesture.dx) > swipeThreshold) {
+            handleSwipe(gesture.dx > 0 ? 'right' : 'left');
+          } else if (gesture.dy < -swipeThreshold) {
+            handleSwipe('up');
+          } else {
+            resetPosition();
+          }
+        },
+      }),
+    [handleSwipe, nextCardScale, position, resetPosition, rotate]
+  );
 
   const renderCard = (profile: Profile, index: number) => {
     const isTopCard = index === currentIndex;
@@ -539,9 +393,9 @@ export default function PeopleScreen() {
             </Text>
           )}
 
-          {profile.job && <Text style={styles.detail}>💼 {profile.job}</Text>}
-          {profile.education && <Text style={styles.detail}>🎓 {profile.education}</Text>}
-          {profile.distance && <Text style={styles.distance}>📍 {profile.distance} km away</Text>}
+          {profile.job && <Text style={styles.detail}>{profile.job}</Text>}
+          {profile.education && <Text style={styles.detail}>{profile.education}</Text>}
+          {profile.distance && <Text style={styles.distance}> {profile.distance} km away</Text>}
 
           {profile.interests && profile.interests.length > 0 && (
             <View style={styles.interestsContainer}>
@@ -564,10 +418,23 @@ export default function PeopleScreen() {
     </View>
   );
 
+  const renderLoadingState = () => (
+    <View style={styles.emptyContainer}>
+      <ActivityIndicator size="large" color="#fff" />
+      <Text style={styles.emptyText}>Loading profiles...</Text>
+    </View>
+  );
+
+  const headerTitle = isProfileLoading
+    ? 'Loading...'
+    : userProfile?.username ||
+      userProfile?.first_name ||
+      'snixx';
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>snixx</Text>
+        <Text style={styles.headerTitle}>{headerTitle}</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.headerIcon}>
             <Icon name="search" size={20} color="#666" />
@@ -580,7 +447,9 @@ export default function PeopleScreen() {
 
     
       <View style={styles.cardsContainer}>
-        {currentIndex >= profiles.length
+        {isProfileLoading
+          ? renderLoadingState()
+          : currentIndex >= profiles.length
           ? renderEmptyState()
           : profiles.map((profile, index) => renderCard(profile, index))}
       </View>

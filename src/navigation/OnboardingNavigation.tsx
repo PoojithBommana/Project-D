@@ -16,11 +16,8 @@ import OnboardingStep5 from '../screen/OnboardingUser/OnboardingStep5';
 import LocationPermissionScreen from '../screen/OnboardingUser/LocationPermissionScreen';
 import InterestsSelectionScreen from '../screen/OnboardingUser/InterestsSelectionScreen';
 import DevicePermissionsScreen from '../screen/OnboardingUser/DevicePermissionsScreen';
-<<<<<<< HEAD
-import LivePhotoScreen from '../screen/OnboardingUser/LivePhotoScreen';
-=======
+  import LivePhotoScreen from '../screen/OnboardingUser/LivePhotoScreen';
 import UsernameInputScreen from '../screen/OnboardingUser/UsernameInputScreen';
->>>>>>> 58bc6b7851b47c7227b8ca02a58841b60765c94c
 
 export type OnboardingStackParamList = {
   AccountSelectionScreen: { existingUser?: any; firebaseUid?: string; email?: string; phone?: string } | undefined;

@@ -94,6 +94,51 @@ export const postApiCall = async (
   }
 };
 
+export const getApiCall = async (
+  screenName: string,
+  endpoint: string,
+  accessToken?: string,
+) => {
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const responseData = await api.get(API_ENDPOINTS[screenName][endpoint], {
+      headers,
+    });
+
+    return {
+      response: responseData.data,
+      statusCode: responseData.status,
+      statusText: responseData.statusText,
+    };
+  } catch (error: any) {
+    if (error?.response) {
+      return {
+        error: true,
+        response: error?.response?.data || { Message: error?.message || 'Server error' },
+        statusCode: error?.response?.status,
+        statusText: error?.response?.statusText,
+      };
+    } else if (error.request) {
+      return {
+        error: true,
+        response: { Message: 'Network error: Unable to reach server' },
+      };
+    } else {
+      return {
+        error: true,
+        response: { Message: error?.message || 'Unknown error occurred' },
+      };
+    }
+  }
+};
+
 /**
  * Makes a GET request to an external API (full URL)
  * Used for third-party APIs like Spotify
