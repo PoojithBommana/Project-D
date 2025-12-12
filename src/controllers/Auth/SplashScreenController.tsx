@@ -15,17 +15,14 @@ export default function SplashScreenController() {
       const hasToken = Boolean(accessToken || legacyToken);
       const isOnboardingDone = onboardingComplete === 'true';
 
-      if (!hasToken) {
-        navigation.navigate('AuthNavigation');
-        return;
-      }
-
-      if (isOnboardingDone) {
+      // If we have any session token, take user straight to the main app
+      // (treat missing onboarding flag as completed to avoid getting stuck).
+      if (hasToken) {
         navigation.navigate('TabNavigation');
         return;
       }
 
-      // Token exists but onboarding not complete: force re-auth
+      // No session found: show auth flow
       navigation.navigate('AuthNavigation');
     } catch (error) {
       console.warn(JSON.stringify(error))

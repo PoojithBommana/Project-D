@@ -107,45 +107,63 @@ export default function PeopleScreen() {
           return;
         }
 
+        // fetch current user for header context
         const apiResponse: any = await getApiCall('AUTH', 'GET_PROFILE', accessToken);
 
         if (apiResponse?.error) {
           console.warn('[PeopleScreen] Failed to fetch profile', apiResponse?.response);
+        } else if (apiResponse?.response?.profile) {
+          const profilePayload = apiResponse.response.profile;
+          setUserProfile(profilePayload);
+        }
+
+        // fetch all profiles (no id, backend returns list)
+        const listResponse: any = await getApiCall('PROFILE', 'GET_PROFILES', accessToken);
+
+        if (listResponse?.error) {
+          console.warn('[PeopleScreen] Failed to fetch profiles', listResponse?.response);
           setProfiles([]);
           return;
         }
 
-        if (apiResponse?.response?.profile) {
-          const profilePayload = apiResponse.response.profile;
-          setUserProfile(profilePayload);
+        const payload = listResponse?.response;
+        const list: any[] =
+          payload?.results ||
+          payload?.profiles ||
+          (Array.isArray(payload) ? payload : []);
 
-          const primaryPhoto =
-            profilePayload?.photos?.[0] ||
-            profilePayload?.selfie_photo ||
-            profilePayload?.profile_photo ||
-            '';
+        const mapped = list
+          .map((p, idx) => {
+            const primaryPhoto =
+              p?.photos?.[0] ||
+              p?.profile_photo ||
+              p?.selfie_photo ||
+              '';
 
-          const fullName =
-            `${profilePayload?.first_name || ''} ${profilePayload?.last_name || ''}`.trim() ||
-            profilePayload?.username ||
-            'Profile';
+            const fullName =
+              `${p?.first_name || ''} ${p?.last_name || ''}`.trim() ||
+              p?.username ||
+              p?.name ||
+              'Profile';
 
-          const mappedProfile: Profile = {
-            id: String(profilePayload?.id ?? profilePayload?.uid ?? 'self'),
-            name: fullName,
-            age: profilePayload?.age || profilePayload?.interested_age_range?.min || 18,
-            image: primaryPhoto || 'https://via.placeholder.com/400x600.png?text=Profile',
-            bio: profilePayload?.bio,
-            location: profilePayload?.currently || profilePayload?.location,
-            verified: Boolean(profilePayload?.is_verified),
-            interests: profilePayload?.hobbies || profilePayload?.known_languages || [],
-          };
+            if (!primaryPhoto) return null;
 
-          setProfiles(primaryPhoto ? [mappedProfile] : []);
-          setCurrentIndex(0);
-        } else {
-          setProfiles([]);
-        }
+            const profile: Profile = {
+              id: String(p?.id ?? p?.uid ?? p?.user_id ?? idx),
+              name: fullName,
+              age: p?.age || p?.interested_age_range?.min || 18,
+              image: primaryPhoto,
+              bio: p?.bio,
+              location: p?.currently || p?.location,
+              verified: Boolean(p?.is_verified),
+              interests: p?.hobbies || p?.known_languages || [],
+            };
+            return profile;
+          })
+          .filter(Boolean) as Profile[];
+
+        setProfiles(mapped);
+        setCurrentIndex(0);
       } catch (error) {
         console.warn('[PeopleScreen] Error fetching profile', error);
         setProfiles([]);
