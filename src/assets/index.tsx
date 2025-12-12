@@ -19,6 +19,6 @@ export const Wrongicon = require('./Wrongicon.png');
 export const Lightbulbicon = require('./Bulbicon.png');
 export const Mapicon = require('./Mapsicon.png')
 export const Applogoicon = require('./snixxlogo.png')
-// export const Bgvideo = require('./bgvideo.mp4') // File not found - commented out
+export const Bgvideo = require('./bgvideo.mp4')
 export const Nonbinaryicon = require('./nonbinary.png')
 export const Splashlogo = require('./snixx.png')

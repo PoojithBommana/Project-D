@@ -26,6 +26,7 @@ interface Props {
       firebaseUid?: string;
       email?: string;
       phone?: string;
+      canCreateNewAccount?: boolean;
     };
   };
 }
@@ -37,8 +38,9 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
 
   const existingUser = route?.params?.existingUser;
   const firebaseUid = route?.params?.firebaseUid;
-  const fallbackEmail = route?.params?.email;
-  const fallbackPhone = route?.params?.phone;
+  const emailParam = route?.params?.email;
+  const phoneParam = route?.params?.phone;
+  const canCreateNewAccount = route?.params?.canCreateNewAccount ?? true;
 
   const existingAccountLabel = useMemo(() => {
     if (!existingUser) return 'Existing account';
@@ -48,20 +50,28 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
   }, [existingUser]);
 
   const existingAccountLogin = useMemo(() => {
-    if (!existingUser) return fallbackPhone || fallbackEmail || 'Login info unavailable';
-    return existingUser.phone || existingUser.email || fallbackPhone || fallbackEmail || 'Login info unavailable';
-  }, [existingUser, fallbackEmail, fallbackPhone]);
+    if (!existingUser) return 'Login info unavailable';
+    return existingUser.phone || existingUser.email || 'Login info unavailable';
+  }, [existingUser]);
 
   const handleExistingAccountSelect = () => {
     setSelectedAccount('existing');
   };
 
   const handleNewAccountSelect = () => {
+    if (!canCreateNewAccount) {
+      Alert.alert('Use existing account', 'Creating a new account is disabled for this login.');
+      return;
+    }
     setSelectedAccount('new');
   };
 
   const handleContinue = async () => {
     if (selectedAccount === 'new') {
+      if (!canCreateNewAccount) {
+        Alert.alert('Use existing account', 'Please continue with your existing account.');
+        return;
+      }
       setShowModal(true);
       return;
     }
@@ -86,15 +96,11 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
         ['onboarding_complete', response.onboarding_complete ? 'true' : 'false'],
       ]);
 
-      if (response.onboarding_complete) {
-        const rootNavigation = (navigation as any)?.getParent()?.getParent();
-        if (rootNavigation) {
-          rootNavigation.navigate('TabNavigation');
-        } else {
-          navigation?.getParent()?.navigate('TabNavigation');
-        }
+      const rootNavigation = (navigation as any)?.getParent()?.getParent();
+      if (rootNavigation) {
+        rootNavigation.navigate('TabNavigation');
       } else {
-        navigation?.navigate('ProfileSetupIntroScreen');
+        navigation?.getParent()?.navigate('TabNavigation');
       }
     } catch (error) {
       console.error('Error continuing with existing account:', error);
@@ -115,8 +121,8 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
     try {
       const response = await authController.createNewAccount({
         firebase_uid: firebaseUid,
-        email: fallbackEmail,
-        phone: fallbackPhone,
+        email: emailParam,
+        phone: phoneParam,
       });
 
       if (!response.success || !response.access || !response.refresh) {
@@ -127,6 +133,7 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
       await AsyncStorage.multiSet([
         ['accessToken', response.access],
         ['refreshToken', response.refresh],
+        ['userId', response.user_id ? String(response.user_id) : firebaseUid || ''],
         ['onboarding_complete', 'false'],
       ]);
 
@@ -181,9 +188,13 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
 
               <View style={styles.accountBody}>
                 <View style={styles.profileImageContainer}>
-                  <View style={styles.profileImagePlaceholder}>
-                    <Image source={Usericon} style={styles.profileIcon} resizeMode="contain" />
-                  </View>
+                  {existingUser?.profile_photo ? (
+                    <Image source={{ uri: existingUser.profile_photo }} style={styles.profileImagePlaceholder} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.profileImagePlaceholder}>
+                      <Image source={Usericon} style={styles.profileIcon} resizeMode="contain" />
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.accountInfo}>
@@ -204,9 +215,11 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
                 styles.accountCard,
                 styles.newAccountCard,
                 selectedAccount === 'new' && styles.accountCardSelected,
+                !canCreateNewAccount && { opacity: 0.5 },
               ]}
               onPress={handleNewAccountSelect}
               activeOpacity={0.8}
+              disabled={!canCreateNewAccount}
             >
               <View style={styles.selectionIndicator}>
                 {selectedAccount === 'new' ? (
@@ -228,11 +241,16 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
                 <View style={styles.accountInfo}>
                   <Text style={styles.newAccountText}>Create a new account</Text>
                   <Text style={styles.accountLogin}>
-                    Login: {fallbackEmail || fallbackPhone || 'Use your current login'}
+                    Login: {emailParam || phoneParam || 'Use your current login'}
                   </Text>
                 </View>
               </View>
             </TouchableOpacity>
+            {!canCreateNewAccount && (
+              <Text style={styles.footerText}>
+                New account creation is disabled for this login. Please continue with your existing account.
+              </Text>
+            )}
           </View>
 
           <View style={styles.footerContainer}>
@@ -271,7 +289,7 @@ export default function AccountSelectionScreen({ navigation, route }: Props) {
 
             <Text style={styles.modalHeading}>
               You are creating a new account with{' '}
-              <Text style={styles.modalHighlightedText}>myselfyours.tej@gmail.com</Text>
+              <Text style={styles.modalHighlightedText}>{emailParam || phoneParam || 'your login'}</Text>
             </Text>
 
             <Text style={styles.modalWarning}>

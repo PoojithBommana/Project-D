@@ -43,6 +43,22 @@ class AuthService {
   private webClientId: string = '168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com';
   private googleSignInConfigured: boolean = false;
 
+  private async clearGoogleSession(): Promise<void> {
+    if (!GoogleSignin) return;
+    try {
+      await GoogleSignin.signOut();
+    } catch (error) {
+      console.warn('Google signOut failed (continuing):', error);
+    }
+    try {
+      if (GoogleSignin.revokeAccess) {
+        await GoogleSignin.revokeAccess();
+      }
+    } catch (error) {
+      console.warn('Google revokeAccess failed (continuing):', error);
+    }
+  }
+
   private configureGoogleSignIn(): void {
     if (!GoogleSignin) {
       throw new Error('Google Sign-In module is not available. Please ensure the native module is properly linked.');
@@ -78,6 +94,7 @@ class AuthService {
       }
 
       this.configureGoogleSignIn();
+      await this.clearGoogleSession();
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       
       // Ensure app is active and Activity is ready (Android)

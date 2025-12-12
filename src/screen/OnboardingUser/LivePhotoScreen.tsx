@@ -18,6 +18,7 @@ import { launchCamera, Asset } from 'react-native-image-picker';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import styles from '../../styles/LivePhotoScreenStyles';
 import { submitOnboardingUpdate } from '../../utils/onboardingUpdate';
+import { uploadImageAndGetUrl } from '../../utils/imageUpload';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Props {
@@ -38,9 +39,9 @@ interface Props {
       favorite_artist: string;
       bio: string;
       hobbies: string[];
-      known_languages: string[];
+      known_languages?: string[];
       interested_in_genders: string[];
-      interested_age_range: number[];
+      interested_age_range: { min: number; max: number };
       showOnlyFirstLetter: boolean;
     };
   };
@@ -156,9 +157,33 @@ export default function LivePhotoScreen({ navigation, route }: Props) {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
 
-      const livePhotoPayload = livePhoto.base64
-        ? `data:${livePhoto.type || 'image/jpeg'};base64,${livePhoto.base64}`
-        : livePhoto.uri;
+      // Upload live selfie to Cloudinary to get a CDN URL
+      const selfieUrl = await uploadImageAndGetUrl({
+        uri: livePhoto.uri,
+        type: livePhoto.type,
+        fileName: (livePhoto as any)?.fileName,
+      });
+
+      const normalizedDatingGoal =
+        (route?.params?.datingGoal || '').replace(/-/g, '_');
+
+      const rawPhotos: (string | undefined)[] = [
+        ...(route?.params?.photos || []),
+        route?.params?.photo, // include single profile photo if provided
+      ].filter(Boolean);
+      const uploadedPhotos: string[] = [];
+
+      if (rawPhotos.length) {
+        for (const photoUri of rawPhotos) {
+          if (!photoUri) continue;
+          if (photoUri.startsWith('http://') || photoUri.startsWith('https://')) {
+            uploadedPhotos.push(photoUri);
+            continue;
+          }
+          const uploadedUrl = await uploadImageAndGetUrl({ uri: photoUri });
+          uploadedPhotos.push(uploadedUrl);
+        }
+      }
 
       const response = await submitOnboardingUpdate(
         {
@@ -168,15 +193,17 @@ export default function LivePhotoScreen({ navigation, route }: Props) {
           birthday: route?.params?.birthday,
           currently: route?.params?.currently || '',
           favorite_artist: route?.params?.favorite_artist || '',
-          photos: route?.params?.photos || [],
+          photos: uploadedPhotos,
           username: route?.params?.username || '',
           bio: route?.params?.bio || '',
           hobbies: route?.params?.hobbies || [],
-          known_languages: route?.params?.known_languages || [],
-          dating_goal: route?.params?.datingGoal || '',
+          known_languages: route?.params?.known_languages?.length
+            ? route?.params?.known_languages
+            : ['English'],
+          dating_goal: normalizedDatingGoal,
           interested_in_genders: route?.params?.interested_in_genders || [],
           interested_age_range: route?.params?.interested_age_range,
-          selfie_photo: livePhotoPayload,
+          selfie_photo: selfieUrl,
         },
         accessToken || undefined,
       );

@@ -3,12 +3,12 @@ export const API_ENDPOINTS: any = {
     SEND_OTP: '/auth/send-otp',
     VERIFY_OTP: '/auth/verify-otp',
     RESEND_OTP: '/auth/resend-otp',
-    SOCIAL_LOGIN: '/auth/login/',
-    USE_EXISTING_ACCOUNT: '/auth/use-existing-account/',
-    CREATE_NEW_ACCOUNT: '/auth/create-new-account/',
-    LOGOUT: '/auth/logout/',
-    REFRESH_TOKEN: '/auth/token/refresh/',
-    GET_PROFILE: '/auth/profile/',
+    SOCIAL_LOGIN: '/login/',
+    USE_EXISTING_ACCOUNT: '/use-existing-account/',
+    CREATE_NEW_ACCOUNT: '/create-new-account/',
+    LOGOUT: '/logout/',
+    REFRESH_TOKEN: '/token/refresh/',
+    GET_PROFILE: '/profile/',
   },
   PROFILE: {
     GET_PROFILES: '/profiles',
@@ -22,6 +22,6 @@ export const API_ENDPOINTS: any = {
     FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
   },
   ONBOARDING: {
-    UPDATE: '/auth/onboarding/update/',
+    UPDATE: '/onboarding/update/',
   },
 };

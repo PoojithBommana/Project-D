@@ -24,6 +24,8 @@ interface Props {
       photo?: string;
       photos?: string[];
       showOnlyFirstLetter: boolean;
+      interested_in_genders: string[];
+      interested_age_range: { min: number; max: number };
     };
   };
 }
@@ -43,19 +45,19 @@ const datingGoals: DatingGoal[] = [
     emoji: '🥵',
   },
   {
-    id: 'short-term',
+    id: 'short_term',
     title: 'Short-term relationship',
     description: 'Something meaningful but not forever',
     emoji: '🌚',
   },
   {
-    id: 'long-term',
+    id: 'long_term',
     title: 'Long-term relationship',
     description: 'Looking for my forever person',
     emoji: '👯‍♀️',
   },
   {
-    id: 'go-with-flow',
+    id: 'go_with_flow',
     title: 'Go with the flow',
     description: 'Open to whatever comes my way',
     emoji: '🤷‍♂️',
@@ -96,6 +98,8 @@ export default function OnboardingStep5({ navigation, route }: Props) {
         photos: route?.params?.photos || [],
         datingGoal: selectedGoal,
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+        interested_in_genders: route?.params?.interested_in_genders || [],
+        interested_age_range: route?.params?.interested_age_range || { min: 18, max: 22 },
       });
     }
   };

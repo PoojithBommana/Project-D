@@ -33,6 +33,8 @@ interface Props {
       photo?: string;
       photos?: string[];
       showOnlyFirstLetter: boolean;
+      bio?: string;
+      birthday?: number;
     };
   };
 }
@@ -286,6 +288,15 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
   };
 
   const handleModalYes = () => {
+    // Map selected genders to backend-friendly values
+    const genderMap: Record<string, string> = {
+      Women: 'female',
+      Men: 'male',
+      'Non-binary': 'non_binary',
+    };
+    const interestedGenders = selectedGenders.map(g => genderMap[g] || g.toLowerCase());
+    const interestedAgeRange = { min: minAge, max: maxAge };
+
     Animated.parallel([
       Animated.spring(modalScale, {
         toValue: 0,
@@ -311,6 +322,10 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
           photo: route?.params?.photo || '',
           photos: route?.params?.photos || [],
           showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+          interested_in_genders: interestedGenders,
+          interested_age_range: interestedAgeRange,
+          bio: route?.params?.bio,
+          birthday: route?.params?.birthday,
         });
       }, 100);
     });

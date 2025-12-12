@@ -16,11 +16,11 @@ import OnboardingStep5 from '../screen/OnboardingUser/OnboardingStep5';
 import LocationPermissionScreen from '../screen/OnboardingUser/LocationPermissionScreen';
 import InterestsSelectionScreen from '../screen/OnboardingUser/InterestsSelectionScreen';
 import DevicePermissionsScreen from '../screen/OnboardingUser/DevicePermissionsScreen';
-  import LivePhotoScreen from '../screen/OnboardingUser/LivePhotoScreen';
+import LivePhotoScreen from '../screen/OnboardingUser/LivePhotoScreen';
 import UsernameInputScreen from '../screen/OnboardingUser/UsernameInputScreen';
 
 export type OnboardingStackParamList = {
-  AccountSelectionScreen: { existingUser?: any; firebaseUid?: string; email?: string; phone?: string } | undefined;
+  AccountSelectionScreen: { existingUser?: any; firebaseUid?: string; email?: string; phone?: string; canCreateNewAccount?: boolean } | undefined;
   ProfileSetupIntroScreen: undefined;
   UserOnboarding: undefined;
   UsernameInputScreen: { firstName: string; lastName: string; showOnlyFirstLetter: boolean };
@@ -31,13 +31,13 @@ export type OnboardingStackParamList = {
   MusicArtistsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
   OnboardingStep3: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
   OnboardingStep4: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; showOnlyFirstLetter: boolean };
-  PromptsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photos?: string[]; showOnlyFirstLetter: boolean };
-  DatingPreferencesScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean };
-  OnboardingStep5: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean };
-  LocationPermissionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
-  InterestsSelectionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
-  DevicePermissionsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
-  LivePhotoScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean };
+  PromptsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photos?: string[]; showOnlyFirstLetter: boolean; bio?: string; birthday?: number };
+  DatingPreferencesScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean; bio?: string; birthday?: number };
+  OnboardingStep5: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; bio?: string; birthday?: number };
+  LocationPermissionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; bio?: string; birthday?: number };
+  InterestsSelectionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; bio?: string; birthday?: number };
+  DevicePermissionsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; hobbies: string[]; bio?: string; birthday?: number };
+  LivePhotoScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; hobbies: string[]; bio?: string; birthday?: number };
 };
 
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -45,7 +45,7 @@ const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 export default function OnboardingNavigation() {
   return (
     <OnboardingStack.Navigator
-      initialRouteName="AccountSelectionScreen"
+      initialRouteName="ProfileSetupIntroScreen"
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',

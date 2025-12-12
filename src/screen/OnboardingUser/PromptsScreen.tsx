@@ -187,6 +187,8 @@ export default function PromptsScreen({ navigation, route }: Props) {
         photo: profilePhoto || undefined,
         photos: route?.params?.photos || [],
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+        bio,
+        birthday: route?.params?.birthday,
       });
     }, 150);
   };

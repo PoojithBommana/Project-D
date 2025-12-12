@@ -34,6 +34,11 @@ interface Props {
       photos?: string[];
       datingGoal: string;
       showOnlyFirstLetter: boolean;
+      interested_in_genders: string[];
+      interested_age_range: { min: number; max: number };
+      hobbies: string[];
+      bio?: string;
+      birthday?: number;
     };
   };
 }
@@ -458,6 +463,11 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
       photos: route?.params?.photos || [],
       datingGoal: route?.params?.datingGoal || '',
       showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      interested_in_genders: route?.params?.interested_in_genders || [],
+      interested_age_range: route?.params?.interested_age_range || { min: 18, max: 22 },
+      hobbies: route?.params?.hobbies || [],
+      bio: route?.params?.bio,
+      birthday: route?.params?.birthday,
     });
   };
 

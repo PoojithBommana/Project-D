@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
   Animated,
@@ -12,6 +11,7 @@ import {
   TextInput,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
@@ -19,6 +19,7 @@ import styles from '../../styles/AuthOptionsScreenStyles.tsx';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../../services/AuthService';
+import { authController } from '../../controllers/AuthController';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { ActivityIndicator } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -120,29 +121,75 @@ export default class AuthOptionsScreen extends Component<Props, State> {
 
       if (result.success && result.user) {
         const backend = result.backendResponse;
+        console.log('[AuthOptions] Firebase user', result.user?.uid, result.user?.email);
+        console.log('[AuthOptions] backend login response', backend);
 
-        if (backend?.account_exists && backend?.existing_user) {
+        if (!backend) {
+          this.setState({ isLoading: false });
+          Alert.alert('Login failed', 'Could not reach server. Please try again.');
+          return;
+        }
+
+        if (backend?.account_exists === true) {
+          const rootNavigation = this.props.navigation?.getParent()?.getParent();
+          const screenParams = {
+            screen: 'AccountSelectionScreen',
+            params: {
+              existingUser: backend?.existing_user || null,
+              firebaseUid: result.user?.uid,
+              email: backend?.existing_user?.email || backend?.email || result.user?.email,
+              phone: backend?.existing_user?.phone || backend?.phone || result.user?.phoneNumber,
+              canCreateNewAccount: backend?.can_create_new_account ?? false,
+            },
+          };
+
+          this.setState({ isLoading: false });
+
+          if (rootNavigation) {
+            rootNavigation.navigate('OnboardingNavigation', screenParams);
+          } else {
+            this.props.navigation?.getParent()?.navigate('OnboardingNavigation', screenParams);
+          }
+          return;
+        }
+
+        if (backend?.account_exists === false) {
+          try {
+            const creationResponse = await authController.createNewAccount({
+              firebase_uid: backend?.uid || result.user?.uid,
+              email: backend?.email || result.user?.email || undefined,
+              phone: backend?.phone || result.user?.phoneNumber || undefined,
+            });
+
+            if (!creationResponse.success || !creationResponse.access || !creationResponse.refresh) {
+              throw new Error(creationResponse.error || 'Could not create account');
+            }
+
+            await AsyncStorage.multiSet([
+              ['accessToken', creationResponse.access],
+              ['refreshToken', creationResponse.refresh],
+              ['userId', creationResponse.user_id ? String(creationResponse.user_id) : result.user?.uid || ''],
+              ['onboarding_complete', 'false'],
+            ]);
+          } catch (creationError: any) {
+            console.error('Error creating new account after login:', creationError);
+            this.setState({ isLoading: false });
+            Alert.alert('Could not start onboarding', creationError?.message || 'Please try again.');
+            return;
+          }
+
           this.setState({ isLoading: false });
           const rootNavigation = this.props.navigation?.getParent()?.getParent();
           if (rootNavigation) {
-            rootNavigation.navigate('OnboardingNavigation', {
-              screen: 'AccountSelectionScreen',
-              params: {
-                existingUser: backend.existing_user,
-                firebaseUid: result.user?.uid,
-                email: backend.existing_user?.email || result.user?.email,
-                phone: backend.existing_user?.phone || result.user?.phoneNumber,
-              },
-            });
+            rootNavigation.dispatch(
+              CommonActions.navigate({
+                name: 'OnboardingNavigation',
+                params: { screen: 'ProfileSetupIntroScreen' },
+              })
+            );
           } else {
             this.props.navigation?.getParent()?.navigate('OnboardingNavigation', {
-              screen: 'AccountSelectionScreen',
-              params: {
-                existingUser: backend.existing_user,
-                firebaseUid: result.user?.uid,
-                email: backend.existing_user?.email || result.user?.email,
-                phone: backend.existing_user?.phone || result.user?.phoneNumber,
-              },
+              screen: 'ProfileSetupIntroScreen',
             });
           }
           return;
@@ -172,25 +219,19 @@ export default class AuthOptionsScreen extends Component<Props, State> {
             rootNavigation.dispatch(
               CommonActions.navigate({
                 name: 'OnboardingNavigation',
+                params: { screen: 'ProfileSetupIntroScreen' },
               })
             );
           } else {
-            this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
+            this.props.navigation?.getParent()?.navigate('OnboardingNavigation', {
+              screen: 'ProfileSetupIntroScreen',
+            });
           }
           return;
         }
 
         this.setState({ isLoading: false });
-        const rootNavigation = this.props.navigation?.getParent()?.getParent();
-        if (rootNavigation) {
-          rootNavigation.dispatch(
-            CommonActions.navigate({
-              name: 'OnboardingNavigation',
-            })
-          );
-        } else {
-          this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
-        }
+        Alert.alert('Login failed', 'Unexpected response. Please try again.');
       } else {
         this.setState({ isLoading: false });
         if (result.error && result.error !== 'Sign in was cancelled') {
