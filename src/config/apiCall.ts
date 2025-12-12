@@ -30,10 +30,11 @@ api.interceptors.response.use(response => {
 export default api;
 
 export const postApiCall = async (
-  method:string,
+  method: string,
   screenName: string,
   endpoint: string,
   params: any,
+  accessToken?: string,
 ) => {
   try {
     const commonParams = {
@@ -57,14 +58,18 @@ export const postApiCall = async (
     const finalParams = { ...commonParams, ...params };
     // console.log('Params', commonParams);
     console.log(finalParams, '----->>>finalParams');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     let responseData = await api.post(
       `${Base_URL}${API_ENDPOINTS[screenName][endpoint]}`,
       finalParams,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+      { headers },
     );
 
     return {

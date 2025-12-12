@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   View,
@@ -13,7 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LinearGradient from 'react-native-linear-gradient';
-import { getApiCall } from '../../../config/apiCall';
+import { getApiCall, postApiCall } from '../../../config/apiCall';
 import styles from './PeopleScreenStyles';
 
 const { width, height } = Dimensions.get('window');
@@ -95,8 +95,74 @@ export default function PeopleScreen() {
     };
   }, []);
 
+  const fetchSwipeUsers = useCallback(async (tokenOverride?: string) => {
+    const token = tokenOverride || (await AsyncStorage.getItem('accessToken'));
+    if (!token) {
+      console.warn('[PeopleScreen] No access token found; skipping swipe users fetch');
+      setProfiles([]);
+      return;
+    }
+    setIsProfileLoading(true);
+    try {
+      const listResponse: any = await getApiCall('SWIPE', 'GET_USERS', token);
+      console.log('[PeopleScreen] Swipe users API response:', listResponse);
+
+      if (listResponse?.error) {
+        console.warn('[PeopleScreen] Failed to fetch profiles', listResponse?.response);
+        setProfiles([]);
+        return;
+      }
+
+      const payload = listResponse?.response;
+      console.log('[PeopleScreen] Swipe users payload:', payload);
+      const list: any[] =
+        payload?.users ||
+        payload?.results ||
+        payload?.profiles ||
+        (Array.isArray(payload) ? payload : []);
+
+        const mapped = list.map((p, idx) => {
+          const primaryPhoto =
+            p?.live_photo || // prefer explicit live photo url
+            p?.selfie_photo || // backup live selfie key
+            p?.profile_photo || // fallback to profile photo
+            p?.photos?.[0] ||
+            p?.image ||
+            'https://dummyimage.com/600x800/1f1f1f/ffffff&text=Profile';
+
+        const fullName =
+          `${p?.first_name || ''} ${p?.last_name || ''}`.trim() ||
+          p?.username ||
+          p?.name ||
+          p?.email ||
+          'Profile';
+
+        const profile: Profile = {
+          id: String(p?.id ?? p?.uid ?? p?.user_id ?? idx),
+          name: fullName,
+          age: p?.age || p?.interested_age_range?.min || 18,
+          image: primaryPhoto,
+          bio: p?.bio,
+          location: p?.currently || p?.location,
+          verified: Boolean(p?.is_verified),
+          interests: p?.hobbies || p?.known_languages || [],
+          distance: typeof p?.distance_km === 'number' ? p.distance_km : undefined,
+        };
+        return profile;
+      });
+
+      setProfiles(mapped);
+      setCurrentIndex(0);
+    } catch (error) {
+      console.warn('[PeopleScreen] Error fetching swipe users', error);
+      setProfiles([]);
+    } finally {
+      setIsProfileLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchProfiles = async () => {
       try {
         setIsProfileLoading(true);
         const accessToken = await AsyncStorage.getItem('accessToken');
@@ -107,63 +173,13 @@ export default function PeopleScreen() {
           return;
         }
 
-        // fetch current user for header context
         const apiResponse: any = await getApiCall('AUTH', 'GET_PROFILE', accessToken);
 
-        if (apiResponse?.error) {
-          console.warn('[PeopleScreen] Failed to fetch profile', apiResponse?.response);
-        } else if (apiResponse?.response?.profile) {
-          const profilePayload = apiResponse.response.profile;
-          setUserProfile(profilePayload);
+        if (apiResponse?.response?.profile) {
+          setUserProfile(apiResponse.response.profile);
         }
 
-        // fetch all profiles (no id, backend returns list)
-        const listResponse: any = await getApiCall('PROFILE', 'GET_PROFILES', accessToken);
-
-        if (listResponse?.error) {
-          console.warn('[PeopleScreen] Failed to fetch profiles', listResponse?.response);
-          setProfiles([]);
-          return;
-        }
-
-        const payload = listResponse?.response;
-        const list: any[] =
-          payload?.results ||
-          payload?.profiles ||
-          (Array.isArray(payload) ? payload : []);
-
-        const mapped = list
-          .map((p, idx) => {
-            const primaryPhoto =
-              p?.photos?.[0] ||
-              p?.profile_photo ||
-              p?.selfie_photo ||
-              '';
-
-            const fullName =
-              `${p?.first_name || ''} ${p?.last_name || ''}`.trim() ||
-              p?.username ||
-              p?.name ||
-              'Profile';
-
-            if (!primaryPhoto) return null;
-
-            const profile: Profile = {
-              id: String(p?.id ?? p?.uid ?? p?.user_id ?? idx),
-              name: fullName,
-              age: p?.age || p?.interested_age_range?.min || 18,
-              image: primaryPhoto,
-              bio: p?.bio,
-              location: p?.currently || p?.location,
-              verified: Boolean(p?.is_verified),
-              interests: p?.hobbies || p?.known_languages || [],
-            };
-            return profile;
-          })
-          .filter(Boolean) as Profile[];
-
-        setProfiles(mapped);
-        setCurrentIndex(0);
+        await fetchSwipeUsers(accessToken);
       } catch (error) {
         console.warn('[PeopleScreen] Error fetching profile', error);
         setProfiles([]);
@@ -172,11 +188,37 @@ export default function PeopleScreen() {
       }
     };
 
-    fetchUserProfile();
-  }, []);
+    fetchProfiles();
+  }, [fetchSwipeUsers]);
+
+  const sendSwipeAction = async (targetId: string, action: 'like' | 'dislike') => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) return;
+
+      const numericId = Number(targetId);
+      const payload = {
+        target_user_id: Number.isFinite(numericId) ? numericId : targetId,
+        action,
+      };
+
+      const response = await postApiCall('POST', 'SWIPE', 'ACTION', payload, accessToken);
+      console.log('[PeopleScreen] Swipe action response:', response);
+    } catch (error) {
+      console.warn('[PeopleScreen] Failed to record swipe', error);
+    }
+  };
 
   const handleSwipe = (direction: 'left' | 'right' | 'up') => {
     if (isAnimatingRef.current || currentIndex >= profiles.length) return;
+    const currentProfile = profiles[currentIndex];
+    const swipeAction: 'like' | 'dislike' = direction === 'left' ? 'dislike' : 'like';
+
+    if (currentProfile?.id) {
+      sendSwipeAction(currentProfile.id, swipeAction);
+    }
+    // Fetch a fresh batch on every swipe
+    fetchSwipeUsers();
     
     // Stop any ongoing animation
     if (currentAnimation.current) {

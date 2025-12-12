@@ -10,14 +10,10 @@ export const API_ENDPOINTS: any = {
     REFRESH_TOKEN: '/token/refresh/',
     GET_PROFILE: '/profile/',
   },
-  PROFILE: {
-    GET_PROFILES: '/profiles',
-    GET_PROFILE: '/profiles/:id',
-    UPDATE_PROFILE: '/profiles/:id',
-    SWIPE_ACTION: '/profiles/swipe',
-    GET_MATCHES: '/profiles/matches',
+  SWIPE: {
+    GET_USERS: '/swipe/users/',
+    ACTION: '/swipe/action/',
   },
- 
   MUSIC: {
     FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
   },
