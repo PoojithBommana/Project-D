@@ -1,838 +1,790 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   Image,
   Dimensions,
+  StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { PeopleStackParamList } from '../../../navigation/PeopleStackNavigator';
+import LinearGradient from 'react-native-linear-gradient';
+import { HomeScreenBg, SnixxHometext } from '../../../assets';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS,
   interpolate,
-  Extrapolation,
+  Extrapolate,
+  runOnJS,
+  useAnimatedReaction,
 } from 'react-native-reanimated';
-import type { SharedValue } from 'react-native-reanimated';
-import LinearGradient from 'react-native-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { styles } from './PeopleScreenStyles';
-import { getApiCall, postApiCall } from '../../../config/apiCall';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+  GestureType,
+} from 'react-native-gesture-handler';
+import { Profile } from '../../../types/Profile';
+import styles, {
+  CARD_WIDTH,
+  CARD_HEIGHT,
+  STACK_OFFSET,
+  STACK_SCALE_1,
+  STACK_SCALE_2,
+  STACK_SCALE_3,
+  STACK_SCALE_4,
+} from './PeopleScreenStyles';
 
-const { width, height } = Dimensions.get('window');
-const SWIPE_THRESHOLD = 100;
-const CARD_WIDTH = width - 20;
-const CARD_HEIGHT = height * 0.75;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+const ROTATION_MULTIPLIER = 10;
+const PARALLAX_MULTIPLIER = 0.3;
 
-interface Profile {
-  id: string;
-  name: string;
-  age: number;
-  image: string;
-  school?: string;
-  bio?: string;
-  location?: string;
-  distance?: number;
-  photos?: string[];
-  interests?: string[];
-  job?: string;
-  height?: string;
-  exercise?: string;
-  education?: string;
-  drinking?: string;
-  smoking?: string;
-  lookingFor?: string;
-  // Additional fields from API
-  live_photo?: string;
-  hobbies?: {
-    chill?: string[];
-    outdoor?: string[];
-  };
-  latitude?: number;
-  longitude?: number;
-  first_name?: string;
-  last_name?: string;
+// Mock data for demonstration - replace with API call
+const MOCK_PROFILES: Profile[] = [
+  {
+    id: '1',
+    name: 'Sarah Johnson',
+    age: 28,
+    images: [
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+    ],
+    job: 'Software Engineer',
+    profession: 'Senior Software Engineer at Google',
+    education: 'MIT - Computer Science',
+    location: 'San Francisco, CA',
+    distance: 5,
+    verified: true,
+    isNew: false,
+    interests: ['Comedy', 'Adventure', 'Hiking', 'Tech', 'Photography'],
+    bio: 'Love coding, hiking, and trying new restaurants. Looking for someone who shares my passion for technology and outdoor adventures. Coffee enthusiast and weekend traveler.',
+  },
+  {
+    id: '2',
+    name: 'Emily Chen',
+    age: 26,
+    images: [
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+    ],
+    job: 'UI/UX Designer',
+    profession: 'Lead Designer at Apple',
+    education: 'Stanford - Design & Human-Computer Interaction',
+    location: 'Palo Alto, CA',
+    distance: 8,
+    verified: true,
+    isNew: true,
+    interests: ['Romance', 'Drama', 'Art', 'Fashion', 'Yoga'],
+    bio: 'Creative designer who loves art galleries, indie films, and morning yoga sessions. Passionate about sustainable fashion and finding beauty in everyday moments.',
+  },
+  {
+    id: '3',
+    name: 'Jessica Martinez',
+    age: 30,
+    images: [
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
+    ],
+    job: 'Photographer',
+    profession: 'Freelance Travel Photographer',
+    education: 'NYU - Visual Arts',
+    location: 'Brooklyn, NY',
+    distance: 12,
+    verified: false,
+    isNew: false,
+    interests: ['Action', 'Thriller', 'Travel', 'Photography', 'Music'],
+    bio: 'Travel photographer capturing stories around the world. Love street photography, live music, and discovering hidden gems in the city. Always up for an adventure!',
+  },
+  {
+    id: '4',
+    name: 'Olivia Brown',
+    age: 27,
+    images: [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
+      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=800',
+      'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=800',
+    ],
+    job: 'Marketing Manager',
+    profession: 'Senior Marketing Manager at Nike',
+    education: 'Harvard Business School - MBA',
+    location: 'Boston, MA',
+    distance: 3,
+    verified: true,
+    isNew: false,
+    interests: ['Drama', 'Romance', 'Fitness', 'Reading', 'Wine'],
+    bio: 'Marketing professional by day, bookworm and wine enthusiast by night. Love spin classes, trying new restaurants, and deep conversations over coffee.',
+  },
+  {
+    id: '5',
+    name: 'Sophia Williams',
+    age: 29,
+    images: [
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800',
+      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800',
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800',
+    ],
+    job: 'Doctor',
+    profession: 'Emergency Medicine Physician',
+    education: 'Johns Hopkins - Medicine',
+    location: 'Baltimore, MD',
+    distance: 7,
+    verified: true,
+    isNew: true,
+    interests: ['Comedy', 'Action', 'Medicine', 'Running', 'Cooking'],
+    bio: 'Emergency doctor who loves helping people. When not at the hospital, I enjoy running marathons, cooking Italian food, and binge-watching medical dramas.',
+  },
+  {
+    id: '6',
+    name: 'Isabella Garcia',
+    age: 25,
+    images: [
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
+    ],
+    job: 'Artist',
+    profession: 'Contemporary Visual Artist',
+    education: 'RISD - Fine Arts',
+    location: 'Providence, RI',
+    distance: 15,
+    verified: false,
+    isNew: false,
+    interests: ['Art', 'Music', 'Painting', 'Jazz', 'Museums'],
+    bio: 'Contemporary artist exploring themes of identity and nature. Love visiting art galleries, listening to jazz, and painting in my studio. Always inspired by the world around me.',
+  },
+  {
+    id: '7',
+    name: 'Ava Miller',
+    age: 31,
+    images: [
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800',
+    ],
+    job: 'Lawyer',
+    profession: 'Corporate Attorney at Law Firm',
+    education: 'Yale Law School - JD',
+    location: 'New Haven, CT',
+    distance: 4,
+    verified: true,
+    isNew: false,
+    interests: ['Thriller', 'Drama', 'Law', 'Tennis', 'Theater'],
+    bio: 'Corporate lawyer who enjoys the challenge of complex cases. Love playing tennis on weekends, attending Broadway shows, and reading legal thrillers.',
+  },
+  {
+    id: '8',
+    name: 'Mia Davis',
+    age: 24,
+    images: [
+      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=800',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
+    ],
+    job: 'Teacher',
+    profession: 'Elementary School Teacher',
+    education: 'Columbia University - Education',
+    location: 'Manhattan, NY',
+    distance: 9,
+    verified: false,
+    isNew: true,
+    interests: ['Romance', 'Comedy', 'Education', 'Dancing', 'Baking'],
+    bio: 'Elementary teacher passionate about inspiring young minds. Love dancing salsa, baking cookies for my students, and exploring NYC\'s best brunch spots.',
+  },
+  {
+    id: '9',
+    name: 'Charlotte Wilson',
+    age: 32,
+    images: [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800',
+    ],
+    job: 'Architect',
+    profession: 'Senior Architect at Architecture Firm',
+    education: 'MIT - Architecture',
+    location: 'Cambridge, MA',
+    distance: 6,
+    verified: true,
+    isNew: false,
+    interests: ['Adventure', 'Action', 'Architecture', 'Travel', 'Sketching'],
+    bio: 'Architect designing sustainable buildings for the future. Love sketching, traveling to see iconic structures, and rock climbing on weekends.',
+  },
+  {
+    id: '10',
+    name: 'Amelia Moore',
+    age: 26,
+    images: [
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
+    ],
+    job: 'Writer',
+    profession: 'Novelist & Screenwriter',
+    education: 'NYU - Creative Writing',
+    location: 'Greenwich Village, NY',
+    distance: 11,
+    verified: false,
+    isNew: false,
+    interests: ['Drama', 'Romance', 'Writing', 'Poetry', 'Coffee Shops'],
+    bio: 'Novelist working on my second book. Love writing in cozy coffee shops, attending poetry readings, and finding inspiration in everyday conversations.',
+  },
+  {
+    id: '11',
+    name: 'Harper Taylor',
+    age: 28,
+    images: [
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800',
+      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800',
+      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=800',
+    ],
+    job: 'Chef',
+    profession: 'Executive Chef at Michelin Restaurant',
+    education: 'Culinary Institute of America',
+    location: 'SoHo, NY',
+    distance: 2,
+    verified: true,
+    isNew: true,
+    interests: ['Comedy', 'Food', 'Cooking', 'Wine', 'Travel'],
+    bio: 'Executive chef passionate about farm-to-table cuisine. Love experimenting with flavors, wine pairings, and hosting dinner parties. Always up for a food adventure!',
+  },
+  {
+    id: '12',
+    name: 'Evelyn Anderson',
+    age: 30,
+    images: [
+      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800',
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+    ],
+    job: 'Entrepreneur',
+    profession: 'Founder & CEO of Tech Startup',
+    education: 'Stanford - Business & Engineering',
+    location: 'Silicon Valley, CA',
+    distance: 13,
+    verified: true,
+    isNew: false,
+    interests: ['Action', 'Adventure', 'Business', 'Surfing', 'Meditation'],
+    bio: 'Tech entrepreneur building the next big thing. Love surfing in the morning, meditation sessions, and networking events. Always learning and growing.',
+  },
+  {
+    id: '13',
+    name: 'Abigail Thomas',
+    age: 27,
+    images: [
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
+    ],
+    job: 'Engineer',
+    profession: 'Robotics Engineer at Tesla',
+    education: 'Caltech - Mechanical Engineering',
+    location: 'Pasadena, CA',
+    distance: 10,
+    verified: false,
+    isNew: false,
+    interests: ['Tech', 'Gaming', 'Robotics', '3D Printing', 'Sci-Fi'],
+    bio: 'Robotics engineer working on autonomous vehicles. Love gaming, building robots, 3D printing, and watching sci-fi movies. Tech geek at heart!',
+  },
+  {
+    id: '14',
+    name: 'Lily Jackson',
+    age: 25,
+    images: [
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
+      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
+    ],
+    job: 'Fashion Designer',
+    profession: 'Fashion Designer at Luxury Brand',
+    education: 'FIT - Fashion Design',
+    location: 'Fashion District, NY',
+    distance: 8,
+    verified: true,
+    isNew: true,
+    interests: ['Fashion', 'Art', 'Design', 'Shopping', 'Fashion Week'],
+    bio: 'Fashion designer creating sustainable luxury collections. Love attending fashion weeks, exploring art galleries, and finding vintage treasures.',
+  },
+  {
+    id: '15',
+    name: 'Grace White',
+    age: 29,
+    images: [
+      'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=800',
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800',
+      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800',
+    ],
+    job: 'Psychologist',
+    profession: 'Clinical Psychologist',
+    education: 'UCLA - Psychology PhD',
+    location: 'Los Angeles, CA',
+    distance: 14,
+    verified: false,
+    isNew: false,
+    interests: ['Drama', 'Romance', 'Psychology', 'Yoga', 'Reading'],
+    bio: 'Clinical psychologist helping people navigate life\'s challenges. Love practicing yoga, reading psychology books, and enjoying LA\'s beautiful beaches.',
+  },
+];
+
+interface SwipeableCardProps {
+  profile: Profile;
+  index: number;
+  onSwipeComplete: (direction: 'left' | 'right') => void;
+  onCardTap?: (profile: Profile) => void;
+  isTopCard: boolean;
+  stackOffset: number;
+  stackScale: number;
+  stackOpacity: number;
+  shouldAnimateToTop?: boolean;
 }
 
-export default function BumbleSwipeScreen() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // Shared translateX value to track top card's swipe position
-  const topCardTranslateX = useSharedValue(0);
+const SwipeableCard: React.FC<SwipeableCardProps> = ({
+  profile,
+  index,
+  onSwipeComplete,
+  onCardTap,
+  isTopCard,
+  stackOffset,
+  stackScale,
+  stackOpacity,
+  shouldAnimateToTop = false,
+}) => {
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const scale = useSharedValue(stackScale);
+  const opacity = useSharedValue(stackOpacity);
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
 
-  // Helper function to map API users to Profile format
-  const mapUsersToProfiles = (usersData: any[]): Profile[] => {
-    return usersData.map((user: any) => {
-      // Handle hobbies - can be array or object with chill/outdoor
-      let hobbiesData: { chill?: string[]; outdoor?: string[] } | undefined;
-      let interestsArray: string[] = [];
-      
-      if (user.hobbies) {
-        if (Array.isArray(user.hobbies)) {
-          // If hobbies is an array, use it as interests
-          interestsArray = user.hobbies;
-        } else if (typeof user.hobbies === 'object') {
-          // If hobbies is an object with chill/outdoor
-          hobbiesData = {
-            chill: Array.isArray(user.hobbies.chill) ? user.hobbies.chill : [],
-            outdoor: Array.isArray(user.hobbies.outdoor) ? user.hobbies.outdoor : [],
-          };
-          // Combine all hobbies into interests array for display
-          interestsArray = [
-            ...(hobbiesData.chill || []),
-            ...(hobbiesData.outdoor || []),
-          ];
-        }
-      }
+  // Initialize translateY with stack offset for non-top cards
+  React.useEffect(() => {
+    if (shouldAnimateToTop && !isTopCard) {
+      // Smoothly animate this card to become the top card with very smooth spring
+      scale.value = withSpring(1, { 
+        damping: 25, 
+        stiffness: 150,
+        mass: 1.2,
+        overshootClamping: false,
+      });
+      opacity.value = withSpring(1, { 
+        damping: 25, 
+        stiffness: 150,
+        mass: 1.2,
+        overshootClamping: false,
+      });
+      translateY.value = withSpring(0, { 
+        damping: 25, 
+        stiffness: 150,
+        mass: 1.2,
+        overshootClamping: false,
+      });
+    } else if (!isTopCard) {
+      translateY.value = -stackOffset;
+      scale.value = stackScale;
+      opacity.value = stackOpacity;
+    } else {
+      translateY.value = 0;
+      scale.value = 1;
+      opacity.value = 1;
+    }
+  }, [isTopCard, stackOffset, shouldAnimateToTop, stackScale, stackOpacity]);
 
-      // Build photos array
-      const photosArray: string[] = [];
-      if (user.profile_photo) photosArray.push(user.profile_photo);
-      if (user.live_photo) photosArray.push(user.live_photo);
-      if (user.photos && Array.isArray(user.photos)) {
-        photosArray.push(...user.photos);
-      }
+  const panGesture = Gesture.Pan()
+    .enabled(isTopCard)
+    .activeOffsetX([-10, 10])
+    .onStart(() => {
+      if (!isTopCard) return;
+      startX.value = translateX.value;
+      startY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      if (!isTopCard) return;
+      translateX.value = startX.value + event.translationX;
+      translateY.value = startY.value + event.translationY;
+    })
+    .onEnd((event) => {
+      if (!isTopCard) return;
+      const shouldSwipeLeft = translateX.value < -SWIPE_THRESHOLD;
+      const shouldSwipeRight = translateX.value > SWIPE_THRESHOLD;
 
-      return {
-        id: user.id?.toString() || '',
-        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown',
-        first_name: user.first_name,
-        last_name: user.last_name,
-        age: user.age || 0,
-        image: user.profile_photo || '',
-        bio: user.bio || '',
-        location: user.location || undefined,
-        distance: user.distance_km ? Math.round(user.distance_km) : undefined,
-        photos: photosArray.length > 0 ? photosArray : undefined,
-        interests: interestsArray.length > 0 ? interestsArray : undefined,
-        hobbies: hobbiesData,
-        job: user.job || user.occupation || undefined,
-        school: user.school || user.education || undefined,
-        live_photo: user.live_photo || undefined,
-        latitude: user.latitude !== null && user.latitude !== undefined ? user.latitude : undefined,
-        longitude: user.longitude !== null && user.longitude !== undefined ? user.longitude : undefined,
-      };
-    });
-  };
-
-  // Fetch new users (for periodic updates - doesn't set loading state)
-  const fetchNewUsers = useCallback(async (isInitialLoad: boolean = false) => {
-    try {
-      if (isInitialLoad) {
-        setLoading(true);
-        setError(null);
-      }
-      
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      
-      if (!accessToken) {
-        if (isInitialLoad) {
-          setError('Please login to view profiles');
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Call the API endpoint: GET_USERS: '/auth/swipe/users/'
-      const logPrefix = isInitialLoad ? '=== Calling API ===' : '=== Fetching New Users (30s interval) ===';
-      console.log(logPrefix);
-      console.log('Endpoint: GET_USERS -> /auth/swipe/users/');
-      console.log('Params: { limit: 15 }');
-      console.log('==================');
-      
-      const apiResponse = await getApiCall('SWIPE', 'GET_USERS', accessToken, { limit: 15 });
-      
-      // Log the full API response
-      console.log('=== API Response ===');
-      console.log('Full Response:', JSON.stringify(apiResponse, null, 2));
-      console.log('===================');
-      
-      if (apiResponse?.error) {
-        const errorMessage = 
-          apiResponse?.response?.message ||
-          apiResponse?.response?.Message ||
-          apiResponse?.response?.error ||
-          'Failed to fetch users';
-        console.error('API Error:', errorMessage);
-        if (isInitialLoad) {
-          setError(errorMessage);
-          setLoading(false);
-        }
-        return;
-      }
-
-      const usersData = apiResponse?.response || [];
-      
-      // Log the raw users data from API
-      console.log('=== Users Data from API ===');
-      console.log('Number of users:', usersData.length);
-      console.log('Users:', JSON.stringify(usersData, null, 2));
-      console.log('==========================');
-      
-      const mappedProfiles = mapUsersToProfiles(usersData);
-
-      // Log the mapped profiles
-      console.log('=== Mapped Profiles ===');
-      console.log('Number of profiles:', mappedProfiles.length);
-      console.log('Profiles:', JSON.stringify(mappedProfiles, null, 2));
-      console.log('=======================');
-
-      if (isInitialLoad) {
-        // Initial load - replace all profiles
-        setProfiles(mappedProfiles);
-        setLoading(false);
+      if (shouldSwipeLeft || shouldSwipeRight) {
+        const direction = shouldSwipeLeft ? 'left' : 'right';
+        const targetX = shouldSwipeLeft ? -SCREEN_WIDTH * 1.5 : SCREEN_WIDTH * 1.5;
+        
+        // Smooth exit animation with easing
+        translateX.value = withTiming(targetX, { 
+          duration: 400,
+        });
+        translateY.value = withTiming(event.translationY, { 
+          duration: 400,
+        });
+        opacity.value = withTiming(0, { 
+          duration: 350,
+        }, () => {
+          runOnJS(onSwipeComplete)(direction);
+        });
       } else {
-        // Periodic update - merge new users with existing ones
-        setProfiles((prevProfiles) => {
-          const existingIds = new Set(prevProfiles.map(p => p.id));
-          const newProfiles = mappedProfiles.filter(p => !existingIds.has(p.id));
-          
-          if (newProfiles.length > 0) {
-            console.log(`=== Adding ${newProfiles.length} new user(s) ===`);
-            console.log('New users:', newProfiles.map(p => `${p.name} (ID: ${p.id})`).join(', '));
-            console.log('===========================================');
-            return [...prevProfiles, ...newProfiles];
-          } else {
-            console.log('=== No new users found ===');
-            return prevProfiles;
-          }
+        // Spring back to center with smoother animation
+        translateX.value = withSpring(0, {
+          damping: 22,
+          stiffness: 140,
+          mass: 1.0,
+          overshootClamping: false,
+        });
+        translateY.value = withSpring(0, {
+          damping: 22,
+          stiffness: 140,
+          mass: 1.0,
+          overshootClamping: false,
         });
       }
-    } catch (err: any) {
-      console.error('Error fetching users:', err);
-      if (isInitialLoad) {
-        setError(err?.message || 'Failed to fetch users');
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  // Initial fetch on mount
-  useEffect(() => {
-    fetchNewUsers(true);
-  }, [fetchNewUsers]);
-
-  // Set up interval to fetch new users every 30 seconds
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchNewUsers(false);
-    }, 30000); // 30 seconds
-
-    // Cleanup interval on unmount
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [fetchNewUsers]);
-
-  // Reset shared translateX value when currentIndex changes
-  useEffect(() => {
-    topCardTranslateX.value = 0;
-  }, [currentIndex]);
-
-  const handleSwipe = useCallback(async (direction: 'left' | 'right') => {
-    if (currentIndex >= profiles.length) return;
-    
-    const currentProfile = profiles[currentIndex];
-    if (!currentProfile) return;
-
-    // Call the ACTION API
-    try {
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      
-      if (!accessToken) {
-        console.error('No access token available for swipe action');
-      } else {
-        // Map direction to action type
-        // left = dislike, right = like
-        const actionType = direction === 'right' ? 'like' : 'dislike';
-        
-        // Convert target_user_id to integer as per API spec
-        const targetUserId = parseInt(currentProfile.id, 10);
-        
-        const actionParams = {
-          target_user_id: targetUserId,
-          action: actionType,
-        };
-
-        console.log('=== Calling Swipe Action API ===');
-        console.log('Endpoint: ACTION -> /auth/swipe/action/');
-        console.log('Method: POST');
-        console.log('Params:', JSON.stringify(actionParams, null, 2));
-        console.log('================================');
-
-        const apiResponse = await postApiCall(
-          'POST',
-          'SWIPE',
-          'ACTION',
-          actionParams,
-          accessToken
-        );
-
-        console.log('=== Swipe Action API Response ===');
-        console.log('Full Response:', JSON.stringify(apiResponse, null, 2));
-        console.log('=================================');
-
-        if (apiResponse?.error) {
-          console.error('Swipe action API error:', apiResponse.response);
-          const errorMessage = 
-            apiResponse?.response?.message ||
-            apiResponse?.response?.Message ||
-            'Failed to record swipe action';
-          console.error('Error message:', errorMessage);
-        } else {
-          const responseData = apiResponse?.response || {};
-          console.log('Swipe action successful');
-          console.log('Success:', responseData.success);
-          console.log('Message:', responseData.message);
-          console.log('Match:', responseData.match);
-          
-          // Handle match response
-          if (responseData.match === true) {
-            console.log('🎉🔥 IT\'S A MATCH!');
-            console.log('Match ID:', responseData.match_id);
-            // TODO: Show match modal/notification here
-            // You can add a state to show a match modal or navigate to a match screen
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error calling swipe action API:', error);
-    }
-
-    // Update UI state after API call
-    const newIndex = currentIndex + 1;
-    setCurrentIndex(newIndex);
-    console.log(`Swiped ${direction} on ${currentProfile.name} (ID: ${currentProfile.id})`);
-  }, [currentIndex, profiles]);
-
-  const handleButtonSwipe = useCallback((direction: 'left' | 'right') => {
-    handleSwipe(direction);
-  }, [handleSwipe]);
-
-  // Background Image Component - Shows next profile when swiping
-  const BackgroundImage = ({ profile, translateX }: { profile: Profile; translateX: SharedValue<number> }) => {
-    const backgroundStyle = useAnimatedStyle(() => {
-      // Only show background when actively swiping (translateX > 0)
-      // Start appearing after 20px of movement, fully visible at halfway point
-      const swipeAmount = Math.abs(translateX.value);
-      const startShowing = 20; // Start showing after 20px of swipe
-      const fullyVisible = SWIPE_THRESHOLD / 2; // Fully visible at halfway point
-      
-      if (swipeAmount < startShowing) {
-        return { opacity: 0 };
-      }
-      
-      const progress = interpolate(
-        swipeAmount,
-        [startShowing, fullyVisible],
-        [0, 1],
-        Extrapolation.CLAMP
-      );
-      
-      return {
-        opacity: progress,
-      };
     });
 
-    const imageUri = profile.image || profile.photos?.[0];
-    
-    return (
-      <Animated.View style={[styles.backgroundImageContainer, backgroundStyle]}>
-        <Image
-          key={imageUri}
-          source={{ uri: imageUri }}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-      </Animated.View>
-    );
-  };
+  const tapGesture = Gesture.Tap()
+    .enabled(isTopCard)
+    .numberOfTaps(1)
+    .maxDuration(250)
+    .onEnd(() => {
+      // Only trigger tap if card hasn't moved significantly
+      if (Math.abs(translateX.value) < 10 && Math.abs(translateY.value) < 10) {
+        if (onCardTap) {
+          runOnJS(onCardTap)(profile);
+        }
+      }
+    });
 
-  // Card Component
-  const Card = ({ profile, index, onSwipe, topCardTranslateX: sharedTranslateX }: { profile: Profile; index: number; onSwipe: (direction: 'left' | 'right') => void; topCardTranslateX: SharedValue<number> }) => {
-    const isTop = index === currentIndex;
-    const translateX = useSharedValue(0);
-    const translateY = useSharedValue(0);
-    const scale = useSharedValue(isTop ? 1 : 0.95);
-    const opacity = useSharedValue(isTop ? 1 : 0.5);
-    const scrollViewRef = useRef<ScrollView>(null);
+  const composedGesture = Gesture.Race(tapGesture, panGesture);
 
-    // Update scale and opacity when card becomes top
-    useEffect(() => {
+  // Update scale, opacity, and position when this card becomes the top card
+  useAnimatedReaction(
+    () => isTopCard,
+    (isTop) => {
       if (isTop) {
-        scale.value = withSpring(1);
-        opacity.value = withSpring(1);
-        translateX.value = 0;
-        translateY.value = 0;
-        sharedTranslateX.value = 0;
+        // Smoothly animate to top position with very smooth spring
+        scale.value = withSpring(1, { 
+          damping: 25, 
+          stiffness: 150,
+          mass: 1.2,
+          overshootClamping: false,
+        });
+        opacity.value = withSpring(1, { 
+          damping: 25, 
+          stiffness: 150,
+          mass: 1.2,
+          overshootClamping: false,
+        });
+        translateY.value = withSpring(0, { 
+          damping: 25, 
+          stiffness: 150,
+          mass: 1.2,
+          overshootClamping: false,
+        });
       } else {
-        scale.value = withSpring(0.95);
-        opacity.value = withSpring(0.5);
+        // Animate to stacked position with smooth spring
+        scale.value = withSpring(stackScale, { 
+          damping: 25, 
+          stiffness: 150,
+          mass: 1.2,
+          overshootClamping: false,
+        });
+        opacity.value = withSpring(stackOpacity, { 
+          damping: 25, 
+          stiffness: 150,
+          mass: 1.2,
+          overshootClamping: false,
+        });
+        translateY.value = withSpring(-stackOffset, { 
+          damping: 25, 
+          stiffness: 150,
+          mass: 1.2,
+          overshootClamping: false,
+        });
       }
-    }, [isTop]);
+    },
+    [stackScale, stackOpacity, stackOffset],
+  );
 
-    const disableScroll = () => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.setNativeProps({ scrollEnabled: false });
-      }
+  const cardStyle = useAnimatedStyle(() => {
+    const rotation = interpolate(
+      translateX.value,
+      [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
+      [-ROTATION_MULTIPLIER, 0, ROTATION_MULTIPLIER],
+      Extrapolate.CLAMP,
+    );
+
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale: scale.value },
+        { rotateZ: `${rotation}deg` },
+      ],
+      opacity: opacity.value,
     };
+  });
 
-    const enableScroll = () => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.setNativeProps({ scrollEnabled: true });
-      }
+
+  const imageStyle = useAnimatedStyle(() => {
+    // Image moves exactly with card - no parallax to prevent separation
+    return {
+      transform: [{ translateX: 0 }],
     };
+  });
 
-    const panGesture = Gesture.Pan()
-      .enabled(isTop)
-      .activeOffsetX([-5, 5])
-      .onStart(() => {
-        runOnJS(disableScroll)();
-      })
-      .onUpdate((event) => {
-        // If horizontal movement is dominant, update card position
-        if (Math.abs(event.translationX) > Math.abs(event.translationY) || Math.abs(event.translationX) > 5) {
-          translateX.value = event.translationX;
-          translateY.value = event.translationY * 0.1;
-          // Sync with shared value for next card animation
-          if (isTop) {
-            sharedTranslateX.value = event.translationX;
-          }
-        }
-      })
-      .onEnd((event) => {
-        runOnJS(enableScroll)();
-        const shouldSwipe = Math.abs(event.translationX) > SWIPE_THRESHOLD || Math.abs(event.velocityX) > 500;
-        
-        if (shouldSwipe) {
-          const direction = event.translationX > 0 ? 'right' : 'left';
-          translateX.value = withTiming(direction === 'right' ? width * 1.5 : -width * 1.5, { duration: 300 });
-          translateY.value = withTiming(0, { duration: 300 });
-          opacity.value = withTiming(0, { duration: 300 });
-          // Reset shared value when swipe completes
-          if (isTop) {
-            sharedTranslateX.value = withTiming(0, { duration: 300 });
-          }
-          runOnJS(onSwipe)(direction);
-        } else {
-          translateX.value = withSpring(0);
-          translateY.value = withSpring(0);
-          // Reset shared value when swipe is cancelled
-          if (isTop) {
-            sharedTranslateX.value = withSpring(0);
-          }
-        }
-      });
-
-    const cardStyle = useAnimatedStyle(() => {
-      const rotate = interpolate(
-        translateX.value,
-        [-200, 0, 200],
-        [-15, 0, 15],
-        Extrapolation.CLAMP
-      );
-
-      return {
-        transform: [
-          { translateX: translateX.value },
-          { translateY: translateY.value },
-          { rotate: `${rotate}deg` },
-          { scale: scale.value },
-        ],
-        opacity: opacity.value,
-        zIndex: isTop ? 1000 : 1000 - index,
-      };
-    });
-
-    const likeOpacity = useAnimatedStyle(() => {
-      const opacity = interpolate(
-        translateX.value,
-        [20, 150],
-        [0, 1],
-        Extrapolation.CLAMP
-      );
-      return { opacity };
-    });
-
-    const nopeOpacity = useAnimatedStyle(() => {
-      const opacity = interpolate(
-        translateX.value,
-        [-150, -20],
-        [1, 0],
-        Extrapolation.CLAMP
-      );
-      return { opacity };
-    });
-
-    const nextCardStyle = useAnimatedStyle(() => {
-      if (!isTop && index === currentIndex + 1) {
-        // Use shared translateX from top card to animate next card
-        // Make card fully visible at halfway point (SWIPE_THRESHOLD / 2)
-        const opacityProgress = interpolate(
-          Math.abs(sharedTranslateX.value),
-          [0, SWIPE_THRESHOLD / 2],
-          [0.5, 1.0],
-          Extrapolation.CLAMP
-        );
-        const scaleProgress = interpolate(
-          Math.abs(sharedTranslateX.value),
-          [0, SWIPE_THRESHOLD / 2],
-          [0.95, 1.0],
-          Extrapolation.CLAMP
-        );
-        return {
-          transform: [{ scale: scaleProgress }],
-          opacity: opacityProgress,
-        };
-      }
-      return {};
-    });
-
-    if (!isTop && index > currentIndex + 1) {
-      return null;
-    }
-
-    return (
-      <Animated.View
-        style={[
-          styles.card,
-          cardStyle,
-          !isTop && nextCardStyle,
-        ]}
-      >
-        <GestureDetector gesture={panGesture}>
-          <Animated.View style={{ flex: 1 }}>
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={isTop}
-              bounces={false}
-            >
-              {/* Main Image Section */}
-              <View style={styles.photoContainer}>
-                <Image 
-                  source={{ uri: profile.image || profile.photos?.[0] }} 
-                  style={styles.mainPhoto}
-                  resizeMode="cover"
-                />
-                
-                {/* Gradient Overlay */}
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.6)']}
-                  style={styles.gradient}
-                />
-
-                {/* Share Button */}
-                <TouchableOpacity style={styles.shareButton}>
-                  <Icon name="share-variant" size={24} color="#fff" />
-                </TouchableOpacity>
-
-                {/* Swipe Indicators */}
-                {isTop && (
-                  <>
-                    <Animated.View style={[styles.likeLabel, likeOpacity]}>
-                      <View style={styles.likeLabelContainer}>
-                        <Text style={styles.likeLabelText}>LIKE</Text>
-                      </View>
-                    </Animated.View>
-
-                    <Animated.View style={[styles.nopeLabel, nopeOpacity]}>
-                      <View style={styles.nopeLabelContainer}>
-                        <Text style={styles.nopeLabelText}>NOPE</Text>
-                      </View>
-                    </Animated.View>
-                  </>
-                )}
-
-                {/* Basic Info Overlay */}
-                <View style={styles.photoOverlay}>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.name}>{profile.name}</Text>
-                    <Text style={styles.age}>, {profile.age}</Text>
-                  </View>
-                  {profile.job && (
-                    <View style={styles.infoRow}>
-                      <Icon name="briefcase-outline" size={14} color="#fff" />
-                      <Text style={styles.infoText}>{profile.job}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-
-              {/* Scrollable Details Section */}
-              <View style={styles.detailsSection}>
-                {/* Bio Section */}
-                {profile.bio && (
-                  <View style={styles.bioSection}>
-                    <View style={styles.bioHeader}>
-                      <Icon name="format-quote-close" size={16} color="#FFC629" />
-                      <Text style={styles.bioHeaderText}>ABOUT ME</Text>
-                    </View>
-                    <Text style={styles.bioText}>{profile.bio}</Text>
-                  </View>
-                )}
-
-                {/* Basics Chips */}
-                <View style={styles.basicsContainer}>
-                  {profile.school && (
-                    <View style={styles.basicChip}>
-                      <Icon name="school-outline" size={16} color="#666" />
-                      <Text style={styles.basicChipText}>{profile.school}</Text>
-                    </View>
-                  )}
-                  {profile.distance && (
-                    <View style={styles.basicChip}>
-                      <Icon name="map-marker-outline" size={16} color="#666" />
-                      <Text style={styles.basicChipText}>{profile.distance} km away</Text>
-                    </View>
-                  )}
-                  {profile.job && (
-                    <View style={styles.basicChip}>
-                      <Icon name="briefcase-outline" size={16} color="#666" />
-                      <Text style={styles.basicChipText}>{profile.job}</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Hobbies - Chill */}
-                {profile.hobbies?.chill && profile.hobbies.chill.length > 0 && (
-                  <View style={styles.interestsSection}>
-                    <Text style={styles.interestsTitle}>CHILL HOBBIES</Text>
-                    <View style={styles.interestsGrid}>
-                      {profile.hobbies.chill.map((hobby, idx) => (
-                        <View key={idx} style={styles.interestTag}>
-                          <Text style={styles.interestText}>{hobby}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {/* Hobbies - Outdoor */}
-                {profile.hobbies?.outdoor && profile.hobbies.outdoor.length > 0 && (
-                  <View style={styles.interestsSection}>
-                    <Text style={styles.interestsTitle}>OUTDOOR HOBBIES</Text>
-                    <View style={styles.interestsGrid}>
-                      {profile.hobbies.outdoor.map((hobby, idx) => (
-                        <View key={idx} style={styles.interestTag}>
-                          <Text style={styles.interestText}>{hobby}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {/* Interests (fallback for array format) */}
-                {profile.interests && profile.interests.length > 0 && !profile.hobbies && (
-                  <View style={styles.interestsSection}>
-                    <Text style={styles.interestsTitle}>MY INTERESTS</Text>
-                    <View style={styles.interestsGrid}>
-                      {profile.interests.map((interest, idx) => (
-                        <View key={idx} style={styles.interestTag}>
-                          <Text style={styles.interestText}>{interest}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {/* Location Details */}
-                {(profile.latitude !== undefined || profile.longitude !== undefined || profile.distance !== undefined) && (
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>LOCATION</Text>
-                    {profile.distance !== undefined && (
-                      <View style={styles.detailRow}>
-                        <Icon name="map-marker-distance" size={20} color="#666" />
-                        <Text style={styles.detailText}>{profile.distance} km away</Text>
-                      </View>
-                    )}
-                    {profile.latitude !== undefined && profile.longitude !== undefined && (
-                      <View style={styles.detailRow}>
-                        <Icon name="map-marker" size={20} color="#666" />
-                        <Text style={styles.detailText}>
-                          {profile.latitude.toFixed(4)}, {profile.longitude.toFixed(4)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {/* Live Photo */}
-                {profile.live_photo && (
-                  <View style={styles.morePhotosSection}>
-                    <Text style={styles.interestsTitle}>LIVE PHOTO</Text>
-                    <Image
-                      source={{ uri: profile.live_photo }}
-                      style={styles.morePhoto}
-                      resizeMode="cover"
-                    />
-                  </View>
-                )}
-
-                {/* More Images */}
-                {profile.photos && profile.photos.length > 1 && (
-                  <View style={styles.morePhotosSection}>
-                    <Text style={styles.interestsTitle}>MORE PHOTOS</Text>
-                    {profile.photos.slice(1).map((photo, idx) => (
-                      <Image
-                        key={idx}
-                        source={{ uri: photo }}
-                        style={styles.morePhoto}
-                        resizeMode="cover"
-                      />
-                    ))}
-                  </View>
-                )}
-
-                {/* All Profile Data (Debug/Info) */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>PROFILE INFO</Text>
-                  <View style={styles.detailRow}>
-                    <Icon name="identifier" size={20} color="#666" />
-                    <Text style={styles.detailText}>ID: {profile.id}</Text>
-                  </View>
-                  {profile.first_name && (
-                    <View style={styles.detailRow}>
-                      <Icon name="account" size={20} color="#666" />
-                      <Text style={styles.detailText}>First Name: {profile.first_name}</Text>
-                    </View>
-                  )}
-                  {profile.last_name && (
-                    <View style={styles.detailRow}>
-                      <Icon name="account" size={20} color="#666" />
-                      <Text style={styles.detailText}>Last Name: {profile.last_name}</Text>
-                    </View>
-                  )}
-                  {profile.age > 0 && (
-                    <View style={styles.detailRow}>
-                      <Icon name="cake" size={20} color="#666" />
-                      <Text style={styles.detailText}>Age: {profile.age}</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* End of Profile */}
-                <View style={styles.endOfProfile}>
-                  <Text style={styles.endOfProfileText}>End of Profile</Text>
-                </View>
-              </View>
-            </ScrollView>
-          </Animated.View>
-        </GestureDetector>
-      </Animated.View>
+  const overlayStyle = useAnimatedStyle(() => {
+    const labelOpacity = interpolate(
+      Math.abs(translateX.value),
+      [SWIPE_THRESHOLD * 0.7, SWIPE_THRESHOLD],
+      [0, 1],
+      Extrapolate.CLAMP,
     );
-  };
 
-  // Loading state
-  if (loading) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
-          <View style={styles.header}>
-            <Icon name="account-outline" size={26} color="#666" />
-          
-            <Icon name="menu" size={26} color="#666" />
-          </View>
-          <View style={[styles.emptyState, { justifyContent: 'center', alignItems: 'center' }]}>
-            <ActivityIndicator size="large" color="#000" />
-            <Text style={[styles.emptyText, { marginTop: 16 }]}>Loading profiles...</Text>
-          </View>
-        </SafeAreaView>
-      </GestureHandlerRootView>
-    );
-  }
+    return {
+      opacity: labelOpacity,
+    };
+  });
 
-  // Error state
-  if (error) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
-          <View style={styles.header}>
-          
-          </View>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Error loading profiles</Text>
-            <Text style={styles.emptySubtext}>{error}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => fetchNewUsers(true)}
-            >
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </GestureHandlerRootView>
+  const likeLabelStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      translateX.value,
+      [SWIPE_THRESHOLD * 0.5, SWIPE_THRESHOLD],
+      [0, 1],
+      Extrapolate.CLAMP,
     );
-  }
+    return { opacity };
+  });
 
-  // Empty state
-  if (profiles.length === 0 || currentIndex >= profiles.length) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
-          <View style={styles.header}>
-            
-          </View>
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconContainer}>
-              <Text style={styles.emptyIcon}>👋</Text>
-            </View>
-            <Text style={styles.emptyText}>That's everyone!</Text>
-            <Text style={styles.emptySubtext}>Check back later for more people nearby.</Text>
-            <TouchableOpacity
-              style={styles.startOverButton}
-              onPress={() => {
-                setCurrentIndex(0);
-                fetchNewUsers(true);
-              }}
-            >
-              <Text style={styles.startOverButtonText}>Start Over</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </GestureHandlerRootView>
+  const passLabelStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      translateX.value,
+      [-SWIPE_THRESHOLD, -SWIPE_THRESHOLD * 0.5],
+      [1, 0],
+      Extrapolate.CLAMP,
     );
-  }
+    return { opacity };
+  });
+
+  const primaryImage = profile.images && profile.images.length > 0 
+    ? { uri: profile.images[0] } 
+    : require('../../../assets/girl.png');
+
+  const genre = profile.interests && profile.interests.length > 0 
+    ? profile.interests[0] 
+    : 'Dating';
+
+  // Static z-index for proper stacking (animated views need static z-index)
+  const staticZIndex = isTopCard ? 1000 : 100 - index;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-      <Text style={styles.appTitle}>snixx</Text>
-       
-        <Icon name="menu" size={26} color="#666" />
-      </View>
-
-      {/* Cards Container */}
-      <View style={styles.cardsContainer}>
-        {profiles.map((profile, index) => (
-          <Card
-            key={`${profile.id}-${index}`}
-            profile={profile}
-            index={index}
-            onSwipe={handleSwipe}
-            topCardTranslateX={topCardTranslateX}
+    <GestureDetector gesture={composedGesture}>
+      <Animated.View style={[styles.card, cardStyle, { zIndex: staticZIndex }]}>
+        <View style={styles.cardImageContainer}>
+          <Image
+            source={primaryImage}
+            style={styles.cardImage}
+            resizeMode="cover"
           />
-        ))}
-      </View>
+          {/* Only show gradient overlay on stacked cards, not on top card */}
+          {!isTopCard && (
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+          )}
+        </View>
 
-      {/* Floating Action Buttons */}
+        {/* Badges */}
+        <View style={styles.badgesContainer}>
+          <View style={[styles.badge, styles.badgeDuration]}>
+            <Text style={styles.badgeText}>1h 30m</Text>
+          </View>
+          <View style={[styles.badge, styles.badgeGenre]}>
+            <Text style={[styles.badgeText, styles.badgeGenreText]}>{genre}</Text>
+          </View>
+        </View>
+
+        {/* Content */}
+        <View style={styles.cardContent}>
+          {profile.verified && (
+            <Text style={styles.subtitle}>
+              {profile.name.split(' ')[0].toUpperCase()}
+            </Text>
+          )}
+          <Text style={styles.title}>
+            {profile.name.split(' ')[0]}, {profile.age}
+          </Text>
+          {profile.job && (
+            <Text style={styles.subtitle}>{profile.job}</Text>
+          )}
+          {profile.distance && (
+            <Text style={styles.dateText}>
+              {profile.distance} km away
+            </Text>
+          )}
+        </View>
+
+        {/* Swipe Overlay Labels */}
+        {isTopCard && (
+          <Animated.View style={styles.overlayLabelContainer} pointerEvents="none">
+            <Animated.View style={[styles.overlayLabel, styles.likeLabel, likeLabelStyle]}>
+              <Text style={[styles.overlayLabelText, styles.likeLabelText]}>LIKE</Text>
+            </Animated.View>
+            <Animated.View style={[styles.overlayLabel, styles.passLabel, passLabelStyle]}>
+              <Text style={[styles.overlayLabelText, styles.passLabelText]}>PASS</Text>
+            </Animated.View>
+          </Animated.View>
+        )}
+      </Animated.View>
+    </GestureDetector>
+  );
+};
+
+interface PeopleScreenProps {
+  navigation?: NativeStackNavigationProp<PeopleStackParamList, 'PeopleScreen'>;
+}
+
+const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
+  const [profiles, setProfiles] = useState<Profile[]>(MOCK_PROFILES);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState(1); // 0: Coming Soon, 1: Now Playing, 2: Tomorrow
+
+  const handleCardTap = useCallback((profile: Profile) => {
+    // Small delay for smoother transition
+    setTimeout(() => {
+      navigation?.navigate('ProfileDetailsScreen', { profile });
+    }, 50);
+  }, [navigation]);
+
+  const handleSwipeComplete = useCallback((direction: 'left' | 'right') => {
+    setIsAnimating(true);
+    // Delay to ensure smooth transition animation starts after card exits
+    setTimeout(() => {
+      setCurrentIndex((prev) => {
+        setIsAnimating(false);
+        return prev + 1;
+      });
+    }, 150);
+    // TODO: Call API to save swipe action
+    // await postApiCall('POST', 'SWIPE', 'ACTION', {
+    //   profileId: profiles[currentIndex].id,
+    //   action: direction === 'right' ? 'like' : 'pass',
+    // });
+  }, [currentIndex]);
+
+  // Show 5 cards in the stack for better visual stacking effect
+  const visibleCards = profiles.slice(currentIndex, currentIndex + 5);
+  
+  console.log(`Showing ${visibleCards.length} cards, currentIndex: ${currentIndex}, total profiles: ${profiles.length}`);
+
+  // Get current top card's image for background
+  const currentTopCard = visibleCards[0];
+  const backgroundImageSource = currentTopCard?.images && currentTopCard.images.length > 0
+    ? { uri: currentTopCard.images[0] }
+    : HomeScreenBg;
+
+  if (currentIndex >= profiles.length) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyStateContainer}>
+          <Text style={styles.emptyStateText}>
+            No more profiles available.{'\n'}Check back later!
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  
+
+  return (
+    <GestureHandlerRootView style={styles.container}>
+      {/* Background Image - Blurred card image */}
+      <Image
+        source={backgroundImageSource}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+        blurRadius={20}
+      />
       
-    
-      </SafeAreaView>
+      {/* Homescreen Background - Behind cards but on top of blurred background */}
+      <View style={styles.homescreenBackgroundContainer}>
+       
+        {/* Snixx Home Text at top */}
+        <Image
+          source={SnixxHometext}
+          style={styles.snixxHomeText}
+          resizeMode="contain"
+        />
+        
+        {/* Light black overlay from top to bottom */}
+        <View style={styles.backgroundOverlay} />
+      </View>
+      
+      {/* Top Header Section */}
+     
+
+      <View style={styles.cardStackContainer}>
+        {visibleCards.map((profile, index) => {
+          const isTopCard = index === 0;
+          const stackIndex = index;
+          
+          let stackOffset = 0;
+          let stackScale = 1;
+          let stackOpacity = 1;
+
+          // Progressive stacking: each card behind gets more offset, smaller scale, and lower opacity
+          // Increased values for more pronounced top stack effect
+          if (stackIndex === 1) {
+            stackOffset = STACK_OFFSET;
+            stackScale = STACK_SCALE_1;
+            stackOpacity = 0.6;
+          } else if (stackIndex === 2) {
+            stackOffset = STACK_OFFSET * 2;
+            stackScale = STACK_SCALE_2;
+            stackOpacity = 0.4;
+          } else if (stackIndex === 3) {
+            stackOffset = STACK_OFFSET * 3;
+            stackScale = STACK_SCALE_3;
+            stackOpacity = 0.25;
+          } else if (stackIndex === 4) {
+            stackOffset = STACK_OFFSET * 4;
+            stackScale = STACK_SCALE_4;
+            stackOpacity = 0.15;
+          }
+
+          // Render cards from back to front for proper stacking
+          // Cards behind should render first (lower z-index), top card renders last (higher z-index)
+          const zIndex = isTopCard ? 1000 : 100 - index;
+
+          // The card that will become the new top card should animate smoothly
+          const shouldAnimateToTop = index === 1 && isAnimating;
+
+          return (
+            <SwipeableCard
+              key={`${profile.id}-${currentIndex + index}`}
+              profile={profile}
+              index={index}
+              onSwipeComplete={handleSwipeComplete}
+              onCardTap={handleCardTap}
+              isTopCard={isTopCard}
+              stackOffset={stackOffset}
+              stackScale={stackScale}
+              stackOpacity={stackOpacity}
+              shouldAnimateToTop={shouldAnimateToTop}
+            />
+          );
+        }).reverse()}
+      </View>
     </GestureHandlerRootView>
   );
-}
+};
+
+export default PeopleScreen;

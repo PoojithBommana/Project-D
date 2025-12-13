@@ -1,0 +1,218 @@
+import { StyleSheet, Dimensions } from 'react-native';
+import { hp, wp, screenWidth, screenHeight } from '../../../utils/responsive';
+
+const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  scrollViewContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: hp(100),
+  },
+  topNavBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: hp(50),
+    paddingBottom: hp(20),
+    paddingHorizontal: wp(20),
+    zIndex: 100,
+  },
+  backButton: {
+    width: wp(44),
+    height: wp(44),
+    borderRadius: wp(22),
+    overflow: 'hidden',
+  },
+  backButtonBlur: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  topTagsContainer: {
+    flexDirection: 'row',
+    gap: wp(8),
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(6),
+    borderRadius: wp(16),
+    backgroundColor: 'rgba(30, 30, 30, 0.8)',
+    gap: wp(4),
+  },
+  tagText: {
+    fontSize: wp(12),
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  contentCard: {
+    marginTop: hp(120),
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: wp(24),
+    borderTopRightRadius: wp(24),
+    borderBottomLeftRadius: wp(16),
+    borderBottomRightRadius: wp(16),
+    overflow: 'hidden',
+    marginHorizontal: wp(0),
+    marginBottom: hp(20),
+  },
+  heroImageContainer: {
+    width: '100%',
+    height: hp(400),
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  nameOverlay: {
+    position: 'absolute',
+    top: hp(40),
+    left: wp(20),
+    right: wp(20),
+  },
+  heroName: {
+    fontSize: wp(42),
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  actionButton: {
+    position: 'absolute',
+    bottom: hp(20),
+    right: wp(20),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    paddingHorizontal: wp(20),
+    paddingVertical: hp(12),
+    borderRadius: wp(24),
+    gap: wp(8),
+  },
+  actionButtonText: {
+    fontSize: wp(14),
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  detailsSection: {
+    padding: wp(20),
+  },
+  title: {
+    fontSize: wp(32),
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: hp(16),
+    letterSpacing: 0.5,
+  },
+  description: {
+    fontSize: wp(16),
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: hp(24),
+    marginBottom: hp(12),
+  },
+  readMoreText: {
+    fontSize: wp(16),
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: hp(16),
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(12),
+    gap: wp(12),
+  },
+  infoText: {
+    fontSize: wp(16),
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.9)',
+    flex: 1,
+  },
+  interestsSection: {
+    marginTop: hp(8),
+    marginBottom: hp(20),
+  },
+  sectionTitle: {
+    fontSize: wp(24),
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: hp(16),
+    paddingHorizontal: wp(20),
+  },
+  interestsScrollContent: {
+    paddingHorizontal: wp(20),
+    gap: wp(16),
+  },
+  interestItem: {
+    width: wp(120),
+    alignItems: 'center',
+  },
+  interestImage: {
+    width: wp(100),
+    height: wp(100),
+    borderRadius: wp(50),
+    marginBottom: hp(8),
+    backgroundColor: '#2a2a2a',
+  },
+  interestName: {
+    fontSize: wp(14),
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: hp(2),
+    width: wp(100),
+  },
+  interestRole: {
+    fontSize: wp(12),
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    width: wp(100),
+  },
+});
+
+export default styles;

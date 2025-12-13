@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native'
 import React from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from '@react-native-community/blur';
-import PeopleScreen from '../screen/Dashboard/SwipsScreen/PeopleScreen';
+import PeopleStackNavigator from './PeopleStackNavigator';
 import LikesScreen from '../screen/Dashboard/LikesScreen';
 import WardrobeFeature from '../screen/Dashboard/AiCloset/WardrobeFeature';
 import ChatScreen from '../screen/Dashboard/ChatScreen';
@@ -28,7 +28,7 @@ export default function TabNavigation() {
           elevation: 0,
           backgroundColor: 'transparent',
           borderColor: '#FFFCF1',
-          borderWidth: 1.5,
+          borderWidth: 0.1,
           borderRadius: 27,
           margin:hp(10),
           marginTop: 40,
@@ -50,7 +50,7 @@ export default function TabNavigation() {
             <View style={styles.androidGlass} />
           )
         ),
-        tabBarActiveTintColor: '#000',
+        tabBarActiveTintColor: '#FFFFFF',
         tabBarInactiveTintColor: '#666',
         tabBarShowLabel: false,
         tabBarLabelStyle: {
@@ -65,7 +65,7 @@ export default function TabNavigation() {
     >
       <TabNavigator.Screen 
         name='People' 
-        component={PeopleScreen}
+        component={PeopleStackNavigator}
         options={{
           tabBarIcon: ({ color, size, focused }) => (
             <Icon name={focused ? "people" : "people-outline"} size={size} color={color} />
