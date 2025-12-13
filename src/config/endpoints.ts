@@ -3,21 +3,25 @@ export const API_ENDPOINTS: any = {
     SEND_OTP: '/auth/send-otp',
     VERIFY_OTP: '/auth/verify-otp',
     RESEND_OTP: '/auth/resend-otp',
-    SOCIAL_LOGIN: '/login/',
-    USE_EXISTING_ACCOUNT: '/use-existing-account/',
-    CREATE_NEW_ACCOUNT: '/create-new-account/',
-    LOGOUT: '/logout/',
+    SOCIAL_LOGIN: '/auth/login/',
+    USE_EXISTING_ACCOUNT: '/auth/account/existing/',
+    CREATE_NEW_ACCOUNT: '/auth/account/new/',
+    LOGOUT: '/auth/logout/',
     REFRESH_TOKEN: '/token/refresh/',
-    GET_PROFILE: '/profile/',
+    GET_PROFILE: '/auth/profile/',
+    VERIFY_FACE: '/auth/verify-face/',
   },
   SWIPE: {
-    GET_USERS: '/swipe/users/',
-    ACTION: '/swipe/action/',
+    GET_USERS: '/auth/swipe/users/',
+    ACTION: '/auth/swipe/action/',
   },
   MUSIC: {
     FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
   },
   ONBOARDING: {
-    UPDATE: '/onboarding/update/',
+    UPDATE: '/auth/onboarding-update/',
+  },
+  WARDROBE: {
+    COLLECTION_ITEMS: '/wardrobe/collection-items/',
   },
 };

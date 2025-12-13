@@ -103,6 +103,7 @@ export const getApiCall = async (
   screenName: string,
   endpoint: string,
   accessToken?: string,
+  params?: Record<string, any>,
 ) => {
   try {
     const headers: Record<string, string> = {
@@ -115,6 +116,7 @@ export const getApiCall = async (
 
     const responseData = await api.get(API_ENDPOINTS[screenName][endpoint], {
       headers,
+      params,
     });
 
     return {

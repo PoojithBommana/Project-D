@@ -1,61 +1,64 @@
 import { StyleSheet, Dimensions, Platform } from 'react-native';
-import { hp } from '../../../utils/responsive';
 
 const { width, height } = Dimensions.get('window');
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFCF1',
   },
+  
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: hp(40),
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#FFFCF1',
+    
   },
-  headerTitle: {
-    fontSize: 40,
+  appTitle: {
+    fontSize: 33,
     fontFamily: 'GTMaruBold',
     color: '#000000',
-    letterSpacing: 0.5,
+    letterSpacing: -0.5,
   },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
+  logo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFC629',
+    letterSpacing: -0.5,
   },
-  headerIcon: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FF6B9D',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
+  // Cards Container
   cardsContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 0,
+    position: 'relative',
+    marginHorizontal: 10,
+    marginTop: 1,
+    marginBottom: 80,
+  },
+  // Background Image
+  backgroundImageContainer: {
+    position: 'absolute',
+    width: width - 20,
+    height: height * 0.95,
+    borderRadius: 24,
+    overflow: 'hidden',
+    zIndex: 0,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
   card: {
     position: 'absolute',
-    width: width * 0.85,
-    height: height * 0.68,
+    width: width - 20,
+    height: height * 0.85,
     borderRadius: 24,
     backgroundColor: '#fff',
     overflow: 'hidden',
-    marginBottom: hp(100),
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -63,253 +66,322 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 20,
       },
-      android: {
-        elevation: 8,
-      },
+     
     }),
   },
-  cardImage: {
+  scrollView: {
+    flex: 1,
+  },
+
+  // Photo Section
+  photoContainer: {
+    width: '100%',
+    height: height * 0.85,
+    position: 'relative',
+  },
+  mainPhoto: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
   },
   gradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '60%',
+    height: '50%',
   },
+  shareButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Swipe Labels (Like/Nope Stamps)
   likeLabel: {
     position: 'absolute',
-    top: 50,
-    left: 30,
-    transform: [{ rotate: '-20deg' }],
-    zIndex: 1000,
+    top: 40,
+    left: 32,
+    zIndex: 50,
+  },
+  likeLabelContainer: {
+    borderWidth: 4,
+    borderColor: '#22C55E',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    transform: [{ rotate: '-12deg' }],
   },
   likeLabelText: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#4CAF50',
-    borderWidth: 4,
-    borderColor: '#4CAF50',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: 'transparent',
-    textShadowColor: 'rgba(76, 175, 80, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    color: '#22C55E',
+    fontWeight: 'bold',
+    fontSize: 36,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   nopeLabel: {
     position: 'absolute',
-    top: 50,
-    right: 30,
-    transform: [{ rotate: '20deg' }],
-    zIndex: 1000,
+    top: 40,
+    right: 32,
+    zIndex: 50,
+  },
+  nopeLabelContainer: {
+    borderWidth: 4,
+    borderColor: '#EF4444',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    transform: [{ rotate: '12deg' }],
   },
   nopeLabelText: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#FF5252',
-    borderWidth: 4,
-    borderColor: '#FF5252',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: 'transparent',
-    textShadowColor: 'rgba(255, 82, 82, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
-  },
-  superLikeLabel: {
-    position: 'absolute',
-    top: 50,
-    left: '50%',
-    transform: [{ translateX: -75 }],
-    zIndex: 1000,
-  },
-  superLikeLabelText: {
+    color: '#EF4444',
+    fontWeight: 'bold',
     fontSize: 36,
-    fontWeight: '800',
-    color: '#00BCD4',
-    borderWidth: 4,
-    borderColor: '#00BCD4',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: 'transparent',
-    textShadowColor: 'rgba(0, 188, 212, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
-  notificationBadge: {
+
+  // Photo Overlay
+  photoOverlay: {
     position: 'absolute',
-    top: 20,
+    bottom: 24,
     left: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 14,
+    right: 20,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 4,
+  },
+  name: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: -0.5,
+    lineHeight: 40,
+  },
+  age: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
+    opacity: 0.9,
+  },
+
+  // Details Section
+  detailsSection: {
+    backgroundColor: '#FDFF8D',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 96,
+  },
+  
+  // Bio Section
+  bioSection: {
+    marginBottom: 24,
+  },
+  bioHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  bioHeaderText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  bioText: {
+    fontSize: 18,
+    lineHeight: 28,
+    color: '#374151',
+    fontWeight: '500',
+  },
+
+  // Basics Chips
+  basicsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  basicChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
     paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+  },
+  basicChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+  },
+
+  // Section (generic)
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  detailText: {
+    fontSize: 15,
+    color: '#374151',
+    fontWeight: '400',
+  },
+
+  // Interests Section
+  interestsSection: {
+    marginBottom: 24,
+  },
+  interestsTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+  },
+  interestsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  interestTag: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: '#FFC629',
+    borderRadius: 20,
+    backgroundColor: '#fff',
+  },
+  interestText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+
+  // More Photos
+  morePhotosSection: {
+    gap: 16,
+    marginBottom: 24,
+  },
+  morePhoto: {
+    width: '100%',
+    height: 384,
     borderRadius: 16,
-    zIndex: 100,
+    backgroundColor: '#F3F4F6',
+  },
+
+  // End of Profile
+  endOfProfile: {
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+  endOfProfileText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#D1D5DB',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+
+  // Action Buttons
+  actionButtonsContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    zIndex: 50,
+  },
+  passButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  superLikeButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 6,
+        shadowRadius: 8,
       },
       android: {
         elevation: 3,
       },
     }),
   },
-  notificationText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#333',
-  },
-  profileInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 24,
-    paddingBottom: 20,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 12,
-  },
-  locationText: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
-    fontWeight: '500',
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  name: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  age: {
-    fontSize: 36,
-    fontWeight: '300',
-    color: '#fff',
-    marginLeft: 8,
-  },
-  verifiedIcon: {
-    marginLeft: 8,
-  },
-  bio: {
-    fontSize: 14,
-    color: '#fff',
-    lineHeight: 20,
-    opacity: 0.95,
-    marginBottom: 12,
-  },
-  detail: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  distance: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.8,
-    marginTop: 8,
-  },
-  interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  interestTag: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 16,
-  },
-  interestText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#fff',
-  },
-  emptyContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 60,
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    width: width * 0.85,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
-  emptyText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  counterContainer: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  counterText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    letterSpacing: 0.5,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    gap: 15,
-    backgroundColor: '#E8F4F8',
-  },
-  actionButton: {
+  likeButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: '#FFC629',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.2,
         shadowRadius: 12,
       },
       android: {
@@ -317,31 +389,129 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  rewindButton: {
-    width: 48,
-    height: 48,
+
+  // Empty State
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyIcon: {
+    fontSize: 48,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#000',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  startOverButton: {
+    marginTop: 32,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#FFC629',
     borderRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  nopeButton: {
-    width: 64,
+  startOverButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
+  // Bottom Navigation
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     height: 64,
-    borderRadius: 32,
+    justifyContent: 'space-around',
+    alignItems: 'center',
   },
-  superLikeButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  navButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    position: 'relative',
   },
-  likeButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  navButtonActive: {
+    // Active state styling
   },
-  boostButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  navButtonActiveIndicator: {
+    position: 'absolute',
+    top: -1,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: '#000',
+  },
+  navButtonActiveIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  navButtonActiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#000',
+  },
+  navText: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  navTextActive: {
+    color: '#000',
+    fontWeight: 'bold',
   },
 });
-
-export default styles;

@@ -7,7 +7,7 @@ import LikesScreen from '../screen/Dashboard/LikesScreen';
 import WardrobeFeature from '../screen/Dashboard/AiCloset/WardrobeFeature';
 import ChatScreen from '../screen/Dashboard/ChatScreen';
 import ProfileScreen from '../screen/Dashboard/ProfileScreen';
-import { hp } from '../utils/responsive';
+import { hp, wp } from '../utils/responsive';
 
 // Import icons - adjust based on your icon library
 // Example using react-native-vector-icons
@@ -23,13 +23,15 @@ export default function TabNavigation() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          bottom: 25,
           left: 20,
           right: 20,
           elevation: 0,
           backgroundColor: 'transparent',
-          borderRadius: 25,
+          borderColor: '#FFFCF1',
+          borderWidth: 1.5,
+          borderRadius: 27,
           margin:hp(10),
+          marginTop: 40,
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
@@ -50,7 +52,7 @@ export default function TabNavigation() {
         ),
         tabBarActiveTintColor: '#000',
         tabBarInactiveTintColor: '#666',
-        tabBarShowLabel: true,
+        tabBarShowLabel: false,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',

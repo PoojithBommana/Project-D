@@ -20,6 +20,7 @@ import styles from '../../styles/LivePhotoScreenStyles';
 import { submitOnboardingUpdate } from '../../utils/onboardingUpdate';
 import { uploadImageAndGetUrl } from '../../utils/imageUpload';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { postApiCall } from '../../config/apiCall';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'LivePhotoScreen'>;
@@ -156,6 +157,11 @@ export default function LivePhotoScreen({ navigation, route }: Props) {
     setIsSaving(true);
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        Alert.alert('Authentication required', 'Please log in again.');
+        setIsSaving(false);
+        return;
+      }
 
       // Upload live selfie to Cloudinary to get a CDN URL
       const selfieUrl = await uploadImageAndGetUrl({
@@ -163,6 +169,39 @@ export default function LivePhotoScreen({ navigation, route }: Props) {
         type: livePhoto.type,
         fileName: (livePhoto as any)?.fileName,
       });
+
+      // Verify face by comparing live photo with uploaded photos
+      const verifyResponse = await postApiCall(
+        'POST',
+        'AUTH',
+        'VERIFY_FACE',
+        {
+          live_photo: selfieUrl,
+        },
+        accessToken,
+      );
+
+      if (verifyResponse?.error) {
+        const errorMessage =
+          verifyResponse?.response?.message ||
+          verifyResponse?.response?.Message ||
+          'Face verification failed. Please try again.';
+        Alert.alert('Verification failed', errorMessage);
+        setIsSaving(false);
+        return;
+      }
+
+      if (!verifyResponse?.response?.verified) {
+        Alert.alert(
+          'Verification failed',
+          verifyResponse?.response?.message ||
+            'Your face could not be verified. Please ensure your live photo matches your profile photos.',
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      console.log('[LivePhotoScreen] Face verified successfully:', verifyResponse.response);
 
       const normalizedDatingGoal =
         (route?.params?.datingGoal || '').replace(/-/g, '_');
@@ -200,7 +239,7 @@ export default function LivePhotoScreen({ navigation, route }: Props) {
           known_languages: route?.params?.known_languages?.length
             ? route?.params?.known_languages
             : ['English'],
-          dating_goal: normalizedDatingGoal,
+          connection_goal: normalizedDatingGoal,
           interested_in_genders: route?.params?.interested_in_genders || [],
           interested_age_range: route?.params?.interested_age_range,
           selfie_photo: selfieUrl,
