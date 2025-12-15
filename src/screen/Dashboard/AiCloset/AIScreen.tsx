@@ -1,10 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, Image, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, Image, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Animated, Dimensions, FlatList } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary, ImagePickerResponse, MediaType, PhotoQuality } from 'react-native-image-picker';
 import { GEMINI_API_KEY, GEMINI_API_URL_TEXT, GEMINI_API_URL_VISION } from '../../../config/apiConfig';
 import { WardrobeStackParamList } from './WardrobeFeature';
+import { BlurView } from '@react-native-community/blur';
+import { AIWardrobeBg, ClosetText } from '../../../assets';
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 interface AIScreenProps {
   navigation?: NativeStackNavigationProp<WardrobeStackParamList, 'Dashboard'>;
@@ -41,6 +49,8 @@ interface CategoryData {
   items: CollectionItem[];
 }
 
+type SavedOutfitCarouselItem = SavedOutfit & { _loopKey: string; _baseIndex: number };
+
 interface SavedOutfit {
   id: string;
   name: string;
@@ -55,6 +65,17 @@ interface ChatMessage {
   timestamp: Date;
   imageUri?: string;
 }
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const OUTFIT_CARD_WIDTH = 160;
+const OUTFIT_CARD_SPACING = 20;
+const OUTFIT_CARD_FULL_WIDTH = OUTFIT_CARD_WIDTH + OUTFIT_CARD_SPACING;
+const OUTFIT_CAROUSEL_SIDE_PADDING = (SCREEN_WIDTH - OUTFIT_CARD_WIDTH) / 2;
+const CATEGORY_CARD_HEIGHT = 100;
+const CATEGORY_CARD_VERTICAL_SPACING = 16;
+const CATEGORY_CARD_VERTICAL_FULL_HEIGHT = CATEGORY_CARD_HEIGHT + CATEGORY_CARD_VERTICAL_SPACING;
+const CATEGORY_CAROUSEL_VERTICAL_PADDING = (SCREEN_HEIGHT * 0.3 - CATEGORY_CARD_HEIGHT) / 2;
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 const AIScreen = ({ navigation }: AIScreenProps) => {
   // All hooks must be at the top level in consistent order
@@ -80,9 +101,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const chatScrollViewRef = useRef<ScrollView>(null);
-  
-  // Saved outfits state - must be after all other hooks
+  // Saved outfits state - moved earlier to maintain consistent hook order
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>(() => {
     // Use lazy initializer to compute initial state
     const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -108,6 +127,38 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
       { id: '7', name: 'Weekend Casual', date: outfitDates[6], items: ['Hoodie', 'Jeans', 'Sneakers'] },
     ];
   });
+  const chatScrollViewRef = useRef<ScrollView>(null);
+  const [_focusedCategoryIndexRow1, _setFocusedCategoryIndexRow1] = useState(0);
+  const [_focusedCategoryIndexRow2, _setFocusedCategoryIndexRow2] = useState(0);
+  const categoryScrollYRow1 = useRef(new Animated.Value(0)).current;
+  const categoryScrollYRow2 = useRef(new Animated.Value(0)).current;
+  const categoryFlatListRefRow1 = useRef<FlatList<CategoryData>>(null);
+  const categoryFlatListRefRow2 = useRef<FlatList<CategoryData>>(null);
+  const outfitScrollX = useRef(new Animated.Value(0)).current;
+  const [_focusedOutfitIndex, setFocusedOutfitIndex] = useState(0);
+  const outfitFlatListRef = useRef<FlatList<SavedOutfitCarouselItem>>(null);
+  const outfitRawIndexRef = useRef(0);
+  const outfitAutoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // Animation shared values for modals
+  const collectionModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const collectionModalOpacity = useSharedValue(0);
+  const calendarModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const calendarModalOpacity = useSharedValue(0);
+  const addToCalendarModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const addToCalendarModalOpacity = useSharedValue(0);
+  const viewAllModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const viewAllModalOpacity = useSharedValue(0);
+  const dateOutfitModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const dateOutfitModalOpacity = useSharedValue(0);
+  const chatbotModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const chatbotModalOpacity = useSharedValue(0);
+
+  // Button press animations
+  const createOutfitButtonScale = useSharedValue(1);
+  const addToCalendarButtonScale = useSharedValue(1);
+  const myCollectionButtonScale = useSharedValue(1);
+  const chatbotTriggerButtonScale = useSharedValue(1);
 
   // Utility functions for calendar
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -143,10 +194,10 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     return days;
   };
 
-  const calendarDays = generateWeekDays();
+  const calendarDays = useMemo(() => generateWeekDays(), []);
 
   // Mock data for collection categories - Row 1
-  const collectionCategoriesRow1: CategoryData[] = [
+  const collectionCategoriesRow1: CategoryData[] = useMemo(() => ([
     { 
       id: '1', 
       name: 'Shirts', 
@@ -252,10 +303,10 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         { id: '11', name: 'Ankle Boots', image: 'https://images.unsplash.com/photo-1608256246200-53bd35f3f44e?w=400&h=400&fit=crop' },
       ]
     },
-  ];
+  ]), []);
 
   // Mock data for collection categories - Row 2
-  const collectionCategoriesRow2: CategoryData[] = [
+  const collectionCategoriesRow2: CategoryData[] = useMemo(() => ([
     { 
       id: '7', 
       name: 'Accessories', 
@@ -336,7 +387,373 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         { id: '6', name: 'Dress Socks', image: 'https://images.unsplash.com/photo-1586350977772-b3b7e690c8e2?w=400&h=400&fit=crop' },
       ]
     },
-  ];
+  ]), []);
+
+  // Calculate base outfit length using useMemo to ensure stability
+  const baseOutfitLength = useMemo(() => savedOutfits.length, [savedOutfits]);
+  const outfitCarouselData: SavedOutfitCarouselItem[] = useMemo(() => {
+    if (baseOutfitLength === 0) return [];
+    const combined = [
+      ...savedOutfits,
+      ...savedOutfits,
+      ...savedOutfits,
+    ];
+    return combined.map((item, idx) => ({
+      ...item,
+      _loopKey: `outfit-${item.id}-${idx}`,
+      _baseIndex: idx % baseOutfitLength,
+    }));
+  }, [savedOutfits, baseOutfitLength]);
+
+  // Initialize vertical scroll positions when modal opens
+  useEffect(() => {
+    if (showCollectionModal && collectionCategoriesRow1.length > 0 && categoryFlatListRefRow1.current) {
+      categoryScrollYRow1.setValue(0);
+      categoryFlatListRefRow1.current.scrollToOffset({ offset: 0, animated: false });
+    }
+  }, [showCollectionModal, collectionCategoriesRow1.length, categoryScrollYRow1]);
+
+  useEffect(() => {
+    if (showCollectionModal && collectionCategoriesRow2.length > 0 && categoryFlatListRefRow2.current) {
+      categoryScrollYRow2.setValue(0);
+      categoryFlatListRefRow2.current.scrollToOffset({ offset: 0, animated: false });
+    }
+  }, [showCollectionModal, collectionCategoriesRow2.length, categoryScrollYRow2]);
+
+  // Animate Collection Modal
+  useEffect(() => {
+    if (showCollectionModal) {
+      collectionModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      collectionModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      collectionModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      collectionModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCollectionModal]);
+
+  // Animate Calendar Modal
+  useEffect(() => {
+    if (showCalendarModal) {
+      calendarModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      calendarModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      calendarModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      calendarModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCalendarModal]);
+
+  // Animate Add to Calendar Modal
+  useEffect(() => {
+    if (showAddToCalendarModal) {
+      addToCalendarModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      addToCalendarModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      addToCalendarModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      addToCalendarModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAddToCalendarModal]);
+
+  // Animate View All Modal
+  useEffect(() => {
+    if (showViewAllModal) {
+      viewAllModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      viewAllModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      viewAllModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      viewAllModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showViewAllModal]);
+
+  // Animate Date Outfit Modal
+  useEffect(() => {
+    if (showDateOutfitModal) {
+      dateOutfitModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      dateOutfitModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      dateOutfitModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      dateOutfitModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDateOutfitModal]);
+
+  // Animate Chatbot Modal
+  useEffect(() => {
+    if (showChatbotModal) {
+      chatbotModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      chatbotModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      chatbotModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      chatbotModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showChatbotModal]);
+
+  const stopOutfitAutoPlay = React.useCallback(() => {
+    if (outfitAutoIntervalRef.current) {
+      clearInterval(outfitAutoIntervalRef.current);
+      outfitAutoIntervalRef.current = null;
+    }
+  }, []);
+
+  const startOutfitAutoPlay = React.useCallback(() => {
+    // Auto-scrolling disabled
+    return;
+  }, []);
+
+  useEffect(() => {
+    if (baseOutfitLength === 0 || !outfitFlatListRef.current) return;
+    const startRawIndex = baseOutfitLength;
+    outfitRawIndexRef.current = startRawIndex;
+    const startOffset = startRawIndex * OUTFIT_CARD_FULL_WIDTH;
+    outfitFlatListRef.current.scrollToOffset({
+      offset: startOffset,
+      animated: false,
+    });
+    // Initialize animated value
+    outfitScrollX.setValue(startOffset);
+    setFocusedOutfitIndex(0);
+    
+    // Auto-scrolling disabled - removed autoplay start
+    
+    return () => {
+      stopOutfitAutoPlay();
+    };
+  }, [baseOutfitLength, startOutfitAutoPlay, stopOutfitAutoPlay, outfitScrollX]);
+
+  const renderCategoryCardRow1 = React.useCallback(({ item, index }: { item: CategoryData; index: number }) => {
+    const inputRange = [
+      (index - 2) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      (index - 1) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      index * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      (index + 1) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      (index + 2) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+    ];
+
+    const scale = categoryScrollYRow1.interpolate({
+      inputRange,
+      outputRange: [0.75, 0.82, 1.15, 0.82, 0.75],
+      extrapolate: 'clamp',
+    });
+
+    const opacity = categoryScrollYRow1.interpolate({
+      inputRange,
+      outputRange: [0.3, 0.5, 1, 0.5, 0.3],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <AnimatedTouchableOpacity
+        style={[
+          styles.categoryCardVertical,
+          {
+            transform: [{ scale }],
+            opacity,
+          },
+        ]}
+        activeOpacity={0.8}
+        onPress={() => {
+          setShowCollectionModal(false);
+          navigation?.navigate('Closet', { categoryData: item });
+        }}
+      >
+        <View style={styles.categoryHeaderVertical}>
+          <View style={styles.categoryIconContainerVertical}>
+            <Icon name={item.icon} size={28} color="#FFFFFF" />
+            <TouchableOpacity 
+              style={styles.categoryAddButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                setShowCollectionModal(false);
+                navigation?.navigate('Camera');
+              }}
+            >
+              <Icon name="plus" size={14} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.categoryTextContainer}>
+            <Text style={styles.categoryNameVertical}>{item.name}</Text>
+            <Text style={styles.categoryCountVertical}>{item.itemCount} items</Text>
+          </View>
+        </View>
+      </AnimatedTouchableOpacity>
+    );
+  }, [navigation, categoryScrollYRow1]);
+
+  const renderCategoryCardRow2 = React.useCallback(({ item, index }: { item: CategoryData; index: number }) => {
+    const inputRange = [
+      (index - 2) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      (index - 1) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      index * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      (index + 1) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+      (index + 2) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+    ];
+
+    const scale = categoryScrollYRow2.interpolate({
+      inputRange,
+      outputRange: [0.75, 0.82, 1.15, 0.82, 0.75],
+      extrapolate: 'clamp',
+    });
+
+    const opacity = categoryScrollYRow2.interpolate({
+      inputRange,
+      outputRange: [0.3, 0.5, 1, 0.5, 0.3],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <AnimatedTouchableOpacity
+        style={[
+          styles.categoryCardVertical,
+          {
+            transform: [{ scale }],
+            opacity,
+          },
+        ]}
+        activeOpacity={0.8}
+        onPress={() => {
+          setShowCollectionModal(false);
+          navigation?.navigate('Closet', { categoryData: item });
+        }}
+      >
+        <View style={styles.categoryHeaderVertical}>
+          <View style={styles.categoryIconContainerVertical}>
+            <Icon name={item.icon} size={28} color="#FFFFFF" />
+            <TouchableOpacity 
+              style={styles.categoryAddButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                setShowCollectionModal(false);
+                navigation?.navigate('Camera');
+              }}
+            >
+              <Icon name="plus" size={14} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.categoryTextContainer}>
+            <Text style={styles.categoryNameVertical}>{item.name}</Text>
+            <Text style={styles.categoryCountVertical}>{item.itemCount} items</Text>
+          </View>
+        </View>
+      </AnimatedTouchableOpacity>
+    );
+  }, [navigation, categoryScrollYRow2]);
+
+  const renderOutfitCard = React.useCallback(({ item, index }: { item: SavedOutfitCarouselItem; index: number }) => {
+    const inputRange = [
+      (index - 2) * OUTFIT_CARD_FULL_WIDTH,
+      (index - 1) * OUTFIT_CARD_FULL_WIDTH,
+      index * OUTFIT_CARD_FULL_WIDTH,
+      (index + 1) * OUTFIT_CARD_FULL_WIDTH,
+      (index + 2) * OUTFIT_CARD_FULL_WIDTH,
+    ];
+
+    const scale = outfitScrollX.interpolate({
+      inputRange,
+      outputRange: [0.76, 0.9, 1.14, 0.9, 0.76],
+      extrapolate: 'clamp',
+    });
+
+    const translateY = outfitScrollX.interpolate({
+      inputRange,
+      outputRange: [48, 16, -20, 16, 48],
+      extrapolate: 'clamp',
+    });
+
+    const rotate = outfitScrollX.interpolate({
+      inputRange,
+      outputRange: ['-18deg', '-10deg', '0deg', '10deg', '18deg'],
+      extrapolate: 'clamp',
+    });
+
+    const opacity = outfitScrollX.interpolate({
+      inputRange,
+      outputRange: [0.35, 0.55, 1, 0.55, 0.35],
+      extrapolate: 'clamp',
+    });
+
+    const meta = item.items.slice(0, 2).join(' · ');
+
+    return (
+      <AnimatedTouchableOpacity
+        style={[
+          styles.myOutfitCard,
+          { transform: [{ translateY }, { rotate }, { scale }], opacity },
+        ]}
+        activeOpacity={0.9}
+        onPress={() => navigation?.navigate('Studio')}
+      >
+        {/* Frosted Glass Background */}
+        <BlurView
+          blurType="dark"
+          blurAmount={15}
+          style={StyleSheet.absoluteFill}
+          reducedTransparencyFallbackColor="rgba(26, 26, 26, 0.85)"
+        />
+        {/* Glossy Overlay */}
+        <View style={styles.glossyOverlay} />
+        {/* Card Content */}
+        <View style={styles.outfitCardContent}>
+          <View style={styles.outfitArcIcon}>
+            <Icon name="hanger" size={26} color="#FFFFFF" />
+          </View>
+          <Text style={styles.outfitArcName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.outfitArcMeta} numberOfLines={1}>{meta}</Text>
+        </View>
+      </AnimatedTouchableOpacity>
+    );
+  }, [navigation, outfitScrollX]);
 
 
   // Helper function to format collection data for AI context
@@ -511,6 +928,19 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     if (!parsedDate) return [];
     return getOutfitsForDate(parsedDate.year, parsedDate.month, parsedDate.day);
   };
+
+  // Pre-calculate calendar days with outfits to avoid expensive calls during render
+  const calendarDaysWithOutfits = useMemo(() => {
+    return calendarDays.map((day) => {
+      const dayOutfits = getOutfitsForCalendarDay(day);
+      const firstOutfit = dayOutfits.length > 0 ? dayOutfits[0] : null;
+      return {
+        ...day,
+        dayOutfits,
+        firstOutfit,
+      };
+    });
+  }, [calendarDays, savedOutfits]);
 
   const generateCalendarDays = (): CalendarDay[] => {
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -1013,93 +1443,266 @@ INSTRUCTIONS:
     }
   }, [chatMessages, isTyping]);
 
+  // Animated styles for Collection Modal
+  const collectionModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: collectionModalTranslateY.value }],
+    };
+  });
+
+  const collectionBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: collectionModalOpacity.value,
+    };
+  });
+
+  // Animated styles for Calendar Modal
+  const calendarModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: calendarModalTranslateY.value }],
+    };
+  });
+
+  const calendarBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: calendarModalOpacity.value,
+    };
+  });
+
+  // Animated styles for Add to Calendar Modal
+  const addToCalendarModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: addToCalendarModalTranslateY.value }],
+    };
+  });
+
+  const addToCalendarBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: addToCalendarModalOpacity.value,
+    };
+  });
+
+  // Animated styles for View All Modal
+  const viewAllModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: viewAllModalTranslateY.value }],
+    };
+  });
+
+  const viewAllBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: viewAllModalOpacity.value,
+    };
+  });
+
+  // Animated styles for Date Outfit Modal
+  const dateOutfitModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: dateOutfitModalTranslateY.value }],
+    };
+  });
+
+  const dateOutfitBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: dateOutfitModalOpacity.value,
+    };
+  });
+
+  // Animated styles for Chatbot Modal
+  const chatbotModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: chatbotModalTranslateY.value }],
+    };
+  });
+
+  const chatbotBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: chatbotModalOpacity.value,
+    };
+  });
+
+  // Button animated styles
+  const createOutfitButtonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: createOutfitButtonScale.value }],
+    };
+  });
+
+  const addToCalendarButtonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: addToCalendarButtonScale.value }],
+    };
+  });
+
+  const myCollectionButtonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: myCollectionButtonScale.value }],
+    };
+  });
+
+  const chatbotTriggerButtonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: chatbotTriggerButtonScale.value }],
+    };
+  });
+
+  // Button press handlers with smooth animations
+  const handleCreateOutfitPress = () => {
+    createOutfitButtonScale.value = withSpring(0.95, {
+      damping: 15,
+      stiffness: 300,
+    });
+    createOutfitButtonScale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    navigation?.navigate('Studio');
+  };
+
+  const handleAddToCalendarPress = () => {
+    addToCalendarButtonScale.value = withSpring(0.95, {
+      damping: 15,
+      stiffness: 300,
+    });
+    addToCalendarButtonScale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    setShowAddToCalendarModal(true);
+  };
+
+  const handleMyCollectionPress = () => {
+    myCollectionButtonScale.value = withSpring(0.95, {
+      damping: 15,
+      stiffness: 300,
+    });
+    myCollectionButtonScale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    setShowCollectionModal(true);
+  };
+
+  const handleChatbotTriggerPress = () => {
+    chatbotTriggerButtonScale.value = withSpring(0.95, {
+      damping: 15,
+      stiffness: 300,
+    });
+    chatbotTriggerButtonScale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    setShowChatbotModal(true);
+  };
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>AI Wardrobe</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.headerIconButton}>
-            <Icon name="calendar-outline" size={24} color="#000000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconButton}>
-            <Icon name="bell-outline" size={24} color="#000000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconButton}>
-            <Icon name="account-circle-outline" size={24} color="#000000" />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+      {/* Background Image */}
+      <Image
+        source={AIWardrobeBg}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      {/* Dark Overlay */}
+      <View style={styles.backgroundOverlay} />
+      
+      <ScrollView 
+        style={styles.scrollViewContainer} 
+        contentContainerStyle={styles.content}
+        removeClippedSubviews={true}
+        nestedScrollEnabled={true}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        overScrollMode={Platform.OS === 'android' ? 'never' : undefined}
+        disableIntervalMomentum={true}
+        decelerationRate="normal"
+        scrollEnabled={true}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+        <Image source={ClosetText} style={styles.headerLogo} resizeMode="contain" />
+        <Text style={styles.mainText}>Create your own outfit with items from your closet</Text>
       </View>
 
       {/* Main Action Section */}
       <View style={styles.mainSection}>
-        <Text style={styles.mainText}>Create your own outfit with items from your closet</Text>
         
         <View style={styles.actionButtons}>
           {/* Create outfit button */}
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation?.navigate('Studio')}
-          >
-            <View style={[styles.actionButtonCircle, styles.actionButtonCircleBlack]}>
-              <View style={styles.iconWithPlus}>
-                <Icon name="hanger" size={28} color="#000000" />
-                <View style={styles.plusIconSmall}>
-                  <Icon name="plus" size={12} color="#000000" />
+          <Reanimated.View style={createOutfitButtonAnimatedStyle}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleCreateOutfitPress}
+              activeOpacity={1}
+            >
+              <View style={[styles.actionButtonCircle, styles.actionButtonCircleBlack]}>
+                <View style={styles.iconWithPlus}>
+                  <Icon name="hanger" size={28} color="#FFFFFF" />
+                  <View style={styles.plusIconSmall}>
+                    <Icon name="plus" size={12} color="#FFFFFF" />
+                  </View>
                 </View>
               </View>
-            </View>
-            <Text style={styles.actionButtonLabel}>Create outfit</Text>
-          </TouchableOpacity>
+              <Text style={styles.actionButtonLabel}>Create outfit</Text>
+            </TouchableOpacity>
+          </Reanimated.View>
 
           {/* Add to calendar button */}
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => setShowAddToCalendarModal(true)}
-          >
-            <View style={[styles.actionButtonCircle, styles.actionButtonCircleWhite]}>
-              <View style={styles.iconWithPlus}>
-                <Icon name="calendar-outline" size={28} color="#000000" />
-                <View style={styles.plusIconSmall}>
-                  <Icon name="plus" size={12} color="#000000" />
+          <Reanimated.View style={addToCalendarButtonAnimatedStyle}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleAddToCalendarPress}
+              activeOpacity={1}
+            >
+              <View style={[styles.actionButtonCircle, styles.actionButtonCircleWhite]}>
+                <View style={styles.iconWithPlus}>
+                  <Icon name="calendar-outline" size={28} color="#FFFFFF" />
+                  <View style={styles.plusIconSmall}>
+                    <Icon name="plus" size={12} color="#FFFFFF" />
+                  </View>
                 </View>
               </View>
-            </View>
-            <Text style={styles.actionButtonLabel}>Add to calendar</Text>
-          </TouchableOpacity>
+              <Text style={styles.actionButtonLabel}>Add to calendar</Text>
+            </TouchableOpacity>
+          </Reanimated.View>
 
           {/* My collection button */}
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => setShowCollectionModal(true)}
-          >
-            <View style={[styles.actionButtonCircle, styles.actionButtonCircleWhite]}>
-              <View style={styles.iconWithPlus}>
-                <Icon name="folder-multiple" size={28} color="#000000" />
-                <View style={styles.plusIconSmall}>
-                  <Icon name="plus" size={12} color="#000000" />
+          <Reanimated.View style={myCollectionButtonAnimatedStyle}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleMyCollectionPress}
+              activeOpacity={1}
+            >
+              <View style={[styles.actionButtonCircle, styles.actionButtonCircleWhite]}>
+                <View style={styles.iconWithPlus}>
+                  <Icon name="folder-multiple" size={28} color="#FFFFFF" />
+                  <View style={styles.plusIconSmall}>
+                    <Icon name="plus" size={12} color="#FFFFFF" />
+                  </View>
                 </View>
               </View>
-            </View>
-            <Text style={styles.actionButtonLabel}>My collection</Text>
-          </TouchableOpacity>
+              <Text style={styles.actionButtonLabel}>My collection</Text>
+            </TouchableOpacity>
+          </Reanimated.View>
         </View>
       </View>
 
       {/* AI Fashion Advisor Trigger Button */}
-      <TouchableOpacity
-        style={styles.chatbotTriggerButton}
-        onPress={() => setShowChatbotModal(true)}
-        activeOpacity={0.8}
-      >
+      <Reanimated.View style={chatbotTriggerButtonAnimatedStyle}>
+        <TouchableOpacity
+          style={styles.chatbotTriggerButton}
+          onPress={handleChatbotTriggerPress}
+          activeOpacity={1}
+        >
         <View style={styles.chatbotTriggerContent}>
           <View style={styles.chatbotTriggerIconContainer}>
-            <Icon name="robot" size={24} color="#000000" />
+            <Icon name="robot" size={24} color="#FFFFFF" />
           </View>
-          <Text style={styles.chatbotTriggerText}>AI Fashion Advisor</Text>
-          <Icon name="chevron-right" size={20} color="#000000" />
+          <Text style={styles.chatbotTriggerText}>Snixxy</Text>
+          <Icon name="chevron-right" size={20} color="#FFFFFF" />
         </View>
       </TouchableOpacity>
+      </Reanimated.View>
 
       {/* My Outfits Section */}
       <View style={styles.section}>
@@ -1109,40 +1712,81 @@ INSTRUCTIONS:
             <Text style={styles.viewAllLink}>View All &gt;</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView 
+        <Animated.FlatList
+          ref={outfitFlatListRef}
+          data={outfitCarouselData}
+          keyExtractor={(item) => item._loopKey}
           horizontal 
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.myOutfitsContainer}
-        >
-          {savedOutfits.map((outfit) => (
-            <TouchableOpacity 
-              key={outfit.id} 
-              style={styles.myOutfitCard}
-              onPress={() => {
-                // Navigate to outfit details or edit
-                navigation?.navigate('Studio');
-              }}
-            >
-              <View style={styles.outfitCardHeader}>
-                <Icon name="hanger" size={20} color="#000000" />
-                <Text style={styles.outfitCardName} numberOfLines={1}>{outfit.name}</Text>
-              </View>
-              <Text style={styles.outfitCardDate}>{outfit.date}</Text>
-              <View style={styles.outfitItemsList}>
-                {outfit.items.slice(0, 3).map((item, index) => (
-                  <View key={index} style={styles.outfitItemTag}>
-                    <Text style={styles.outfitItemText}>{item}</Text>
-                  </View>
-                ))}
-                {outfit.items.length > 3 && (
-                  <View style={styles.outfitItemTag}>
-                    <Text style={styles.outfitItemText}>+{outfit.items.length - 3}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+          renderItem={renderOutfitCard}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: outfitScrollX } } }],
+            { 
+              useNativeDriver: true,
+              listener: (event: any) => {
+                // Track the actual scroll position for smooth updates
+                const currentOffset = event.nativeEvent.contentOffset.x;
+                const currentIndex = Math.round(currentOffset / OUTFIT_CARD_FULL_WIDTH);
+                // Only update if there's a significant change to avoid unnecessary updates
+                if (Math.abs(currentIndex - outfitRawIndexRef.current) >= 1) {
+                  outfitRawIndexRef.current = currentIndex;
+                }
+              }
+            }
+          )}
+          disableIntervalMomentum
+          onScrollBeginDrag={() => stopOutfitAutoPlay()}
+          scrollEventThrottle={16}
+          snapToInterval={OUTFIT_CARD_FULL_WIDTH}
+          decelerationRate="fast"
+          bounces={false}
+          onMomentumScrollEnd={({ nativeEvent }) => {
+            if (baseOutfitLength === 0) return;
+            const rawIndex = Math.round(nativeEvent.contentOffset.x / OUTFIT_CARD_FULL_WIDTH);
+            outfitRawIndexRef.current = rawIndex;
+            const focusedIndex = rawIndex % baseOutfitLength;
+            setFocusedOutfitIndex(focusedIndex);
+
+            const minIndex = baseOutfitLength - 1;
+            const maxIndex = baseOutfitLength * 2;
+            if (rawIndex <= minIndex && outfitFlatListRef.current) {
+              const target = rawIndex + baseOutfitLength;
+              outfitRawIndexRef.current = target;
+              const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
+              outfitFlatListRef.current.scrollToOffset({
+                offset: targetOffset,
+                animated: false,
+              });
+              // Sync animated value
+              outfitScrollX.setValue(targetOffset);
+            } else if (rawIndex >= maxIndex && outfitFlatListRef.current) {
+              const target = rawIndex - baseOutfitLength;
+              outfitRawIndexRef.current = target;
+              const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
+              outfitFlatListRef.current.scrollToOffset({
+                offset: targetOffset,
+                animated: false,
+              });
+              // Sync animated value
+              outfitScrollX.setValue(targetOffset);
+            }
+            // Auto-scrolling disabled - removed autoplay restart
+          }}
+          getItemLayout={(_, index) => ({
+            length: OUTFIT_CARD_FULL_WIDTH,
+            offset: OUTFIT_CARD_FULL_WIDTH * index,
+            index,
+          })}
+          contentContainerStyle={[
+            styles.myOutfitsContainer,
+            { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING },
+          ]}
+          removeClippedSubviews={true}
+          initialNumToRender={3}
+          maxToRenderPerBatch={2}
+          windowSize={5}
+          updateCellsBatchingPeriod={50}
+        />
       </View>
 
       {/* Outfit Calendar Section */}
@@ -1159,17 +1803,19 @@ INSTRUCTIONS:
           horizontal 
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.daysContainer}
+          nestedScrollEnabled={true}
+          scrollEventThrottle={16}
+          removeClippedSubviews={true}
+          disableIntervalMomentum={true}
+          decelerationRate="fast"
         >
-          {calendarDays.map((day) => {
-            const dayOutfits = getOutfitsForCalendarDay(day);
-            const firstOutfit = dayOutfits.length > 0 ? dayOutfits[0] : null;
-            
+          {calendarDaysWithOutfits.map((day: DayData & { dayOutfits: SavedOutfit[]; firstOutfit: SavedOutfit | null }) => {
             return (
               <TouchableOpacity
                 key={day.id}
                 style={styles.dayItem}
                 onPress={() => {
-                  if (firstOutfit) {
+                  if (day.firstOutfit) {
                     navigation?.navigate('Studio');
                   } else {
                     setShowAddToCalendarModal(true);
@@ -1180,16 +1826,16 @@ INSTRUCTIONS:
                 <Text style={[styles.dayText, day.isToday && styles.dayTextToday]}>{day.day}</Text>
                 <Text style={[styles.dateText, day.isToday && styles.dateTextToday]}>{day.date}</Text>
                 <View style={styles.weatherContainer}>
-                  <Icon name="weather-sunny" size={16} color="#000000" />
+                  <Icon name="weather-sunny" size={16} color="#FFFFFF" />
                   <Text style={styles.tempText}>{day.tempHigh} {day.tempLow}</Text>
                 </View>
                 
                 {/* Outfit Section */}
                 <View style={styles.dayItemOutfitSection}>
-                  {firstOutfit ? (
+                  {day.firstOutfit ? (
                     <View style={styles.calendarOutfitNameContainer}>
-                      <Icon name="hanger" size={16} color="#000000" />
-                      <Text style={styles.calendarOutfitName} numberOfLines={1}>{firstOutfit.name}</Text>
+                      <Icon name="hanger" size={16} color="#FFFFFF" />
+                      <Text style={styles.calendarOutfitName} numberOfLines={1}>{day.firstOutfit.name}</Text>
                     </View>
                   ) : (
                     <TouchableOpacity 
@@ -1213,180 +1859,130 @@ INSTRUCTIONS:
       <Modal
         visible={showCollectionModal}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowCollectionModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <Reanimated.View style={[styles.modalOverlay, collectionBackdropAnimatedStyle]}>
+          <BlurView
+            blurType="dark"
+            blurAmount={20}
+            style={StyleSheet.absoluteFill}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+          <View style={styles.darkOverlay} />
           <TouchableOpacity 
-            style={styles.modalBackdrop}
+            style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setShowCollectionModal(false)}
           />
-          <View style={styles.collectionModalContent}>
+          <Reanimated.View style={[styles.collectionModalContent, collectionModalAnimatedStyle]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>My Collection</Text>
               <TouchableOpacity 
                 onPress={() => setShowCollectionModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#000000" />
+                <Icon name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
             {/* Row 1 - Categories */}
             <View style={styles.collectionRow}>
               <Text style={styles.collectionRowTitle}>Categories</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryScrollContainer}
-              >
-                {collectionCategoriesRow1.map((category) => (
-                  <TouchableOpacity 
-                    key={category.id} 
-                    style={styles.categoryCard}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setShowCollectionModal(false);
-                      navigation?.navigate('Closet', { categoryData: category });
-                    }}
-                  >
-                    <View style={styles.categoryHeader}>
-                      <View style={styles.categoryIconContainer}>
-                        <Icon name={category.icon} size={32} color="#000000" />
-                        <TouchableOpacity 
-                          style={styles.categoryAddButton}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            setShowCollectionModal(false);
-                            navigation?.navigate('Camera');
-                          }}
-                        >
-                          <Icon name="plus" size={16} color="#000000" />
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.categoryName}>{category.name}</Text>
-                      <Text style={styles.categoryCount}>{category.itemCount} items</Text>
-                    </View>
-                    {category.items && category.items.length > 0 && (
-                      <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.categoryItemsContainer}
-                      >
-                        {category.items.slice(0, 4).map((item) => (
-                          <TouchableOpacity
-                            key={item.id}
-                            style={styles.categoryItemImageContainer}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              setShowCollectionModal(false);
-                              navigation?.navigate('Closet', { categoryData: category });
-                            }}
-                          >
-                            <Image 
-                              source={{ uri: item.image }} 
-                              style={styles.categoryItemImage}
-                              resizeMode="cover"
-                            />
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <Animated.FlatList
+                ref={categoryFlatListRefRow1}
+                data={collectionCategoriesRow1}
+                keyExtractor={(item) => item.id}
+                horizontal={false}
+                showsVerticalScrollIndicator={false}
+                renderItem={renderCategoryCardRow1}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { y: categoryScrollYRow1 } } }],
+                  { useNativeDriver: true }
+                )}
+                scrollEventThrottle={1}
+                snapToInterval={CATEGORY_CARD_VERTICAL_FULL_HEIGHT}
+                snapToAlignment="center"
+                decelerationRate={0.88}
+                disableIntervalMomentum={true}
+                bounces={false}
+                contentContainerStyle={[
+                  styles.categoryVerticalContainer,
+                  { paddingVertical: CATEGORY_CAROUSEL_VERTICAL_PADDING },
+                ]}
+                getItemLayout={(_, index) => ({
+                  length: CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+                  offset: CATEGORY_CARD_VERTICAL_FULL_HEIGHT * index,
+                  index,
+                })}
+                removeClippedSubviews={false}
+              />
             </View>
 
-            {/* Row 2 - More Categories */}
+            {/* Row 2 - Other Categories */}
             <View style={styles.collectionRow}>
-              <Text style={styles.collectionRowTitle}>More Categories</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryScrollContainer}
-              >
-                {collectionCategoriesRow2.map((category) => (
-                  <TouchableOpacity 
-                    key={category.id} 
-                    style={styles.categoryCard}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setShowCollectionModal(false);
-                      navigation?.navigate('Closet', { categoryData: category });
-                    }}
-                  >
-                    <View style={styles.categoryHeader}>
-                      <View style={styles.categoryIconContainer}>
-                        <Icon name={category.icon} size={32} color="#000000" />
-                        <TouchableOpacity 
-                          style={styles.categoryAddButton}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            setShowCollectionModal(false);
-                            navigation?.navigate('Camera');
-                          }}
-                        >
-                          <Icon name="plus" size={16} color="#000000" />
-                        </TouchableOpacity>
+              <Text style={styles.collectionRowTitle}>Other Categories</Text>
+              <Animated.FlatList
+                ref={categoryFlatListRefRow2}
+                data={collectionCategoriesRow2}
+                keyExtractor={(item) => item.id}
+                horizontal={false}
+                showsVerticalScrollIndicator={false}
+                renderItem={renderCategoryCardRow2}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { y: categoryScrollYRow2 } } }],
+                  { useNativeDriver: true }
+                )}
+                scrollEventThrottle={1}
+                snapToInterval={CATEGORY_CARD_VERTICAL_FULL_HEIGHT}
+                snapToAlignment="center"
+                decelerationRate={0.88}
+                disableIntervalMomentum={true}
+                bounces={false}
+                contentContainerStyle={[
+                  styles.categoryVerticalContainer,
+                  { paddingVertical: CATEGORY_CAROUSEL_VERTICAL_PADDING },
+                ]}
+                getItemLayout={(_, index) => ({
+                  length: CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
+                  offset: CATEGORY_CARD_VERTICAL_FULL_HEIGHT * index,
+                  index,
+                })}
+                removeClippedSubviews={false}
+              />
                       </View>
-                      <Text style={styles.categoryName}>{category.name}</Text>
-                      <Text style={styles.categoryCount}>{category.itemCount} items</Text>
-                    </View>
-                    {category.items && category.items.length > 0 && (
-                      <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.categoryItemsContainer}
-                      >
-                        {category.items.slice(0, 4).map((item) => (
-                          <TouchableOpacity
-                            key={item.id}
-                            style={styles.categoryItemImageContainer}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              setShowCollectionModal(false);
-                              navigation?.navigate('Closet', { categoryData: category });
-                            }}
-                          >
-                            <Image 
-                              source={{ uri: item.image }} 
-                              style={styles.categoryItemImage}
-                              resizeMode="cover"
-                            />
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </View>
+          </Reanimated.View>
+        </Reanimated.View>
       </Modal>
 
       {/* Calendar Modal */}
       <Modal
         visible={showCalendarModal}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowCalendarModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <Reanimated.View style={[styles.modalOverlay, calendarBackdropAnimatedStyle]}>
+          <BlurView
+            blurType="dark"
+            blurAmount={20}
+            style={StyleSheet.absoluteFill}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+          <View style={styles.darkOverlay} />
           <TouchableOpacity 
-            style={styles.modalBackdrop}
+            style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setShowCalendarModal(false)}
           />
-          <View style={styles.calendarModalContent}>
+          <Reanimated.View style={[styles.calendarModalContent, calendarModalAnimatedStyle]}>
             {/* Calendar Header */}
             <View style={styles.calendarHeader}>
               <TouchableOpacity 
                 onPress={() => setShowCalendarModal(false)}
                 style={styles.calendarBackButton}
               >
-                <Icon name="arrow-left" size={24} color="#000000" />
+                <Icon name="arrow-left" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.calendarMonthYear}>
                 <Text style={styles.calendarMonthYearText}>
@@ -1395,10 +1991,10 @@ INSTRUCTIONS:
               </TouchableOpacity>
               <View style={styles.calendarHeaderIcons}>
                 <TouchableOpacity style={styles.calendarHeaderIcon}>
-                  <Icon name="calendar" size={24} color="#000000" />
+                  <Icon name="calendar" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.calendarHeaderIcon}>
-                  <Icon name="view-grid" size={24} color="#000000" />
+                  <Icon name="view-grid" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -1407,7 +2003,7 @@ INSTRUCTIONS:
             {selectedOutfitForDate && (
               <View style={styles.selectedOutfitBanner}>
                 <View style={styles.selectedOutfitBannerContent}>
-                  <Icon name="hanger" size={20} color="#000000" />
+                  <Icon name="hanger" size={20} color="#FFFFFF" />
                   <Text style={styles.selectedOutfitBannerText}>
                     Select a date to assign "{selectedOutfitForDate.name}"
                   </Text>
@@ -1415,7 +2011,7 @@ INSTRUCTIONS:
                     onPress={() => setSelectedOutfitForDate(null)}
                     style={styles.selectedOutfitBannerClose}
                   >
-                    <Icon name="close" size={18} color="#000000" />
+                    <Icon name="close" size={18} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1424,10 +2020,10 @@ INSTRUCTIONS:
             {/* Calendar Navigation */}
             <View style={styles.calendarNav}>
               <TouchableOpacity onPress={handlePreviousMonth} style={styles.calendarNavButton}>
-                <Icon name="chevron-left" size={24} color="#000000" />
+                <Icon name="chevron-left" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleNextMonth} style={styles.calendarNavButton}>
-                <Icon name="chevron-right" size={24} color="#000000" />
+                <Icon name="chevron-right" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -1472,7 +2068,7 @@ INSTRUCTIONS:
                       <View style={styles.calendarDayOutfits}>
                         {calendarDay.outfits.slice(0, 3).map((outfit) => (
                           <View key={outfit.id} style={styles.calendarOutfitThumbnail}>
-                            <Icon name="hanger" size={12} color="#000000" />
+                            <Icon name="hanger" size={12} color="#FFFFFF" />
                           </View>
                         ))}
                         {calendarDay.outfits.length > 3 && (
@@ -1510,7 +2106,7 @@ INSTRUCTIONS:
                   >
                     {calendarDay.outfits.length > 0 ? (
                       <View style={styles.calendarOutfitCardContent}>
-                        <Icon name="hanger" size={32} color="#000000" />
+                        <Icon name="hanger" size={32} color="#FFFFFF" />
                         <Text style={styles.calendarOutfitCardDate}>{calendarDay.day}</Text>
                       </View>
                     ) : (
@@ -1518,7 +2114,7 @@ INSTRUCTIONS:
                         <View style={styles.calendarOutfitCardIcon}>
                           <Icon name="calendar-plus" size={32} color="#CCCCCC" />
                           <View style={styles.calendarOutfitCardPlus}>
-                            <Icon name="plus" size={12} color="#000000" />
+                            <Icon name="plus" size={12} color="#FFFFFF" />
                           </View>
                         </View>
                         <Text style={styles.calendarOutfitCardDate}>{calendarDay.day}</Text>
@@ -1528,31 +2124,38 @@ INSTRUCTIONS:
                 ))}
               </ScrollView>
             </View>
-          </View>
-        </View>
+          </Reanimated.View>
+        </Reanimated.View>
       </Modal>
 
       {/* Add to Calendar Modal - Outfit Selection */}
       <Modal
         visible={showAddToCalendarModal}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowAddToCalendarModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <Reanimated.View style={[styles.modalOverlay, addToCalendarBackdropAnimatedStyle]}>
+          <BlurView
+            blurType="dark"
+            blurAmount={20}
+            style={StyleSheet.absoluteFill}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+          <View style={styles.darkOverlay} />
           <TouchableOpacity 
-            style={styles.modalBackdrop}
+            style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setShowAddToCalendarModal(false)}
           />
-          <View style={styles.addToCalendarModalContent}>
+          <Reanimated.View style={[styles.addToCalendarModalContent, addToCalendarModalAnimatedStyle]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Outfit to Calendar</Text>
               <TouchableOpacity 
                 onPress={() => setShowAddToCalendarModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#000000" />
+                <Icon name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -1570,7 +2173,7 @@ INSTRUCTIONS:
               >
                 <View style={styles.createNewOutfitCardContent}>
                   <View style={styles.createNewOutfitIconContainer}>
-                    <Icon name="plus" size={32} color="#000000" />
+                    <Icon name="plus" size={32} color="#FFFFFF" />
                   </View>
                   <Text style={styles.createNewOutfitCardText}>Create New Outfit</Text>
                 </View>
@@ -1584,7 +2187,7 @@ INSTRUCTIONS:
                   onPress={() => handleOutfitSelectForCalendar(outfit)}
                 >
                   <View style={styles.outfitSelectionCardHeader}>
-                    <Icon name="hanger" size={24} color="#000000" />
+                    <Icon name="hanger" size={24} color="#FFFFFF" />
                     <Text style={styles.outfitSelectionName}>{outfit.name}</Text>
                   </View>
                   <Text style={styles.outfitSelectionDate}>{outfit.date}</Text>
@@ -1603,31 +2206,38 @@ INSTRUCTIONS:
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        </View>
+          </Reanimated.View>
+        </Reanimated.View>
       </Modal>
 
       {/* View All Outfits Modal */}
       <Modal
         visible={showViewAllModal}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowViewAllModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <Reanimated.View style={[styles.modalOverlay, viewAllBackdropAnimatedStyle]}>
+          <BlurView
+            blurType="dark"
+            blurAmount={20}
+            style={StyleSheet.absoluteFill}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+          <View style={styles.darkOverlay} />
           <TouchableOpacity 
-            style={styles.modalBackdrop}
+            style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setShowViewAllModal(false)}
           />
-          <View style={styles.viewAllModalContent}>
+          <Reanimated.View style={[styles.viewAllModalContent, viewAllModalAnimatedStyle]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>All Outfits</Text>
               <TouchableOpacity 
                 onPress={() => setShowViewAllModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#000000" />
+                <Icon name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -1645,7 +2255,7 @@ INSTRUCTIONS:
                   }}
                 >
                   <View style={styles.outfitSelectionCardHeader}>
-                    <Icon name="hanger" size={24} color="#000000" />
+                    <Icon name="hanger" size={24} color="#FFFFFF" />
                     <Text style={styles.outfitSelectionName}>{outfit.name}</Text>
                   </View>
                   <Text style={styles.outfitSelectionDate}>{outfit.date}</Text>
@@ -1659,24 +2269,31 @@ INSTRUCTIONS:
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        </View>
+          </Reanimated.View>
+        </Reanimated.View>
       </Modal>
 
       {/* Date-Based Outfit Selection Modal */}
       <Modal
         visible={showDateOutfitModal}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowDateOutfitModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <Reanimated.View style={[styles.modalOverlay, dateOutfitBackdropAnimatedStyle]}>
+          <BlurView
+            blurType="dark"
+            blurAmount={20}
+            style={StyleSheet.absoluteFill}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+          <View style={styles.darkOverlay} />
           <TouchableOpacity 
-            style={styles.modalBackdrop}
+            style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setShowDateOutfitModal(false)}
           />
-          <View style={styles.dateOutfitModalContent}>
+          <Reanimated.View style={[styles.dateOutfitModalContent, dateOutfitModalAnimatedStyle]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {selectedCalendarDate 
@@ -1688,7 +2305,7 @@ INSTRUCTIONS:
                 onPress={() => setShowDateOutfitModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#000000" />
+                <Icon name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -1711,7 +2328,7 @@ INSTRUCTIONS:
                           }}
                         >
                           <View style={styles.outfitSelectionCardHeader}>
-                            <Icon name="hanger" size={24} color="#000000" />
+                            <Icon name="hanger" size={24} color="#FFFFFF" />
                             <Text style={styles.outfitSelectionName}>{outfit.name}</Text>
                           </View>
                           <View style={styles.outfitSelectionItems}>
@@ -1740,7 +2357,7 @@ INSTRUCTIONS:
                       setShowAddToCalendarModal(true);
                     }}
                   >
-                    <Icon name="hanger" size={20} color="#000000" />
+                    <Icon name="hanger" size={20} color="#FFFFFF" />
                     <Text style={styles.dateOutfitActionText}>Select from Existing</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1750,21 +2367,21 @@ INSTRUCTIONS:
                       navigation?.navigate('Studio');
                     }}
                   >
-                    <Icon name="plus" size={20} color="#000000" />
+                    <Icon name="plus" size={20} color="#FFFFFF" />
                     <Text style={styles.dateOutfitActionText}>Create New Outfit</Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
-          </View>
-        </View>
+          </Reanimated.View>
+        </Reanimated.View>
       </Modal>
 
       {/* AI Fashion Advisor Chatbot Modal */}
       <Modal
         visible={showChatbotModal}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowChatbotModal(false)}
       >
         <KeyboardAvoidingView
@@ -1772,16 +2389,25 @@ INSTRUCTIONS:
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+          <Reanimated.View style={[StyleSheet.absoluteFill, chatbotBackdropAnimatedStyle]}>
+            <BlurView
+              blurType="dark"
+              blurAmount={20}
+              style={StyleSheet.absoluteFill}
+              reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+            />
+            <View style={styles.darkOverlay} />
+          </Reanimated.View>
           <TouchableOpacity
-            style={styles.modalBackdrop}
+            style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setShowChatbotModal(false)}
           />
-          <View style={styles.chatbotModalContent}>
+          <Reanimated.View style={[styles.chatbotModalContent, chatbotModalAnimatedStyle]}>
             <View style={styles.modalHeader}>
               <View style={styles.chatbotHeaderLeft}>
                 <View style={styles.chatbotIconContainer}>
-                  <Icon name="robot" size={20} color="#000000" />
+                  <Icon name="robot" size={20} color="#FFFFFF" />
                 </View>
                 <Text style={styles.modalTitle}>AI Fashion Advisor</Text>
               </View>
@@ -1789,7 +2415,7 @@ INSTRUCTIONS:
                 style={styles.closeButton}
                 onPress={() => setShowChatbotModal(false)}
               >
-                <Icon name="close" size={24} color="#000000" />
+                <Icon name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -1833,6 +2459,8 @@ INSTRUCTIONS:
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.collectionItemsScrollContent}
                             style={styles.collectionItemsScrollView}
+                            nestedScrollEnabled={true}
+                            scrollEventThrottle={16}
                           >
                             {collectionItems.map((item, index) => (
                               <View
@@ -1953,7 +2581,7 @@ INSTRUCTIONS:
                 style={styles.attachmentButton}
                 onPress={handleImagePicker}
               >
-                <Icon name="pin" size={22} color="#000000" />
+                <Icon name="pin" size={22} color="#FFFFFF" />
               </TouchableOpacity>
               <TextInput
                 style={styles.chatInput}
@@ -1969,28 +2597,52 @@ INSTRUCTIONS:
                 onPress={handleSendMessage}
                 disabled={!chatInput.trim()}
               >
-                <Icon name="send" size={20} color={chatInput.trim() ? "#000000" : "#CCCCCC"} />
+                <Icon name="send" size={20} color={chatInput.trim() ? "#FFFFFF" : "rgba(255, 255, 255, 0.5)"} />
               </TouchableOpacity>
             </View>
-          </View>
+          </Reanimated.View>
         </KeyboardAvoidingView>
       </Modal>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#000000',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 0,
+  },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    zIndex: 1,
+  },
+  scrollViewContainer: {
+    flex: 1,
+    zIndex: 2,
   },
   content: {
     paddingBottom: 100,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 24,
@@ -1999,15 +2651,11 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  headerIconButton: {
-    padding: 4,
+  headerLogo: {
+    height: 200,
+    width: 200,
   },
   mainSection: {
     paddingHorizontal: 20,
@@ -2016,8 +2664,8 @@ const styles = StyleSheet.create({
   mainText: {
     fontSize: 16,
     fontFamily: 'GTMaruRegular',
-    color: '#000000',
-    marginBottom: 24,
+    color: '#FFFFFF',
+    marginBottom: 40,
     lineHeight: 22,
   },
   actionButtons: {
@@ -2039,14 +2687,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   actionButtonCircleBlack: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#1a1a1a',
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   actionButtonCircleWhite: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#1a1a1a',
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   iconWithPlus: {
     position: 'relative',
@@ -2060,14 +2708,16 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   actionButtonLabel: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   section: {
@@ -2084,12 +2734,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   viewCalendarLink: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   daysContainer: {
     paddingRight: 20,
@@ -2099,11 +2749,11 @@ const styles = StyleSheet.create({
     width: 180,
     minHeight: 160,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     marginRight: 16,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -2117,7 +2767,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
   },
   calendarOutfitNameContainer: {
     flexDirection: 'row',
@@ -2128,7 +2778,7 @@ const styles = StyleSheet.create({
   calendarOutfitName: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
   },
@@ -2138,26 +2788,26 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   dayText: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 4,
   },
   dayTextToday: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: 'GTMaruBold',
   },
   dateText: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 8,
   },
   dateTextToday: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: 'GTMaruMedium',
   },
   weatherContainer: {
@@ -2168,17 +2818,17 @@ const styles = StyleSheet.create({
   tempText: {
     fontSize: 11,
     fontFamily: 'GTMaruRegular',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   outfitCard: {
     width: 180,
     minHeight: 160,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     marginRight: 16,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -2192,27 +2842,68 @@ const styles = StyleSheet.create({
     minHeight: 120,
   },
   myOutfitsContainer: {
-    paddingRight: 20,
+    paddingVertical: 48,
+    alignItems: 'center',
   },
   viewAllLink: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   myOutfitCard: {
-    width: 180,
-    minHeight: 160,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    marginRight: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#FDFF8D',
+    width: OUTFIT_CARD_WIDTH,
+    height: OUTFIT_CARD_WIDTH,
+    borderRadius: 28,
+    marginRight: OUTFIT_CARD_SPACING,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  glossyOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    height: '40%',
+    opacity: 0.6,
+  },
+  outfitCardContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    zIndex: 1,
+  },
+  outfitArcIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  outfitArcName: {
+    fontSize: 14,
+    fontFamily: 'GTMaruBold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  outfitArcMeta: {
+    fontSize: 11,
+    fontFamily: 'GTMaruMedium',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
   },
   outfitCardHeader: {
     flexDirection: 'row',
@@ -2223,14 +2914,14 @@ const styles = StyleSheet.create({
   outfitCardName: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#000000',
+    color: '#FFFFFF',
     marginLeft: 8,
     flex: 1,
   },
   outfitCardDate: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 12,
     width: '100%',
   },
@@ -2240,17 +2931,17 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   outfitItemTag: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   outfitItemText: {
     fontSize: 10,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   bookContainer: {
     paddingRight: 20,
@@ -2264,8 +2955,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  darkOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
   collectionModalContent: {
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -2283,47 +2978,96 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   closeButton: {
     padding: 4,
   },
   collectionRow: {
     marginBottom: 32,
+    height: SCREEN_HEIGHT * 0.3,
   },
   collectionRowTitle: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   categoryScrollContainer: {
-    paddingRight: 20,
+    paddingVertical: 38,
+    alignItems: 'center',
+  },
+  categoryVerticalContainer: {
+    paddingVertical: 0,
   },
   categoryCard: {
-    width: 140,
-    marginRight: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
-    padding: 12,
+    padding:6,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
+    alignSelf: 'center',
+    marginBottom: 12,
+    marginTop: 12,
+    margin:40,
+  },
+  categoryCardVertical: {
+    width: '100%',
+    height: CATEGORY_CARD_HEIGHT,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    marginBottom: CATEGORY_CARD_VERTICAL_SPACING,
+    justifyContent: 'center',
   },
   categoryHeader: {
     alignItems: 'center',
     marginBottom: 12,
   },
+  categoryHeaderVertical: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  categoryIconContainerVertical: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    position: 'relative',
+  },
+  categoryTextContainer: {
+    flex: 1,
+  },
+  categoryNameVertical: {
+    fontSize: 16,
+    fontFamily: 'GTMaruBold',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  categoryCountVertical: {
+    fontSize: 12,
+    fontFamily: 'GTMaruRegular',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
   categoryIconContainer: {
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     position: 'relative',
   },
   categoryAddButton: {
@@ -2333,23 +3077,23 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   categoryName: {
     fontSize: 12,
     fontFamily: 'GTMaruBold',
-    color: '#000000',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 4,
   },
   categoryCount: {
     fontSize: 10,
     fontFamily: 'GTMaruRegular',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
   },
   categoryItemsContainer: {
@@ -2362,7 +3106,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
   },
   categoryItemImage: {
     width: '100%',
@@ -2370,7 +3114,7 @@ const styles = StyleSheet.create({
   },
   // Calendar Modal Styles
   calendarModalContent: {
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -2396,7 +3140,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   calendarHeaderIcons: {
     flexDirection: 'row',
@@ -2406,12 +3150,12 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   selectedOutfitBanner: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   selectedOutfitBannerContent: {
     flexDirection: 'row',
@@ -2422,7 +3166,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   selectedOutfitBannerClose: {
     padding: 4,
@@ -2447,7 +3191,7 @@ const styles = StyleSheet.create({
   weekDayText: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   calendarGridContainer: {
     maxHeight: 400,
@@ -2463,22 +3207,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   calendarDayCellOtherMonth: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#0a0a0a',
   },
   calendarDayCellToday: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
   },
   calendarDayNumber: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   calendarDayNumberOtherMonth: {
-    color: '#CCCCCC',
+    color: 'rgba(255, 255, 255, 0.3)',
   },
   calendarDayNumberToday: {
     fontSize: 16,
@@ -2496,9 +3240,9 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2506,14 +3250,14 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   calendarOutfitMoreText: {
     fontSize: 8,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   calendarOutfitCardsSection: {
     marginTop: 24,
@@ -2523,7 +3267,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
     marginBottom: 12,
   },
   calendarOutfitCardsContainer: {
@@ -2533,10 +3277,10 @@ const styles = StyleSheet.create({
     width: 80,
     height: 100,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     marginRight: 12,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2555,20 +3299,20 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   calendarOutfitCardDate: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   // Add to Calendar Modal Styles
   addToCalendarModalContent: {
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -2580,12 +3324,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   outfitSelectionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
   },
   outfitSelectionCardHeader: {
     flexDirection: 'row',
@@ -2595,14 +3339,14 @@ const styles = StyleSheet.create({
   outfitSelectionName: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#000000',
+    color: '#FFFFFF',
     marginLeft: 12,
     flex: 1,
   },
   outfitSelectionDate: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 12,
   },
   outfitSelectionItems: {
@@ -2611,25 +3355,25 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   outfitSelectionItemTag: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   outfitSelectionItemText: {
     fontSize: 10,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   createNewOutfitCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     borderStyle: 'dashed',
   },
   createNewOutfitCardContent: {
@@ -2641,21 +3385,21 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
   },
   createNewOutfitCardText: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   // View All Modal Styles
   viewAllModalContent: {
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -2667,16 +3411,16 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   viewAllOutfitCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
   },
   // Date-Based Outfit Modal Styles
   dateOutfitModalContent: {
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -2690,7 +3434,7 @@ const styles = StyleSheet.create({
   dateOutfitsTitle: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#000000',
+    color: '#FFFFFF',
     marginBottom: 12,
   },
   dateOutfitsList: {
@@ -2704,7 +3448,7 @@ const styles = StyleSheet.create({
   dateOutfitsEmptyText: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 12,
   },
   dateOutfitActions: {
@@ -2715,29 +3459,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
     gap: 8,
   },
   dateOutfitActionButtonPrimary: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
   },
   dateOutfitActionText: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   // Chatbot Trigger Button Styles
   chatbotTriggerButton: {
     marginHorizontal: 20,
     marginBottom: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -2754,11 +3498,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
     marginRight: 12,
   },
   chatbotTriggerText: {
@@ -2766,11 +3510,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   // Chatbot Modal Styles
   chatbotModalContent: {
-    backgroundColor: '#FFFCF1',
+    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -2793,10 +3537,10 @@ const styles = StyleSheet.create({
   chatbotSection: {
     marginHorizontal: 20,
     marginBottom: 32,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -2811,7 +3555,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
   chatbotHeaderLeft: {
     flexDirection: 'row',
@@ -2821,18 +3565,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#000000',
+    borderColor: '#FFFFFF',
     marginRight: 10,
   },
   chatbotTitle: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   chatMessagesContainer: {
     maxHeight: 200,
@@ -2867,9 +3611,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   botMessageBubble: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#2a2a2a',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -2901,9 +3645,9 @@ const styles = StyleSheet.create({
   collectionItemCard: {
     width: 160,
     marginRight: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a1a',
     borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    borderColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -2948,14 +3692,14 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   botMessageText: {
-    color: '#000000',
+    color: '#FFFFFF',
   },
   thinkingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#2a2a2a',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 16,
@@ -2969,7 +3713,7 @@ const styles = StyleSheet.create({
   thinkingText: {
     fontSize: 14,
     fontFamily: 'GTMaruRegular',
-    color: '#666666',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontStyle: 'italic',
   },
   quickSuggestionsContainer: {
@@ -2980,15 +3724,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#2a2a2a',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     marginRight: 8,
   },
   quickSuggestionText: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   chatInputContainer: {
     flexDirection: 'row',
@@ -2996,30 +3740,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
   },
   attachmentButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     marginRight: 10,
   },
   chatInput: {
     flex: 1,
     fontSize: 14,
     fontFamily: 'GTMaruRegular',
-    color: '#000000',
-    backgroundColor: '#F9F9F9',
+    color: '#FFFFFF',
+    backgroundColor: '#2a2a2a',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     maxHeight: 80,
     marginRight: 10,
   },
@@ -3034,8 +3778,8 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
   },
   sendButtonDisabled: {
-    backgroundColor: '#F0F0F0',
-    borderColor: '#CCCCCC',
+    backgroundColor: '#1a1a1a',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
 });
 

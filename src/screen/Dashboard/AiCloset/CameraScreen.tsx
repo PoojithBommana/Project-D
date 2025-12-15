@@ -9,7 +9,9 @@ import {
   Platform, 
   PermissionsAndroid,
   ActivityIndicator,
-  StatusBar
+  StatusBar,
+  ScrollView,
+  TextInput
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -29,7 +31,11 @@ interface CameraScreenProps {
 
 const CameraScreen = ({ navigation }: CameraScreenProps) => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [itemName, setItemName] = useState('');
+  const [showNameInput, setShowNameInput] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
   const isMountedRef = useRef(true);
   const insets = useSafeAreaInsets();
 
@@ -192,6 +198,7 @@ const CameraScreen = ({ navigation }: CameraScreenProps) => {
           const imageUri = response.assets[0].uri;
           if (imageUri) {
             setCapturedImage(imageUri);
+            setShowNameInput(true);
           }
         }
       });
@@ -209,14 +216,67 @@ const CameraScreen = ({ navigation }: CameraScreenProps) => {
 
   const handleRetake = useCallback(() => {
     setCapturedImage(null);
+    setItemName('');
+    setShowNameInput(false);
     handleOpenCamera();
   }, [handleOpenCamera]);
 
-  const handleSave = useCallback(() => {
-    if (capturedImage) {
-      navigation?.navigate('Closet', { newItemImage: capturedImage });
+  const handleNameContinue = useCallback(() => {
+    if (!itemName.trim()) {
+      Alert.alert('Required', 'Please enter a name for your item');
+      return;
     }
-  }, [capturedImage, navigation]);
+    setShowNameInput(false);
+  }, [itemName]);
+
+  const handleSave = useCallback(() => {
+    if (capturedImage && itemName.trim()) {
+      navigation?.navigate('Closet', { 
+        newItemImage: capturedImage,
+        newItemName: itemName.trim()
+      });
+    }
+  }, [capturedImage, itemName, navigation]);
+
+  const instructions = [
+    {
+      icon: 'lightbulb-on',
+      title: 'Good Lighting',
+      description: 'Make sure you have good, natural lighting. Avoid shadows and harsh direct sunlight.',
+    },
+    {
+      icon: 'image-outline',
+      title: 'Plain Background',
+      description: 'Place your item on a plain, neutral background (white or light colored surface works best).',
+    },
+    {
+      icon: 'crop-free',
+      title: 'Center the Item',
+      description: 'Position your item in the center of the frame. Make sure it\'s fully visible and not cut off.',
+    },
+    {
+      icon: 'camera-enhance',
+      title: 'Clear Focus',
+      description: 'Ensure the item is in focus and the image is sharp. Avoid blurry or out-of-focus photos.',
+    },
+    {
+      icon: 'view-array',
+      title: 'Show Full Item',
+      description: 'Capture the entire item in the frame. For clothing, lay it flat or hang it up neatly.',
+    },
+  ];
+
+  const handleNextInstruction = useCallback(() => {
+    if (currentInstructionIndex < instructions.length - 1) {
+      setCurrentInstructionIndex(currentInstructionIndex + 1);
+    } else {
+      setShowInstructions(false);
+    }
+  }, [currentInstructionIndex, instructions.length]);
+
+  const handleSkipInstructions = useCallback(() => {
+    setShowInstructions(false);
+  }, []);
 
   const handleSelectFromGallery = useCallback(async () => {
     if (!isMountedRef.current) return;
@@ -267,6 +327,7 @@ const CameraScreen = ({ navigation }: CameraScreenProps) => {
           const imageUri = response.assets[0].uri;
           if (imageUri) {
             setCapturedImage(imageUri);
+            setShowNameInput(true);
           }
         }
       });
@@ -282,6 +343,85 @@ const CameraScreen = ({ navigation }: CameraScreenProps) => {
     }
   }, [requestGalleryPermission]);
 
+  if (showInstructions) {
+    const currentInstruction = instructions[currentInstructionIndex];
+    const isLastInstruction = currentInstructionIndex === instructions.length - 1;
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFCF1" />
+        <View style={styles.instructionContainer}>
+          {/* Header */}
+          <View style={styles.instructionHeader}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation?.goBack()}
+            >
+              <Icon name="arrow-left" size={24} color="#000000" />
+            </TouchableOpacity>
+            <Text style={styles.instructionHeaderTitle}>Photo Tips</Text>
+            <TouchableOpacity 
+              style={styles.skipButton}
+              onPress={handleSkipInstructions}
+            >
+              <Text style={styles.skipButtonText}>Skip</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Instruction Content */}
+          <ScrollView 
+            style={styles.instructionScroll}
+            contentContainerStyle={styles.instructionContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.instructionIconContainer}>
+              <Icon name={currentInstruction.icon} size={80} color="#000000" />
+            </View>
+            
+            <Text style={styles.instructionTitle}>{currentInstruction.title}</Text>
+            <Text style={styles.instructionDescription}>{currentInstruction.description}</Text>
+
+            {/* Progress Indicators */}
+            <View style={styles.progressContainer}>
+              {instructions.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.progressDot,
+                    index === currentInstructionIndex && styles.progressDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+
+            {/* Navigation Buttons */}
+            <View style={[styles.instructionButtons, { paddingBottom: Math.max(insets.bottom, 20) + 20 }]}>
+              {currentInstructionIndex > 0 && (
+                <TouchableOpacity 
+                  style={styles.prevButton}
+                  onPress={() => setCurrentInstructionIndex(currentInstructionIndex - 1)}
+                >
+                  <Icon name="chevron-left" size={20} color="#000000" />
+                  <Text style={styles.prevButtonText}>Previous</Text>
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity 
+                style={[styles.nextButton, !currentInstructionIndex && styles.nextButtonFull]}
+                onPress={handleNextInstruction}
+              >
+                <Text style={styles.nextButtonText}>
+                  {isLastInstruction ? 'Start Taking Photos' : 'Next'}
+                </Text>
+                {!isLastInstruction && <Icon name="chevron-right" size={20} color="#000000" />}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -289,6 +429,74 @@ const CameraScreen = ({ navigation }: CameraScreenProps) => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#000000" />
           <Text style={styles.loadingText}>Requesting permission...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (showNameInput && capturedImage) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFCF1" />
+        <View style={styles.nameInputContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => {
+                setCapturedImage(null);
+                setItemName('');
+                setShowNameInput(false);
+              }}
+            >
+              <Icon name="arrow-left" size={24} color="#000000" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Name Your Item</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          <ScrollView 
+            style={styles.nameInputScroll}
+            contentContainerStyle={styles.nameInputScrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Image Preview */}
+            <View style={styles.nameInputImageWrapper}>
+              <View style={styles.nameInputImageContainer}>
+                <Image 
+                  source={{ uri: capturedImage }} 
+                  style={styles.nameInputImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+
+            {/* Name Input Section */}
+            <View style={styles.nameInputSection}>
+              <Text style={styles.nameInputLabel}>What is this item?</Text>
+              <Text style={styles.nameInputHint}>e.g., Blue Shirt, Jeans, Sneakers</Text>
+              <TextInput
+                style={styles.nameInput}
+                placeholder="Enter item name"
+                placeholderTextColor="#999999"
+                value={itemName}
+                onChangeText={setItemName}
+                autoFocus={true}
+                returnKeyType="done"
+                onSubmitEditing={handleNameContinue}
+              />
+              
+              <TouchableOpacity 
+                style={[styles.continueButton, !itemName.trim() && styles.continueButtonDisabled]}
+                onPress={handleNameContinue}
+                disabled={!itemName.trim()}
+              >
+                <Text style={styles.continueButtonText}>Continue</Text>
+                <Icon name="chevron-right" size={20} color="#000000" />
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
       </SafeAreaView>
     );
@@ -575,6 +783,226 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontFamily: 'GTMaruBold',
+  },
+  instructionContainer: {
+    flex: 1,
+    backgroundColor: '#FFFCF1',
+  },
+  instructionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#FDFF8D',
+    backgroundColor: '#FFFCF1',
+  },
+  instructionHeaderTitle: {
+    fontSize: 20,
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
+  },
+  skipButton: {
+    padding: 8,
+  },
+  skipButtonText: {
+    fontSize: 16,
+    fontFamily: 'GTMaruMedium',
+    color: '#666666',
+  },
+  instructionScroll: {
+    flex: 1,
+  },
+  instructionContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  instructionIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#FDFF8D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    marginBottom: 32,
+  },
+  instructionTitle: {
+    fontSize: 28,
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  instructionDescription: {
+    fontSize: 18,
+    fontFamily: 'GTMaruRegular',
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 26,
+    marginBottom: 40,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 20,
+    marginBottom: 32,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
+  },
+  progressDotActive: {
+    backgroundColor: '#000000',
+    width: 24,
+  },
+  instructionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    gap: 12,
+    width: '100%',
+  },
+  prevButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    borderRadius: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FDFF8D',
+  },
+  prevButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontFamily: 'GTMaruMedium',
+    marginLeft: 4,
+  },
+  nextButton: {
+    flex: 1,
+    backgroundColor: '#FDFF8D',
+    paddingVertical: 16,
+    borderRadius: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  nextButtonFull: {
+    flex: 1,
+  },
+  nextButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontFamily: 'GTMaruBold',
+    marginRight: 4,
+  },
+  nameInputContainer: {
+    flex: 1,
+    backgroundColor: '#FFFCF1',
+  },
+  nameInputScroll: {
+    flex: 1,
+  },
+  nameInputScrollContent: {
+    paddingBottom: 100,
+    paddingHorizontal: 20,
+  },
+  nameInputImageWrapper: {
+    marginTop: 20,
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  nameInputImageContainer: {
+    height: 320,
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#FDFF8D',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  nameInputImage: {
+    width: '85%',
+    height: '85%',
+    resizeMode: 'contain',
+  },
+  nameInputSection: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#FDFF8D',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  nameInputLabel: {
+    fontSize: 22,
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
+  nameInputHint: {
+    fontSize: 14,
+    fontFamily: 'GTMaruRegular',
+    color: '#666666',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  nameInput: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#FFFCF1',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FDFF8D',
+    paddingHorizontal: 18,
+    fontSize: 16,
+    fontFamily: 'GTMaruMedium',
+    color: '#000000',
+    marginBottom: 24,
+  },
+  continueButton: {
+    backgroundColor: '#FDFF8D',
+    paddingVertical: 16,
+    borderRadius: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#E0E0E0',
+    borderColor: '#CCCCCC',
+  },
+  continueButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontFamily: 'GTMaruBold',
+    marginRight: 8,
   },
 });
 

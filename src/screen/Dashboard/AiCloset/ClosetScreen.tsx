@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, StatusBar, Platform, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -59,10 +59,44 @@ const ClosetScreen = ({ navigation, route }: ClosetScreenProps) => {
     }
   }, [route?.params?.newItemImage, navigation, categoryData]);
 
-  // Filter items based on search query
-  const filteredItems = items.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter items based on search query - memoized for performance
+  const filteredItems = useMemo(() => {
+    return items.filter(item =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [items, searchQuery]);
+
+  // Memoized renderItem function to prevent unnecessary re-renders
+  const renderItem = useCallback(({ item }: { item: ClosetItem }) => {
+    return (
+      <TouchableOpacity 
+        style={styles.itemCard} 
+        activeOpacity={0.8}
+        onPress={() => {
+          // Could navigate to item details screen in the future
+        }}
+      >
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: item.imageUri }} 
+            style={styles.itemImage}
+            resizeMode="cover"
+          />
+          <View style={styles.imageOverlay}>
+            <TouchableOpacity style={styles.favoriteButton}>
+              <Icon name="heart-outline" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.itemInfo}>
+          <Text style={styles.itemTitle} numberOfLines={1}>{item.title}</Text>
+          {!categoryData && (
+            <Text style={styles.itemCategory} numberOfLines={1}>{item.category}</Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  }, [categoryData]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -123,34 +157,13 @@ const ClosetScreen = ({ navigation, route }: ClosetScreenProps) => {
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.itemCard} 
-              activeOpacity={0.8}
-              onPress={() => {
-                // Could navigate to item details screen in the future
-              }}
-            >
-              <View style={styles.imageContainer}>
-                <Image 
-                  source={{ uri: item.imageUri }} 
-                  style={styles.itemImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.imageOverlay}>
-                  <TouchableOpacity style={styles.favoriteButton}>
-                    <Icon name="heart-outline" size={18} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemTitle} numberOfLines={1}>{item.title}</Text>
-                {!categoryData && (
-                  <Text style={styles.itemCategory} numberOfLines={1}>{item.category}</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          )}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={10}
+          updateCellsBatchingPeriod={50}
+          keyboardShouldPersistTaps="handled"
+          renderItem={renderItem}
         />
       )}
 

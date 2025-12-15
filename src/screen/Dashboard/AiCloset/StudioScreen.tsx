@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -11,6 +11,8 @@ import {
   TextInput,
   Alert,
   Image,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,13 +25,20 @@ type StudioScreenProps = {
 
 const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>('Category(9)');
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [selectedCollectionType, setSelectedCollectionType] = useState<string | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [outfitName, setOutfitName] = useState('');
   const [selectedItems, setSelectedItems] = useState<{ [key: string]: { id: string; name: string; image: string; icon: string } | null }>({});
   const [currentSlot, setCurrentSlot] = useState<string | null>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  const CARD_WIDTH = 220;
+  const CARD_SPACING = 16;
+  const CARD_FULL_WIDTH = CARD_WIDTH + CARD_SPACING;
+  const windowWidth = Dimensions.get('window').width;
+  const horizontalInset = Math.max((windowWidth - CARD_WIDTH) / 2, 0);
+  const fallbackTintPalette = ['#d8d6df', '#e3b04b', '#23b4c3'];
   
   const placeholderIcons = {
     hat: 'hat-fedora',
@@ -169,6 +178,96 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
     ],
   };
 
+  const renderCollectionItem = ({ item, index }: { item: { id: string; name: string; image: string; icon: string }; index: number }) => {
+    const inputRange = [
+      (index - 1) * CARD_FULL_WIDTH,
+      index * CARD_FULL_WIDTH,
+      (index + 1) * CARD_FULL_WIDTH,
+    ];
+
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.9, 1, 0.9],
+      extrapolate: 'clamp',
+    });
+
+    const rotateY = scrollX.interpolate({
+      inputRange,
+      outputRange: ['12deg', '0deg', '-12deg'],
+      extrapolate: 'clamp',
+    });
+
+    const translateY = scrollX.interpolate({
+      inputRange,
+      outputRange: [12, 0, 12],
+      extrapolate: 'clamp',
+    });
+
+    const opacity = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.55, 1, 0.55],
+      extrapolate: 'clamp',
+    });
+
+    const overlayOpacity = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.45, 0.12, 0.45],
+      extrapolate: 'clamp',
+    });
+
+    const tintColor = fallbackTintPalette[index % fallbackTintPalette.length];
+
+    return (
+      <Animated.View
+        style={[
+          styles.collectionItemCard,
+          {
+            transform: [
+              { perspective: 1000 },
+              { translateY },
+              { scale },
+              { rotateY },
+            ],
+            opacity,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.collectionItemPressable}
+          activeOpacity={0.8}
+          onPress={() => handleItemSelect(item)}
+        >
+          <View style={styles.collectionImageContainer}>
+            {item.image ? (
+              <Image 
+                source={{ uri: item.image }} 
+                style={styles.collectionItemImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.collectionItemIconFallback, { backgroundColor: tintColor }]}>
+                <Icon 
+                  name={item.icon || placeholderIcons[selectedCollectionType as keyof typeof placeholderIcons]} 
+                  size={32} 
+                  color="#4A4A4A" 
+                />
+              </View>
+            )}
+            <Animated.View 
+              pointerEvents="none"
+              style={[styles.collectionTintOverlay, { backgroundColor: tintColor, opacity: overlayOpacity }]} 
+            />
+          </View>
+          {item.name && (
+            <View style={styles.collectionItemLabel}>
+              <Text style={styles.collectionItemName}>{item.name}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   const handlePlusButtonPress = (type: string, slot?: string) => {
     setSelectedCollectionType(type);
     setCurrentSlot(slot || type);
@@ -246,32 +345,6 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Filter and Action Bar */}
-      <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.shuffleButton}>
-          <Icon name="shuffle-variant" size={20} color="#000000" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>All clothes</Text>
-          <Icon name="chevron-down" size={16} color="#000000" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.filterButton, styles.filterButtonLight]}>
-          <Text style={styles.filterButtonText}>Season</Text>
-          <Icon name="chevron-down" size={16} color="#000000" />
-        </TouchableOpacity>
-
-        {selectedCategory && (
-          <TouchableOpacity 
-            style={styles.activeFilterButton}
-            onPress={() => setSelectedCategory(null)}
-          >
-            <Text style={styles.activeFilterText}>{selectedCategory}</Text>
-            <Icon name="close" size={14} color="#000000" />
-          </TouchableOpacity>
-        )}
-      </View>
 
       {/* Main Outfit Builder Area */}
       <View style={styles.outfitBuilder}>
@@ -596,35 +669,28 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.collectionItemsContainer}
-            >
-              {selectedCollectionType && collectionItems[selectedCollectionType]?.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.collectionItemCard}
-                  onPress={() => handleItemSelect(item)}
-                >
-                  <View style={styles.collectionItemIcon}>
-                    {item.image ? (
-                      <Image 
-                        source={{ uri: item.image }} 
-                        style={styles.collectionItemImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Icon 
-                        name={item.icon || placeholderIcons[selectedCollectionType as keyof typeof placeholderIcons]} 
-                        size={40} 
-                        color="#4A4A4A" 
-                      />
-                    )}
-                  </View>
-                  <Text style={styles.collectionItemName}>{item.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View style={styles.collectionCarouselSurface}>
+              <Animated.FlatList
+                data={selectedCollectionType ? collectionItems[selectedCollectionType] : []}
+                keyExtractor={(item) => item.id}
+                renderItem={renderCollectionItem}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={CARD_FULL_WIDTH}
+                decelerationRate="fast"
+                bounces={false}
+                contentContainerStyle={[
+                  styles.collectionItemsContainer,
+                  { paddingHorizontal: horizontalInset },
+                ]}
+                style={styles.collectionItemsScrollView}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                  { useNativeDriver: true }
+                )}
+                scrollEventThrottle={16}
+              />
+            </View>
         </View>
     </View>
       </Modal>
@@ -1013,62 +1079,111 @@ const styles = StyleSheet.create({
   },
   collectionModalContent: {
     backgroundColor: '#FFFCF1',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 28,
     paddingHorizontal: 20,
-    maxHeight: '80%',
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
     color: '#000000',
+    letterSpacing: 0.3,
   },
   closeButton: {
-    padding: 4,
-  },
-  collectionItemsContainer: {
-    paddingBottom: 20,
-  },
-  collectionItemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#FDFF8D',
-  },
-  collectionItemIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: '#FFFCF1',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
     borderWidth: 2,
     borderColor: '#FDFF8D',
+  },
+  collectionItemsScrollView: {
+    marginHorizontal: 4,
+  },
+  collectionItemsContainer: {
+    paddingVertical: 8,
+    alignItems: 'center',
+    paddingBottom: 24,
+  },
+  collectionCarouselSurface: {
+    backgroundColor: '#1f2026',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 4,
+  },
+  collectionItemCard: {
+    width: 220,
+    marginRight: 16,
+    marginBottom: 20,
+    backgroundColor: '#e3b04b',
+    borderWidth: 0,
+    borderRadius: 18,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  collectionItemPressable: {
+    flex: 1,
+  },
+  collectionImageContainer: {
+    width: '100%',
+    position: 'relative',
   },
   collectionItemImage: {
     width: '100%',
-    height: '100%',
-    borderRadius: 10,
+    height: 240,
+    borderRadius: 18,
+  },
+  collectionItemIconFallback: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#e3b04b',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+  },
+  collectionTintOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 18,
+  },
+  collectionItemLabel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
   collectionItemName: {
-    fontSize: 16,
-    fontFamily: 'GTMaruMedium',
-    color: '#000000',
-    flex: 1,
+    fontSize: 14,
+    fontFamily: 'GTMaruBold',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   // Save Modal Styles
   saveModalContent: {
