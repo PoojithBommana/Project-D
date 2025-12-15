@@ -223,7 +223,7 @@ export default function OnboardingStep4({ navigation, route }: Props) {
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
           {
             title: 'Photo Library Permission',
-            message: 'DilMill needs access to your photos to select images.',
+            message: 'Snixx needs access to your photos to select images.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -252,7 +252,7 @@ export default function OnboardingStep4({ navigation, route }: Props) {
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
           {
             title: 'Storage Permission',
-            message: 'DilMill needs access to your storage to select images.',
+            message: 'Snixx needs access to your storage to select images.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',

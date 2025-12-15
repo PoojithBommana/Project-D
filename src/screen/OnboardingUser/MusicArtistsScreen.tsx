@@ -13,6 +13,7 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
@@ -52,6 +53,9 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const [showSkipModal, setShowSkipModal] = useState(false);
+  const skipModalScale = useRef(new Animated.Value(0)).current;
+  const skipModalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -138,18 +142,76 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
     setSelectedArtists(selectedArtists.filter(a => a.id !== artistId));
   };
 
+  const navigateToNextStep = () => {
+    navigation?.navigate('HeightScreen', {
+      firstName: route?.params?.firstName || '',
+      lastName: route?.params?.lastName || '',
+      username: route?.params?.username || '',
+      gender: route?.params?.gender || '',
+      age: route?.params?.age || 0,
+      showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+    });
+  };
+
   const handleContinue = () => {
     animateButtonPress();
     setTimeout(() => {
-      navigation?.navigate('OnboardingStep3', {
-        firstName: route?.params?.firstName || '',
-        lastName: route?.params?.lastName || '',
-        username: route?.params?.username || '',
-        gender: route?.params?.gender || '',
-        age: route?.params?.age || 0,
-        showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
-      });
+      navigateToNextStep();
     }, 150);
+  };
+
+  const openSkipModal = () => {
+    setShowSkipModal(true);
+    skipModalScale.setValue(0.9);
+    skipModalOpacity.setValue(0);
+
+    Animated.parallel([
+      Animated.spring(skipModalScale, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(skipModalOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeSkipModal = (callback?: () => void) => {
+    Animated.parallel([
+      Animated.spring(skipModalScale, {
+        toValue: 0.9,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(skipModalOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowSkipModal(false);
+      if (callback) {
+        callback();
+      }
+    });
+  };
+
+  const handleSkipNo = () => {
+    closeSkipModal();
+  };
+
+  const handleSkipYes = () => {
+    closeSkipModal(() => {
+      animateButtonPress();
+      setTimeout(() => {
+        navigateToNextStep();
+      }, 150);
+    });
   };
 
   const progress = 70; // Progress percentage
@@ -251,11 +313,6 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        {/* Progress Bar */}
-        <View style={styles.progressBarContainer}>
-          <Animated.View style={[styles.progressBar, { width: `${progress}%` }]} />
-        </View>
-
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -269,6 +326,21 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
               },
             ]}
           >
+            {/* Header row with progress and skip */}
+            <View style={styles.topBarContainer}>
+              {/* Progress Bar */}
+              <View style={styles.progressBarContainer}>
+                <Animated.View style={[styles.progressBar, { width: `${progress}%` }]} />
+              </View>
+              <TouchableOpacity
+                onPress={openSkipModal}
+                activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={styles.skipText}>Skip</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Header */}
             <View style={styles.headerContainer}>
               <Text style={styles.heading}>Add your favourite music artists</Text>
@@ -307,7 +379,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
             <View style={styles.popularSection}>
               <View style={styles.popularSectionHeader}>
                 <View style={styles.popularSectionTitleContainer}>
-                  <Text style={styles.popularSectionTitle}>Popular on DilMill</Text>
+                  <Text style={styles.popularSectionTitle}>Popular on Snixx</Text>
                 </View>
                 <TouchableOpacity 
                   style={styles.shuffleButton}
@@ -347,11 +419,17 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
                 }}
               >
                 <TouchableOpacity
-                  style={styles.continueButtonActive}
+                  style={[
+                    styles.continueButton,
+                  ]}
                   onPress={handleContinue}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.continueButtonTextActive}>
+                  <Text
+                    style={[
+                      styles.continueButtonText,
+                    ]}
+                  >
                     Continue
                   </Text>
                 </TouchableOpacity>
@@ -360,6 +438,63 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
 
           </Animated.View>
         </ScrollView>
+        {/* Themed Skip Confirmation Modal */}
+        <Modal
+          visible={showSkipModal}
+          transparent
+          animationType="none"
+          onRequestClose={handleSkipNo}
+        >
+          <Animated.View
+            style={[
+              styles.modalOverlay,
+              {
+                opacity: skipModalOpacity,
+              },
+            ]}
+          >
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  transform: [{ scale: skipModalScale }],
+                },
+              ]}
+            >
+              <View style={styles.modalIconContainer}>
+                <Icon name="music-note" size={rs(48)} color="#4A90E2" />
+              </View>
+
+              <Text style={styles.modalTitle}>
+                Skip music preferences?
+              </Text>
+
+              <Text style={styles.modalSubtext}>
+                You can always confirm and update your profile matching preferences later.
+              </Text>
+
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonNo]}
+                  onPress={handleSkipNo}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonText}>No</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonYes]}
+                  onPress={handleSkipYes}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextYes]}>
+                    Yes
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </Animated.View>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -4,7 +4,7 @@ import { wp, hp, rf, rs } from '../utils/responsive';
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFCF1',
   },
   container: {
     flex: 1,
@@ -25,71 +25,87 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: rs(30),
     borderBottomLeftRadius: rs(30),
   },
-  content: {
+  contentContainer: {
     flex: 1,
     paddingHorizontal: wp(24),
-    paddingTop: hp(40),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapContainer: {
-    width: '100%',
-    height: hp(350),
-    marginBottom: hp(0),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapImage: {
-    width: '100%',
-    height: '100%',
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginBottom: hp(100),
-    paddingHorizontal: wp(20),
+    paddingTop: hp(32),
+    paddingBottom: hp(40),
   },
   heading: {
     fontSize: rf(24),
     fontFamily: 'GTMaruBold',
     color: '#000000',
-    textAlign: 'center',
-    marginBottom: hp(16),
     lineHeight: rf(32),
+    marginBottom: hp(8),
   },
   subheading: {
-    fontSize: rf(16),
+    fontSize: rf(14),
     fontFamily: 'GTMaruRegular',
     color: '#666666',
-    textAlign: 'center',
-    lineHeight: rf(24),
+    lineHeight: rf(20),
+    marginBottom: hp(24),
   },
-  buttonContainer: {
+  sectionTitle: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
+    marginTop: hp(16),
+    marginBottom: hp(12),
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: wp(12),
+  },
+  pill: {
+    paddingVertical: hp(10),
+    paddingHorizontal: wp(18),
+    borderRadius: rs(24),
+    backgroundColor: '#F5F5F5',
+  },
+  pillSelected: {
+    backgroundColor: '#FDFF8E',
+  },
+  pillText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    color: '#000000',
+  },
+  pillTextSelected: {
+    fontFamily: 'GTMaruBold',
+  },
+  errorText: {
+    marginTop: hp(12),
+    fontSize: rf(14),
+    fontFamily: 'GTMaruBold',
+    color: '#FF0000',
+  },
+  footer: {
+    paddingHorizontal: wp(24),
+    paddingBottom: hp(24),
+    paddingTop: hp(12),
     width: '100%',
-    marginTop: hp(20),
   },
-  allowButton: {
+  nextButton: {
     width: '100%',
     height: hp(56),
-    backgroundColor: '#FDFF8E',
     borderRadius: rs(12),
+    backgroundColor: '#FDFF8E',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  allowButtonText: {
+  nextIcon: {
     fontSize: rf(18),
     fontFamily: 'GTMaruBold',
     color: '#000000',
-    letterSpacing: rs(0.5),
   },
 });
 
 export default styles;
+
 

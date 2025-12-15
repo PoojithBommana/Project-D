@@ -141,12 +141,20 @@ const styles = StyleSheet.create({
   turnOnButton: {
     width: '100%',
     height: hp(56),
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#FDFF8E',
     padding: wp(13),
     borderRadius: rs(12),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: hp(16),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   turnOnButtonText: {
     fontSize: rf(18),

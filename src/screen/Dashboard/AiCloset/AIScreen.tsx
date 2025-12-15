@@ -1693,7 +1693,7 @@ INSTRUCTIONS:
       {/* My Outfits Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>My Outfits</Text>
+          <Text style={styles.sectionTitle}>MY OUTFITS</Text>
           <TouchableOpacity onPress={() => setShowViewAllModal(true)}>
             <Text style={styles.viewAllLink}>View All &gt;</Text>
           </TouchableOpacity>
@@ -2784,6 +2784,10 @@ const styles = StyleSheet.create({
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
     color: '#FFFFFF',
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
+    letterSpacing: 0.5,
   },
   viewCalendarLink: {
     fontSize: 14,
@@ -3010,8 +3014,8 @@ const styles = StyleSheet.create({
   },
   collectionModalContent: {
     backgroundColor: 'rgba(26, 26, 26, 0.95)',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingTop: 24,
     paddingHorizontal: 20,
     paddingBottom: 40,
@@ -3176,8 +3180,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   collectionModalGlass: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     overflow: 'hidden',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.15)',

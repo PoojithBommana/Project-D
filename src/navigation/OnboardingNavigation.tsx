@@ -8,6 +8,12 @@ import OnboardingStep2 from '../screen/OnboardingUser/BirthdateScreen';
 import NotificationPermissionScreen from '../screen/OnboardingUser/NotificationPermissionScreen';
 import ActivitySelectionScreen from '../screen/OnboardingUser/ActivitySelectionScreen';
 import MusicArtistsScreen from '../screen/OnboardingUser/MusicArtistsScreen';
+import HeightScreen from '../screen/OnboardingUser/HeightScreen';
+import LifestyleHabitsScreen from '../screen/OnboardingUser/LifestyleHabitsScreen';
+import InterestsSelectionV2Screen from '../screen/OnboardingUser/InterestsSelectionV2Screen';
+import ValuesScreen from '../screen/OnboardingUser/ValuesScreen';
+import BeliefsScreen from '../screen/OnboardingUser/BeliefsScreen';
+import CausesCommunitiesScreen from '../screen/OnboardingUser/CausesCommunitiesScreen';
 import OnboardingStep3 from '../screen/OnboardingUser/OnboardingStep3';
 import OnboardingStep4 from '../screen/OnboardingUser/OnboardingStep4';
 import PromptsScreen from '../screen/OnboardingUser/PromptsScreen';
@@ -29,7 +35,13 @@ export type OnboardingStackParamList = {
   NotificationPermissionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
   ActivitySelectionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
   MusicArtistsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
-  OnboardingStep3: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean };
+  HeightScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number };
+  LifestyleHabitsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number; habits?: { drinking?: string; smoking?: string } };
+  InterestsSelectionV2Screen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number; habits?: { drinking?: string; smoking?: string }; interests?: string[] };
+  ValuesScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number; habits?: { drinking?: string; smoking?: string }; interests?: string[]; values?: string[] };
+  BeliefsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number; habits?: { drinking?: string; smoking?: string }; interests?: string[]; values?: string[]; datingGoals?: string[]; beliefs?: { religion: string[]; politics: string[] } };
+  CausesCommunitiesScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number; habits?: { drinking?: string; smoking?: string }; interests?: string[]; values?: string[]; datingGoals?: string[]; beliefs?: { religion: string[]; politics: string[] } | undefined; causes?: string[] };
+  OnboardingStep3: { firstName: string; lastName: string; username?: string; gender: string; age: number; showOnlyFirstLetter: boolean; height?: number; habits?: { drinking?: string; smoking?: string }; interests?: string[]; values?: string[]; datingGoals?: string[]; beliefs?: { religion: string[]; politics: string[] } | undefined; causes?: string[] | undefined; openingMove?: { id: string; label: string; customText?: string } };
   OnboardingStep4: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; showOnlyFirstLetter: boolean };
   PromptsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photos?: string[]; showOnlyFirstLetter: boolean; bio?: string; birthday?: number };
   DatingPreferencesScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean; bio?: string; birthday?: number };
@@ -124,6 +136,54 @@ export default function OnboardingNavigation() {
       <OnboardingStack.Screen 
         name="MusicArtistsScreen" 
         component={MusicArtistsScreen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="HeightScreen" 
+        component={HeightScreen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="LifestyleHabitsScreen" 
+        component={LifestyleHabitsScreen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="InterestsSelectionV2Screen" 
+        component={InterestsSelectionV2Screen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="ValuesScreen" 
+        component={ValuesScreen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="BeliefsScreen" 
+        component={BeliefsScreen}
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 350,
+        }}
+      />
+      <OnboardingStack.Screen 
+        name="CausesCommunitiesScreen" 
+        component={CausesCommunitiesScreen}
         options={{
           animation: 'slide_from_right',
           animationDuration: 350,

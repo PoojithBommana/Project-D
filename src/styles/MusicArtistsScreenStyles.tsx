@@ -11,13 +11,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFCF1',
     position: 'relative',
   },
-  progressBarContainer: {
+  topBarContainer: {
     width: '90%',
-    height: hp(8),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'center',
+    marginTop: hp(32),
+  },
+  progressBarContainer: {
+    flex: 1,
+    height: hp(9),
     borderRadius: rs(30),
     backgroundColor: '#E8E8E8',
-    marginTop: hp(60),
-    alignSelf: 'center',
     overflow: 'hidden',
   },
   progressBar: {
@@ -26,13 +32,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: rs(30),
     borderBottomLeftRadius: rs(30),
   },
+  skipText: {
+    marginLeft: wp(16),
+    fontSize: rf(14),
+    fontFamily: 'GTMaruBold',
+    color: '#666666',
+  },
   scrollContent: {
     flexGrow: 1,
   },
   contentContainer: {
     flex: 1,
     paddingHorizontal: wp(24),
-    paddingTop: hp(40),
+    paddingTop: hp(32),
     paddingBottom: hp(140),
   },
   headerContainer: {
@@ -321,12 +333,28 @@ const styles = StyleSheet.create({
   continueButton: {
     width: '100%',
     height: hp(56),
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#FDFF8E',
     borderRadius: rs(12),
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(16),
+    shadowColor: '#000',
+    fontFamily: 'GTMaruBold',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  continueButtonActive: {
+    backgroundColor: '#FDFF8E',
+    width: '100%',
+    height: hp(56),
+    borderRadius: rs(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontFamily: 'GTMaruBold',
 
     shadowColor: '#000',
     shadowOffset: {
@@ -337,27 +365,24 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  continueButtonActive: {
-    backgroundColor: '#FDFF8D',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-  },
   continueButtonDisabled: {
     backgroundColor: '#E0E0E0',
-    opacity: 0.6,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   continueButtonText: {
     fontSize: rf(18),
     fontFamily: 'GTMaruBold',
-    color: '#999999',
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(16),
+    color: '#000000',
   },
   continueButtonTextActive: {
+    fontSize: rf(18),
+    fontFamily: 'GTMaruBold',
     color: '#000000',
   },
   continueButtonTextDisabled: {
+    fontSize: rf(18),
+    fontFamily: 'GTMaruBold',
     color: '#999999',
   },
   playlistsSection: {
@@ -453,6 +478,80 @@ const styles = StyleSheet.create({
     fontFamily: 'GTMaruRegular',
     color: '#999999',
     marginTop: hp(12),
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(24),
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: rs(20),
+    paddingHorizontal: wp(32),
+    paddingVertical: hp(32),
+    width: '100%',
+    maxWidth: wp(320),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  modalIconContainer: {
+    marginBottom: hp(20),
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: rf(22),
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: hp(12),
+    lineHeight: rf(30),
+  },
+  modalSubtext: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: rf(20),
+    marginBottom: hp(32),
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  modalButton: {
+    flex: 1,
+    height: hp(48),
+    borderRadius: rs(12),
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonNo: {
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+  },
+  modalButtonYes: {
+    borderColor: '#FDFF8D',
+    backgroundColor: '#FDFF8D',
+  },
+  modalButtonText: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruBold',
+    color: '#666666',
+  },
+  modalButtonTextYes: {
+    color: '#000000',
   },
 });
 

@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Modal,
   ScrollView,
   Image,
   Alert,
@@ -32,13 +31,13 @@ interface Props {
       gender: string;
       age: number;
       showOnlyFirstLetter: boolean;
+      height?: number;
     };
   };
 }
 
 export default function OnboardingStep3({ navigation, route }: Props) {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -87,24 +86,7 @@ export default function OnboardingStep3({ navigation, route }: Props) {
   };
 
   const handleAddPhoto = () => {
-    setShowPhotoModal(true);
-    Animated.spring(modalSlideAnim, {
-      toValue: 0,
-      tension: 50,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handleCloseModal = () => {
-    Animated.timing(modalSlideAnim, {
-      toValue: hp(100),
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      setShowPhotoModal(false);
-      setCurrentSlide(0);
-    });
+    navigateToNextScreen();
   };
 
   const requestAndroidPermission = async (): Promise<boolean> => {
@@ -126,7 +108,7 @@ export default function OnboardingStep3({ navigation, route }: Props) {
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
           {
             title: 'Photo Library Permission',
-            message: 'DilMill needs access to your photos to select images.',
+            message: 'Snixx needs access to your photos to select images.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -147,7 +129,7 @@ export default function OnboardingStep3({ navigation, route }: Props) {
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
           {
             title: 'Storage Permission',
-            message: 'DilMill needs access to your storage to select images.',
+            message: 'Snixx needs access to your storage to select images.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -163,11 +145,7 @@ export default function OnboardingStep3({ navigation, route }: Props) {
   };
 
   const handleModalContinue = () => {
-    handleCloseModal();
-    // Navigate directly to next screen after closing modal
-    setTimeout(() => {
-      navigateToNextScreen();
-    }, 300);
+    navigateToNextScreen();
   };
 
   const photoGuidelines = [
@@ -186,14 +164,7 @@ export default function OnboardingStep3({ navigation, route }: Props) {
   ];
 
   const handleContinue = () => {
-    // Show the guidelines modal instead of navigating directly
-    setShowPhotoModal(true);
-    Animated.spring(modalSlideAnim, {
-      toValue: 0,
-      tension: 50,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
+    navigateToNextScreen();
   };
 
   const navigateToNextScreen = () => {
@@ -301,87 +272,6 @@ export default function OnboardingStep3({ navigation, route }: Props) {
         </View>
 
         {/* Photo Guidelines Modal */}
-        <Modal
-          visible={showPhotoModal}
-          transparent={true}
-          animationType="none"
-          onRequestClose={handleCloseModal}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={styles.modalBackdrop}
-              activeOpacity={1}
-              onPress={handleCloseModal}
-            />
-            <Animated.View
-              style={[
-                styles.modalContainer,
-                {
-                  transform: [{ translateY: modalSlideAnim }],
-                },
-              ]}
-            >
-              <View style={styles.modalContent}>
-                {/* Modal Header */}
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>
-                    Choose the right photos, get better matches
-                  </Text>
-                  <Text style={styles.modalSubtitle}>by DilMill Security</Text>
-                </View>
-
-                {/* Guideline Cards */}
-                <View style={styles.guidelinesContainer}>
-                  <ScrollView
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    snapToInterval={wp(280) + wp(20)}
-                    snapToAlignment="center"
-                    decelerationRate="fast"
-                    onMomentumScrollEnd={(event) => {
-                      const cardWidth = wp(280) + wp(20); // card width + margin
-                      const slideIndex = Math.round(
-                        event.nativeEvent.contentOffset.x / cardWidth
-                      );
-                      setCurrentSlide(slideIndex);
-                    }}
-                    style={styles.guidelinesScrollView}
-                    contentContainerStyle={styles.guidelinesScrollContent}
-                  >
-                    {photoGuidelines.map((guideline, index) => (
-                      <View key={guideline.id} style={styles.guidelineCard}>
-                        <Text style={styles.guidelineText}>{guideline.text}</Text>
-                      </View>
-                    ))}
-                  </ScrollView>
-                </View>
-
-                {/* Pagination Dots */}
-                <View style={styles.paginationContainer}>
-                  {photoGuidelines.map((_, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.paginationDot,
-                        index === currentSlide && styles.paginationDotActive,
-                      ]}
-                    />
-                  ))}
-                </View>
-
-                {/* Modal Continue Button */}
-                <TouchableOpacity
-                  style={styles.modalContinueButton}
-                  onPress={handleModalContinue}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.modalContinueButtonText}>Continue</Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          </View>
-        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

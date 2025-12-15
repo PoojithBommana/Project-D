@@ -1,32 +1,55 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-const LiquidButton = ({ title = "Button" }) => {
+interface Props {
+  title?: string;
+  variant?: 'primary' | 'borderless';
+  onPress?: () => void;
+  customStyle?: ViewStyle;
+  textStyle?: TextStyle;
+}
+
+const LiquidButton = ({
+  title = 'Button',
+  variant = 'primary',
+  onPress,
+  customStyle,
+  textStyle,
+}: Props) => {
+  if (variant === 'borderless') {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onPress}
+        style={[styles.borderlessButton, customStyle]}
+      >
+        <Text style={[styles.borderlessText, textStyle]}>{title}</Text>
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <TouchableOpacity  activeOpacity={0.8} style={styles.container}>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.container}>
       {/* 1. The Outer Metallic Ring (Border) */}
       <View style={styles.borderWrapper}>
-        
         {/* 2. The Main Dark Body Gradient */}
         <LinearGradient
-          colors={['#5e5e5e', '#2a2a2a', '#1a1a1a']} 
+          colors={['#5e5e5e', '#2a2a2a', '#1a1a1a']}
           locations={[0, 0.45, 1]}
-          style={styles.innerButton}
+          style={[styles.innerButton, customStyle]}
         >
-          
           {/* 3. The "Liquid Glass" Gloss Effect (Top Half Only) */}
           <LinearGradient
             colors={['rgba(255,255,255,0.25)', 'rgba(255,255,255,0.02)']}
             style={styles.glossOverlay}
           />
-          
+
           {/* 4. Top Edge Specular Highlight (The distinct white rim inside) */}
           <View style={styles.topInnerHighlight} />
 
           {/* 5. Text with Drop Shadow */}
-          <Text style={styles.text}>{title}</Text>
-          
+          <Text style={[styles.text, textStyle]}>{title}</Text>
         </LinearGradient>
       </View>
     </TouchableOpacity>
@@ -91,6 +114,16 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: -1 }, // Negative Y pushes shadow up (embossed)
     textShadowRadius: 1,
     zIndex: 10,
+  },
+  borderlessButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  borderlessText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

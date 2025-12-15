@@ -10,20 +10,18 @@ export default function SplashScreenController() {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
       const legacyToken = await AsyncStorage.getItem('authToken'); // backward compatibility
-      const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
 
       const hasToken = Boolean(accessToken || legacyToken);
-      const isOnboardingDone = onboardingComplete === 'true';
 
       // If we have any session token, take user straight to the main app
       // (treat missing onboarding flag as completed to avoid getting stuck).
       if (hasToken) {
-        navigation.navigate('TabNavigation');
+        navigation.navigate('OnboardingNavigation', { screen: 'ProfileSetupIntroScreen' });
         return;
       }
 
       // No session found: show auth flow
-      navigation.navigate('AuthNavigation');
+      navigation.navigate('OnboardingNavigation', { screen: 'ProfileSetupIntroScreen' });
     } catch (error) {
       console.warn(JSON.stringify(error))
     }
