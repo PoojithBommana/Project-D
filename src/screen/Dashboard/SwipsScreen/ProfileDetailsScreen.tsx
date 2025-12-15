@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BlurView } from '@react-native-community/blur';
 import LinearGradient from 'react-native-linear-gradient';
@@ -19,7 +18,6 @@ import Animated, {
   withSpring,
   withTiming,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import { Profile } from '../../../types/Profile';
 import { hp, wp } from '../../../utils/responsive';
@@ -38,71 +36,42 @@ interface Props {
 }
 
 const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
-  const profile = route?.params?.profile;
+  const { profile } = route.params;
   const [readMore, setReadMore] = useState(false);
 
-  // Safety check - if no profile, go back
-  useEffect(() => {
-    if (!profile) {
-      setTimeout(() => {
-        navigation.goBack();
-      }, 100);
-    }
-  }, [profile, navigation]);
+  // Get raw data if available (contains all backend fields)
+  const rawData = (profile as any).rawData || profile;
 
-  // Animation values - start from initial state for smooth entrance
+  // Animation values
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
   const backgroundOpacity = useSharedValue(0);
-  const contentTranslateY = useSharedValue(50);
+  const contentTranslateY = useSharedValue(30);
 
-  // Run entrance animation whenever the screen gains focus to avoid flicker on return
-  useFocusEffect(
-    useCallback(() => {
-      opacity.value = 0;
-      scale.value = 0.95;
-      backgroundOpacity.value = 0;
-      contentTranslateY.value = 50;
+  useEffect(() => {
+    // Smooth fade and scale entrance animation with staggered timing
+    backgroundOpacity.value = withTiming(1, {
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+    });
 
-      opacity.value = withTiming(1, {
-        duration: 400,
-        easing: Easing.out(Easing.cubic),
-      });
-      scale.value = withSpring(1, {
-        damping: 20,
-        stiffness: 90,
-        mass: 0.8,
-      });
-      backgroundOpacity.value = withTiming(1, {
-        duration: 350,
-        easing: Easing.out(Easing.ease),
-      });
-      contentTranslateY.value = withSpring(0, {
-        damping: 20,
-        stiffness: 90,
-        mass: 0.8,
-      });
+    opacity.value = withTiming(1, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
+    });
+    
+    scale.value = withSpring(1, {
+      damping: 22,
+      stiffness: 100,
+      mass: 0.9,
+    });
 
-      // No special cleanup needed; values will reset on next focus
-      return () => {};
-    }, [opacity, scale, backgroundOpacity, contentTranslateY]),
-  );
-
-  // Smooth exit animation before leaving screen to avoid flicker
-  const runExitAnimation = useCallback(() => {
-    opacity.value = withTiming(
-      0,
-      { duration: 220, easing: Easing.inOut(Easing.ease) },
-      (finished) => {
-        if (finished) {
-          runOnJS(navigation.goBack)();
-        }
-      },
-    );
-    backgroundOpacity.value = withTiming(0, { duration: 180, easing: Easing.inOut(Easing.ease) });
-    contentTranslateY.value = withTiming(30, { duration: 220, easing: Easing.inOut(Easing.ease) });
-    scale.value = withTiming(0.96, { duration: 220, easing: Easing.inOut(Easing.ease) });
-  }, [navigation, opacity, backgroundOpacity, contentTranslateY, scale]);
+    contentTranslateY.value = withSpring(0, {
+      damping: 22,
+      stiffness: 100,
+      mass: 0.9,
+    });
+  }, []);
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -123,115 +92,103 @@ const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   });
 
-  // Safe access to profile properties
-  const primaryImage = profile?.images && profile.images.length > 0 
+  // Normalize key fields to safe string/number values for rendering
+  const safeName = typeof profile.name === 'string' ? profile.name : '';
+  const safeAge = typeof profile.age === 'number' ? profile.age : 0;
+  const safeBio = typeof profile.bio === 'string'
+    ? profile.bio
+    : (typeof rawData?.bio === 'string' ? rawData.bio : '');
+  const displayBio = safeBio || 'No bio available.';
+  const safeProfession = typeof profile.profession === 'string' ? profile.profession : '';
+  const safeEducation = typeof profile.education === 'string' ? profile.education : '';
+  const safeLocation = typeof profile.location === 'string' ? profile.location : '';
+  const safeDistance = typeof profile.distance === 'number' ? profile.distance : null;
+  const connectionStatus = typeof rawData?.connection_status === 'string'
+    ? rawData.connection_status
+    : 'none';
+
+  const primaryImage = profile.images && profile.images.length > 0 
     ? { uri: profile.images[0] } 
     : require('../../../assets/girl.png');
 
-  const genre = profile?.interests && profile.interests.length > 0 
-    ? profile.interests[0] 
+  // Get hobbies from raw data - handle both object and array formats
+  const hobbies = rawData?.hobbies || profile.interests || [];
+  const hobbiesObject = typeof hobbies === 'object' && !Array.isArray(hobbies) ? hobbies : null;
+  const hobbiesArray = Array.isArray(hobbies)
+    ? hobbies.filter((h) => typeof h === 'string')
+    : hobbiesObject
+      ? (Object.values(hobbiesObject).flat().filter((h) => typeof h === 'string') as string[])
+      : [];
+
+  const genre = hobbiesArray.length > 0 
+    ? hobbiesArray[0] 
     : 'Dating';
 
-  const displayBio = profile?.bio || 'No bio available.';
-
-  // Always render container with black background, even if profile is missing
   return (
-    <View style={styles.container}>
-      {/* Black background layer to prevent white screen */}
-      <View style={styles.blackBackgroundLayer} />
-      
-      {!profile ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      ) : (
-        <Animated.View style={[StyleSheet.absoluteFill, containerAnimatedStyle]}>
-          {/* Blurred Background - only blurred image, no card */}
-          <Animated.View style={[StyleSheet.absoluteFill, backgroundAnimatedStyle]}>
-            <Image
-              source={primaryImage}
-              style={styles.backgroundImage}
-              resizeMode="cover"
-              blurRadius={25}
-              defaultSource={require('../../../assets/girl.png')}
-            />
-            <View style={styles.backgroundOverlay} />
-          </Animated.View>
+    <Animated.View style={[styles.container, containerAnimatedStyle]}>
+      {/* Blurred Background */}
+      <Animated.View style={[StyleSheet.absoluteFill, backgroundAnimatedStyle]}>
+        <Image
+          source={primaryImage}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+          blurRadius={20}
+        />
+        <View style={styles.backgroundOverlay} />
+      </Animated.View>
 
-          <Animated.View 
-            style={[styles.scrollViewContainer, contentAnimatedStyle]}
-          >
-            <ScrollView 
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              bounces={true}
-              contentOffset={{ x: 0, y: 0 }}
-            >
+      <Animated.View 
+        style={[styles.scrollViewContainer, contentAnimatedStyle]}
+      >
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Top Navigation Bar */}
         <View style={styles.topNavBar}>
           {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
-            onPress={runExitAnimation}
-            activeOpacity={0.7}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
           >
             <BlurView
-              blurType="dark"
-              blurAmount={10}
+              blurType="light"
+              blurAmount={12}
               style={styles.backButtonBlur}
+              reducedTransparencyFallbackColor="rgba(255,255,255,0.85)"
+              
             >
-              <Icon name="chevron-back" size={wp(24)} color="#FFFFFF" />
+              <Text style={styles.backButtonText}>Back</Text>
             </BlurView>
           </TouchableOpacity>
+        </View>
 
-          {/* Right Side Tags */}
-          <View style={styles.topTagsContainer}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{genre}</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>1h 30m</Text>
-            </View>
-            <View style={styles.tag}>
-              <Icon name="star" size={wp(14)} color="#FFFFFF" />
-              <Text style={styles.tagText}>7.9/10</Text>
-            </View>
+        {/* Hero Image Section - Separate Card */}
+        <View style={styles.heroImageContainer}>
+          <Image
+            source={primaryImage}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+          
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
+            style={styles.heroGradient}
+          />
+          
+          {/* Name Overlay */}
+          <View style={styles.nameOverlay}>
+            <Text style={styles.heroName}>{safeName.toUpperCase()}</Text>
           </View>
         </View>
 
-        {/* Main Content Card */}
-        <View style={styles.contentCard}>
-          {/* Hero Image Section */}
-          <View style={styles.heroImageContainer}>
-            <Image
-              source={primaryImage}
-              style={styles.heroImage}
-              resizeMode="cover"
-              defaultSource={require('../../../assets/girl.png')}
-            />
-            
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
-              style={styles.heroGradient}
-            />
-            
-            {/* Name Overlay */}
-            <View style={styles.nameOverlay}>
-              <Text style={styles.heroName}>{(profile?.name || 'Profile').toUpperCase()}</Text>
-            </View>
-
-            {/* Action Button */}
-           
-          </View>
-
-     
-
-          {/* Profile Details Section */}
-          <View style={styles.detailsSection}>
+        {/* Profile Details Section */}
+        <View style={styles.detailsSection}>
             {/* Title */}
             <Text style={styles.title}>
-              {profile?.name || 'Unknown'}, {profile?.age || 'N/A'}
+              {safeName || 'Unknown'}, {safeAge}
             </Text>
 
             {/* Description/Bio */}
@@ -249,72 +206,117 @@ const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             )}
 
             {/* Additional Info */}
-            {profile.profession && (
+            {safeProfession && (
               <View style={styles.infoRow}>
                 <Icon name="briefcase-outline" size={wp(18)} color="#FFFFFF" />
-                <Text style={styles.infoText}>{profile.profession}</Text>
+                <Text style={styles.infoText}>{safeProfession}</Text>
               </View>
             )}
 
-            {profile.education && (
+            {safeEducation && (
               <View style={styles.infoRow}>
                 <Icon name="school-outline" size={wp(18)} color="#FFFFFF" />
-                <Text style={styles.infoText}>{profile.education}</Text>
+                <Text style={styles.infoText}>{safeEducation}</Text>
               </View>
             )}
 
-            {profile.location && (
+            {safeLocation && (
               <View style={styles.infoRow}>
                 <Icon name="location-outline" size={wp(18)} color="#FFFFFF" />
-                <Text style={styles.infoText}>{profile.location}</Text>
+                <Text style={styles.infoText}>{safeLocation}</Text>
               </View>
             )}
 
-            {profile.distance && (
+            {typeof safeDistance === 'number' && safeDistance > 0 && (
               <View style={styles.infoRow}>
                 <Icon name="location" size={wp(18)} color="#FFFFFF" />
-                <Text style={styles.infoText}>{profile.distance} km away</Text>
+                <Text style={styles.infoText}>{safeDistance} km away</Text>
+              </View>
+            )}
+
+            {/* Connection Status */}
+            {connectionStatus && connectionStatus !== 'none' && (
+              <View style={styles.infoRow}>
+                <Icon 
+                  name={connectionStatus === 'connected' ? 'checkmark-circle' : 'time-outline'} 
+                  size={wp(18)} 
+                  color="#FFFFFF" 
+                />
+                <Text style={styles.infoText}>
+                  {connectionStatus === 'connected' ? 'Connected' : 
+                   connectionStatus === 'requested' ? 'Request Sent' :
+                   connectionStatus === 'incoming_request' ? 'Request Received' : ''}
+                </Text>
               </View>
             )}
           </View>
 
-          {/* Interests/Photos Section (Cast) */}
-          {profile.interests && profile.interests.length > 0 && (
+          {/* Hobbies/Interests Section */}
+          {hobbiesArray.length > 0 && (
             <View style={styles.interestsSection}>
-              <Text style={styles.sectionTitle}>Interests</Text>
+              <Text style={styles.sectionTitle}>Hobbies & Interests</Text>
+              {hobbiesObject ? (
+                // Display hobbies by category if it's an object
+                <View style={{ paddingHorizontal: wp(20) }}>
+                  {Object.entries(hobbiesObject).map(([category, items]: [string, any]) => (
+                    <View key={category} style={{ marginBottom: hp(16) }}>
+                      <Text style={[styles.sectionTitle, { fontSize: wp(18), marginBottom: hp(8), textTransform: 'capitalize', paddingHorizontal: 0 }]}>
+                        {category}
+                      </Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                        {Array.isArray(items) && items
+                          .filter((item) => typeof item === 'string')
+                          .map((item: string, idx: number) => (
+                            <View key={idx} style={styles.hobbyTag}>
+                              <Text style={styles.hobbyText}>{item}</Text>
+                            </View>
+                          ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                // Display as simple list if it's an array
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: wp(20) }}>
+                  {hobbiesArray
+                    .filter((hobby) => typeof hobby === 'string')
+                    .map((hobby: string, idx: number) => (
+                      <View key={idx} style={styles.hobbyTag}>
+                        <Text style={styles.hobbyText}>{hobby}</Text>
+                      </View>
+                    ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Photos Section */}
+          {profile.images && profile.images.length > 0 && (
+            <View style={styles.interestsSection}>
+              <Text style={styles.sectionTitle}>Photos</Text>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.interestsScrollContent}
               >
-                {profile.images && profile.images.slice(0, 6).map((imageUri, index) => (
+                {profile.images.map((imageUri: string, index: number) => (
                   <View key={index} style={styles.interestItem}>
                     <Image
                       source={{ uri: imageUri }}
                       style={styles.interestImage}
                       resizeMode="cover"
                     />
-                    {profile.interests && profile.interests[index] && (
-                      <>
-                        <Text style={styles.interestName} numberOfLines={1}>
-                          {profile.interests[index]}
-                        </Text>
-                        <Text style={styles.interestRole} numberOfLines={1}>
-                          Photo {index + 1}
-                        </Text>
-                      </>
-                    )}
+                    <Text style={styles.interestRole} numberOfLines={1}>
+                      Photo {index + 1}
+                    </Text>
                   </View>
                 ))}
               </ScrollView>
             </View>
           )}
-        </View>
-            </ScrollView>
-          </Animated.View>
-        </Animated.View>
-      )}
-    </View>
+        </ScrollView>
+      </Animated.View>
+    </Animated.View>
   );
 };
 

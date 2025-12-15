@@ -26,7 +26,7 @@ export default function TabNavigation() {
           left: 20,
           right: 20,
           elevation: 0,
-          backgroundColor: 'transparent',
+          backgroundColor: '#FFFCF1',
           borderColor: '#FFFCF1',
           borderWidth: 0.1,
           borderRadius: 27,

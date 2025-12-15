@@ -21,6 +21,9 @@ export const API_ENDPOINTS: any = {
   ONBOARDING: {
     UPDATE: '/auth/onboarding-update/',
   },
+  CONNECTIONS: {
+    SEND: '/auth/connections/send/',
+  },
   WARDROBE: {
     COLLECTION_ITEMS: '/wardrobe/collection-items/',
   },

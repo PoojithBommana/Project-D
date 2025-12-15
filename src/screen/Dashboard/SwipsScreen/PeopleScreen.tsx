@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,15 @@ import {
   Dimensions,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PeopleStackParamList } from '../../../navigation/PeopleStackNavigator';
 import LinearGradient from 'react-native-linear-gradient';
-import { HomeScreenBg, SnixxHometext } from '../../../assets';
+import { BlurView } from '@react-native-community/blur';
+import { SnixxHometext } from '../../../assets';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,82 +31,15 @@ import {
   GestureHandlerRootView,
   GestureType,
 } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Profile } from '../../../types/Profile';
-import styles, {
-  CARD_WIDTH,
-  CARD_HEIGHT,
-  STACK_OFFSET,
-  STACK_SCALE_1,
-  STACK_SCALE_2,
-  STACK_SCALE_3,
-  STACK_SCALE_4,
-} from './PeopleScreenStyles';
+import { getApiCall, postApiCall } from '../../../config/apiCall';
+import styles from './PeopleScreenStyles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 const ROTATION_MULTIPLIER = 10;
 const PARALLAX_MULTIPLIER = 0.3;
-
-// Mock data for demonstration - replace with API call
-const MOCK_PROFILES: Profile[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    age: 28,
-    images: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
-    ],
-    job: 'Software Engineer',
-    profession: 'Senior Software Engineer at Google',
-    education: 'MIT - Computer Science',
-    location: 'San Francisco, CA',
-    distance: 5,
-    verified: true,
-    isNew: false,
-    interests: ['Comedy', 'Adventure', 'Hiking', 'Tech', 'Photography'],
-    bio: 'Love coding, hiking, and trying new restaurants. Looking for someone who shares my passion for technology and outdoor adventures. Coffee enthusiast and weekend traveler.',
-  },
-  {
-    id: '2',
-    name: 'Emily Chen',
-    age: 26,
-    images: [
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800',
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
-    ],
-    job: 'UI/UX Designer',
-    profession: 'Lead Designer at Apple',
-    education: 'Stanford - Design & Human-Computer Interaction',
-    location: 'Palo Alto, CA',
-    distance: 8,
-    verified: true,
-    isNew: true,
-    interests: ['Romance', 'Drama', 'Art', 'Fashion', 'Yoga'],
-    bio: 'Creative designer who loves art galleries, indie films, and morning yoga sessions. Passionate about sustainable fashion and finding beauty in everyday moments.',
-  },
-  {
-    id: '3',
-    name: 'Jessica Martinez',
-    age: 30,
-    images: [
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
-      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
-    ],
-    job: 'Photographer',
-    profession: 'Freelance Travel Photographer',
-    education: 'NYU - Visual Arts',
-    location: 'Brooklyn, NY',
-    distance: 12,
-    verified: false,
-    isNew: false,
-    interests: ['Action', 'Thriller', 'Travel', 'Photography', 'Music'],
-    bio: 'Travel photographer capturing stories around the world. Love street photography, live music, and discovering hidden gems in the city. Always up for an adventure!',
-  },
-];
 
 interface SwipeableCardProps {
   profile: Profile;
@@ -133,11 +70,11 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   const opacity = useSharedValue(stackOpacity);
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
-  const panStartTime = React.useRef(0);
 
   // Initialize translateY with stack offset for non-top cards
   React.useEffect(() => {
     if (shouldAnimateToTop && !isTopCard) {
+      // Smoothly animate this card to become the top card with very smooth spring
       scale.value = withSpring(1, { 
         damping: 25, 
         stiffness: 150,
@@ -169,12 +106,12 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
 
   const panGesture = Gesture.Pan()
     .enabled(isTopCard)
-    .activeOffsetX([-10, 10])
+    .activeOffsetX([-5, 5])
+    .activeOffsetY([-5, 5])
     .onStart(() => {
       if (!isTopCard) return;
       startX.value = translateX.value;
       startY.value = translateY.value;
-      panStartTime.current = Date.now();
     })
     .onUpdate((event) => {
       if (!isTopCard) return;
@@ -183,33 +120,25 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     })
     .onEnd((event) => {
       if (!isTopCard) return;
-      const panDuration = Date.now() - panStartTime.current;
-      const totalMovement = Math.abs(event.translationX) + Math.abs(event.translationY);
-      
-      if (panDuration < 200 && totalMovement < 30) {
+      const shouldSwipeLeft = translateX.value < -SWIPE_THRESHOLD;
+      const shouldSwipeRight = translateX.value > SWIPE_THRESHOLD;
+      const shouldSwipeUp = translateY.value < -SWIPE_THRESHOLD * 0.5;
+
+      if (shouldSwipeUp && Math.abs(translateX.value) < SWIPE_THRESHOLD * 0.5) {
+        // Treat swipe up as opening profile details
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
         if (onCardTap) {
           runOnJS(onCardTap)(profile);
         }
-        translateX.value = withSpring(0, {
-          damping: 22,
-          stiffness: 140,
-          mass: 1.0,
-        });
-        translateY.value = withSpring(0, {
-          damping: 22,
-          stiffness: 140,
-          mass: 1.0,
-        });
         return;
       }
-      
-      const shouldSwipeLeft = translateX.value < -SWIPE_THRESHOLD;
-      const shouldSwipeRight = translateX.value > SWIPE_THRESHOLD;
 
       if (shouldSwipeLeft || shouldSwipeRight) {
         const direction = shouldSwipeLeft ? 'left' : 'right';
         const targetX = shouldSwipeLeft ? -SCREEN_WIDTH * 1.5 : SCREEN_WIDTH * 1.5;
         
+        // Smooth exit animation with easing
         translateX.value = withTiming(targetX, { 
           duration: 400,
         });
@@ -222,6 +151,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           runOnJS(onSwipeComplete)(direction);
         });
       } else {
+        // Spring back to center with smoother animation
         translateX.value = withSpring(0, {
           damping: 22,
           stiffness: 140,
@@ -240,10 +170,10 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   const tapGesture = Gesture.Tap()
     .enabled(isTopCard)
     .numberOfTaps(1)
-    .maxDuration(300)
-    .maxDistance(15)
+    .maxDuration(250)
     .onEnd(() => {
-      if (Math.abs(translateX.value) < 20 && Math.abs(translateY.value) < 20) {
+      // Only trigger tap if card hasn't moved significantly
+      if (Math.abs(translateX.value) < 10 && Math.abs(translateY.value) < 10) {
         if (onCardTap) {
           runOnJS(onCardTap)(profile);
         }
@@ -252,10 +182,12 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
 
   const composedGesture = Gesture.Race(tapGesture, panGesture);
 
+  // Update scale, opacity, and position when this card becomes the top card
   useAnimatedReaction(
     () => isTopCard,
     (isTop) => {
       if (isTop) {
+        // Smoothly animate to top position with very smooth spring
         scale.value = withSpring(1, { 
           damping: 25, 
           stiffness: 150,
@@ -275,6 +207,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           overshootClamping: false,
         });
       } else {
+        // Animate to stacked position with smooth spring
         scale.value = withSpring(stackScale, { 
           damping: 25, 
           stiffness: 150,
@@ -317,6 +250,14 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     };
   });
 
+
+  const imageStyle = useAnimatedStyle(() => {
+    // Image moves exactly with card - no parallax to prevent separation
+    return {
+      transform: [{ translateX: 0 }],
+    };
+  });
+
   const overlayStyle = useAnimatedStyle(() => {
     const labelOpacity = interpolate(
       Math.abs(translateX.value),
@@ -354,10 +295,49 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     ? { uri: profile.images[0] } 
     : require('../../../assets/girl.png');
 
-  const genre = profile.interests && profile.interests.length > 0 
-    ? profile.interests[0] 
-    : 'Dating';
+  const handleConnectPress = useCallback(async () => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        Alert.alert('Authentication required', 'Please log in again.');
+        return;
+      }
 
+      const targetUserId = parseInt(profile.id, 10);
+      if (Number.isNaN(targetUserId)) {
+        Alert.alert('Error', 'Invalid user id');
+        return;
+      }
+
+      console.log('=== CONNECTION SEND API Call ===');
+      console.log('Payload:', { target_user_id: targetUserId });
+
+      const response = await postApiCall(
+        'POST',
+        'CONNECTIONS',
+        'SEND',
+        { target_user_id: targetUserId },
+        accessToken,
+      );
+
+      console.log('=== CONNECTION SEND API Response ===');
+      console.log('Full Response:', JSON.stringify(response, null, 2));
+
+      if (response?.error) {
+        const msg = response?.response?.error || response?.response?.message || 'Failed to send connection request';
+        Alert.alert('Error', msg);
+      } else {
+        const status = response?.response?.status;
+        const message = response?.response?.message || 'Connection request sent';
+        Alert.alert('Connect', `${message}${status ? ` (status: ${status})` : ''}`);
+      }
+    } catch (err) {
+      console.error('Connection send failed:', err);
+      Alert.alert('Error', 'Unable to send connection request');
+    }
+  }, [profile.id]);
+
+  // Static z-index for proper stacking (animated views need static z-index)
   const staticZIndex = isTopCard ? 1000 : 100 - index;
 
   return (
@@ -369,6 +349,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
             style={styles.cardImage}
             resizeMode="cover"
           />
+          {/* Only show gradient overlay on stacked cards, not on top card */}
           {!isTopCard && (
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
@@ -378,34 +359,52 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           )}
         </View>
 
-        <View style={styles.badgesContainer}>
-          <View style={[styles.badge, styles.badgeDuration]}>
-            <Text style={styles.badgeText}>1h 30m</Text>
+        {/* Connect Button - Top Right */}
+        {isTopCard && (
+          <View style={styles.connectButtonContainer}>
+            <TouchableOpacity
+              style={styles.connectButton}
+              onPress={handleConnectPress}
+              activeOpacity={0.8}
+            >
+              {Platform.OS === 'ios' ? (
+                <BlurView
+                  blurType="light"
+                  blurAmount={10}
+                  style={styles.connectButtonGlass}
+                  reducedTransparencyFallbackColor="rgba(255,255,255,0.8)"
+                />
+              ) : (
+                <View style={styles.androidGlassButton} />
+              )}
+              <Text style={styles.connectButtonText}>Connect</Text>
+            </TouchableOpacity>
           </View>
-          <View style={[styles.badge, styles.badgeGenre]}>
-            <Text style={[styles.badgeText, styles.badgeGenreText]}>{genre}</Text>
-          </View>
-        </View>
+        )}
 
+        {/* Content */}
         <View style={styles.cardContent}>
-          {profile.verified && (
+          {profile.verified && profile.name && typeof profile.name === 'string' && (
             <Text style={styles.subtitle}>
-              {profile.name.split(' ')[0].toUpperCase()}
+              {(profile.name.split(' ')[0] || '').toUpperCase()}
             </Text>
           )}
-          <Text style={styles.title}>
-            {profile.name.split(' ')[0]}, {profile.age}
-          </Text>
-          {profile.job && (
+          {profile.name && typeof profile.name === 'string' && (
+            <Text style={styles.title}>
+              {profile.name.split(' ')[0] || ''}, {String(profile.age || 0)}
+            </Text>
+          )}
+          {profile.job && typeof profile.job === 'string' && profile.job.trim() && (
             <Text style={styles.subtitle}>{profile.job}</Text>
           )}
-          {profile.distance && (
+          {typeof profile.distance === 'number' && profile.distance > 0 && (
             <Text style={styles.dateText}>
               {profile.distance} km away
             </Text>
           )}
         </View>
 
+        {/* Swipe Overlay Labels */}
         {isTopCard && (
           <Animated.View style={styles.overlayLabelContainer} pointerEvents="none">
             <Animated.View style={[styles.overlayLabel, styles.likeLabel, likeLabelStyle]}>
@@ -426,37 +425,259 @@ interface PeopleScreenProps {
 }
 
 const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
-  const [profiles, setProfiles] = useState<Profile[]>(MOCK_PROFILES);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState(1); // 0: Coming Soon, 1: Now Playing, 2: Tomorrow
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleCardTap = useCallback((profile: Profile) => {
-    console.log('Card tapped, navigating to ProfileDetailsScreen', profile?.name);
-    if (navigation && profile) {
-      try {
-        navigation.navigate('ProfileDetailsScreen', { profile });
-      } catch (error) {
-        console.error('Navigation error:', error);
-      }
-    }
+    // Small delay for smoother transition
+    setTimeout(() => {
+      navigation?.navigate('ProfileDetailsScreen', { profile });
+    }, 50);
   }, [navigation]);
 
-  const handleSwipeComplete = useCallback((direction: 'left' | 'right') => {
+  const handleSwipeComplete = useCallback(async (direction: 'left' | 'right') => {
     setIsAnimating(true);
+    
+    // Get current profile before updating index
+    const currentProfile = profiles[currentIndex];
+    
+    // Call API to save swipe action
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (accessToken && currentProfile) {
+        const actionPayload = {
+          target_user_id: parseInt(currentProfile.id, 10), // API expects integer
+          action: direction === 'right' ? 'like' : 'dislike', // API uses 'like' or 'dislike'
+        };
+        
+        console.log('=== SWIPE ACTION API Call ===');
+        console.log('Payload:', JSON.stringify(actionPayload, null, 2));
+        
+        const actionResponse = await postApiCall(
+          'POST',
+          'SWIPE',
+          'ACTION',
+          actionPayload,
+          accessToken,
+        );
+
+        console.log('=== SWIPE ACTION API Response ===');
+        console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
+        console.log('Response Data:', actionResponse?.response);
+        console.log('Response Status:', actionResponse?.statusCode);
+        console.log('==================================');
+
+        if (actionResponse?.error) {
+          console.error('Swipe action failed:', actionResponse.response);
+          Alert.alert(
+            'Error',
+            actionResponse?.response?.error || 
+            actionResponse?.response?.message || 
+            'Failed to record swipe action'
+          );
+          // Continue with UI update even if API call fails
+        } else {
+          const responseData = actionResponse?.response;
+          console.log('Swipe action successful:', responseData);
+          
+          // Handle match response
+          if (responseData?.match === true) {
+            Alert.alert(
+              '🎉 It\'s a Match!',
+              responseData?.message || 'You both liked each other!',
+              [{ text: 'OK', onPress: () => {} }]
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error calling swipe action API:', error);
+      // Continue with UI update even if API call fails
+    }
+
+    // Delay to ensure smooth transition animation starts after card exits
     setTimeout(() => {
       setCurrentIndex((prev) => {
         setIsAnimating(false);
         return prev + 1;
       });
     }, 150);
-  }, [currentIndex]);
+  }, [currentIndex, profiles]);
 
-  const visibleCards = profiles.slice(currentIndex, currentIndex + 5);
+  // Transform user data to Profile format
+  const transformUserToProfile = (user: any): Profile => {
+    // Combine first_name and last_name
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim() || 'Unknown';
+
+    // Build images array - profile_photo first, then live_photo
+    const images: string[] = [];
+    if (user.profile_photo) images.push(user.profile_photo);
+    if (user.live_photo) images.push(user.live_photo);
+    // Also check for additional photos arrays if API provides them
+    if (Array.isArray(user.images)) images.push(...user.images);
+    if (Array.isArray(user.photos)) images.push(...user.photos);
+
+    // Handle hobbies - can be array or object
+    let interests: string[] = [];
+    if (Array.isArray(user.hobbies)) {
+      // If hobbies is already an array, use it directly
+      interests = user.hobbies.filter(Boolean);
+    } else if (user.hobbies && typeof user.hobbies === 'object') {
+      // If hobbies is an object (e.g., {creative: [...], fun: [...]}), flatten it
+      interests = Object.values(user.hobbies)
+        .flat()
+        .filter(Boolean) as string[];
+    } else if (Array.isArray(user.interests)) {
+      // Fallback to interests if hobbies not available
+      interests = user.interests.filter(Boolean);
+    }
+
+    return {
+      id: user.id?.toString() || '',
+      name: fullName || 'Unknown',
+      age: typeof user.age === 'number' ? user.age : 0,
+      images: images.length > 0 ? images : [], // Ensure array is never empty
+      job: (user.job || user.profession || '').toString(),
+      profession: (user.profession || user.job || '').toString(),
+      education: (user.education || '').toString(),
+      location: (user.location || '').toString(),
+      distance: typeof user.distance_km === 'number' ? user.distance_km : (typeof user.distance === 'number' ? user.distance : 0),
+      verified: Boolean(user.verified),
+      isNew: Boolean(user.is_new),
+      interests: Array.isArray(interests) ? interests : [],
+      bio: (user.bio || '').toString(),
+      // Preserve raw backend payload for detail screen
+      rawData: user,
+    };
+  };
+
+  // Fetch users function - can be called on mount or for polling
+  const fetchUsers = useCallback(async (isInitialLoad: boolean = false) => {
+    try {
+      if (isInitialLoad) {
+        setIsLoading(true);
+      }
+      
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      
+      if (!accessToken) {
+        if (isInitialLoad) {
+          Alert.alert('Authentication required', 'Please log in again.');
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Optional: Add limit parameter (default is 15)
+      const response = await getApiCall('SWIPE', 'GET_USERS', accessToken, { limit: 15 });
+      
+      // Console log the full API response
+      console.log('=== GET_USERS API Response ===');
+      console.log('Full Response:', JSON.stringify(response, null, 2));
+      console.log('Response Data:', response?.response);
+      console.log('Response Status:', response?.statusCode);
+      console.log('=============================');
+      
+      if (response?.error) {
+        const errorMessage = 
+          response?.response?.message || 
+          response?.response?.Message || 
+          response?.response?.error ||
+          'Failed to load users. Please try again.';
+        console.error('API Error:', errorMessage);
+        if (isInitialLoad) {
+          Alert.alert('Error', errorMessage);
+          setProfiles([]);
+        }
+      } else if (response?.response) {
+        // Console log the raw response data
+        console.log('Raw API Response Data:', response.response);
+        
+        // Transform API response to Profile format
+        // API returns array of users with: id, first_name, last_name, age, profile_photo, live_photo, hobbies, bio, distance_km, connection_status
+        const apiProfiles: Profile[] = Array.isArray(response.response)
+          ? response.response.map((user: any) => {
+              console.log('Processing user:', user);
+              return transformUserToProfile(user);
+            })
+          : [];
+        
+        console.log('Transformed Profiles:', apiProfiles);
+        
+        if (isInitialLoad) {
+          // On initial load, replace all profiles
+          setProfiles(apiProfiles);
+        } else {
+          // On polling, append only new users (avoid duplicates)
+          setProfiles((prevProfiles) => {
+            const existingIds = new Set(prevProfiles.map(p => p.id));
+            const newProfiles = apiProfiles.filter(p => !existingIds.has(p.id));
+            
+            if (newProfiles.length > 0) {
+              console.log(`Adding ${newProfiles.length} new profile(s) to the stack`);
+              return [...prevProfiles, ...newProfiles];
+            } else {
+              console.log('No new profiles found');
+              return prevProfiles;
+            }
+          });
+        }
+      } else {
+        console.warn('Unexpected response format:', response);
+        if (isInitialLoad) {
+          setProfiles([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      if (isInitialLoad) {
+        Alert.alert('Error', 'Failed to load users. Please try again.');
+        setProfiles([]);
+      }
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  // Fetch users on component mount and set up polling
+  useEffect(() => {
+    // Initial load
+    fetchUsers(true);
+
+    // Set up polling every 50 seconds
+    const pollInterval = setInterval(() => {
+      console.log('Polling for new users...');
+      fetchUsers(false);
+    }, 50000); // 50 seconds
+
+    // Cleanup interval on unmount
+    return () => {
+      clearInterval(pollInterval);
+    };
+  }, [fetchUsers]);
+
+  // Show current card + next card slightly behind it
+  const visibleCards = profiles.slice(currentIndex, currentIndex + 2);
   
-  const currentTopCard = visibleCards[0];
-  const backgroundImageSource = currentTopCard?.images && currentTopCard.images.length > 0
-    ? { uri: currentTopCard.images[0] }
-    : HomeScreenBg;
+  console.log(`Showing ${visibleCards.length} cards, currentIndex: ${currentIndex}, total profiles: ${profiles.length}`);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyStateContainer}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.emptyStateText}>Loading profiles...</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (currentIndex >= profiles.length) {
     return (
@@ -470,57 +691,44 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
     );
   }
 
+  
+
   return (
     <GestureHandlerRootView style={styles.container}>
-      <View style={styles.backgroundImageContainer} />
-      
-      <Image
-        key={`bg-${currentIndex}`}
-        source={backgroundImageSource}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-        blurRadius={20}
-        defaultSource={HomeScreenBg}
-      />
-      
+      {/* Homescreen Background - Behind cards */}
       <View style={styles.homescreenBackgroundContainer}>
-        <Image
+       
+        {/* Snixx Home Text at top */}
+        {/* <Image
           source={SnixxHometext}
           style={styles.snixxHomeText}
           resizeMode="contain"
-        />
+        /> */}
         
-        <View style={styles.backgroundOverlay} />
+        {/* Light black overlay from top to bottom */}
+      
       </View>
+      
+      {/* Top Header Section */}
+     
 
       <View style={styles.cardStackContainer}>
         {visibleCards.map((profile, index) => {
           const isTopCard = index === 0;
           const stackIndex = index;
           
+          // No static stacking - cards share same position/size.
+          // The next card will only be revealed as the top card moves while swiping.
           let stackOffset = 0;
           let stackScale = 1;
           let stackOpacity = 1;
 
-          if (stackIndex === 1) {
-            stackOffset = STACK_OFFSET;
-            stackScale = STACK_SCALE_1;
-            stackOpacity = 0.6;
-          } else if (stackIndex === 2) {
-            stackOffset = STACK_OFFSET * 2;
-            stackScale = STACK_SCALE_2;
-            stackOpacity = 0.4;
-          } else if (stackIndex === 3) {
-            stackOffset = STACK_OFFSET * 3;
-            stackScale = STACK_SCALE_3;
-            stackOpacity = 0.25;
-          } else if (stackIndex === 4) {
-            stackOffset = STACK_OFFSET * 4;
-            stackScale = STACK_SCALE_4;
-            stackOpacity = 0.15;
-          }
+          // Render cards from back to front for proper stacking
+          // Cards behind should render first (lower z-index), top card renders last (higher z-index)
+          const zIndex = isTopCard ? 1000 : 900;
 
-          const shouldAnimateToTop = index === 1 && isAnimating;
+          // No special animation needed for next card
+          const shouldAnimateToTop = false;
 
           return (
             <SwipeableCard

@@ -3,8 +3,9 @@ import { hp, wp, screenWidth, screenHeight } from '../../../utils/responsive';
 
 const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
-const CARD_WIDTH = WINDOW_WIDTH * 0.88; // Reduced width
-const CARD_HEIGHT = WINDOW_HEIGHT * 0.65; // Reduced height
+// Full-page style cards (similar to Bumble): slightly inset from edges
+const CARD_WIDTH = WINDOW_WIDTH - wp(48); 
+const CARD_HEIGHT = WINDOW_HEIGHT - hp(180); // leave more breathing room top/bottom
 const CARD_BORDER_RADIUS = 20;
 const STACK_OFFSET = 35; // Vertical offset between stacked cards (increased for very pronounced top stack effect)
 const STACK_SCALE_1 = 0.91; // Scale for first card behind
@@ -15,20 +16,10 @@ const STACK_SCALE_4 = 0.66; // Scale for fourth card behind
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-    justifyContent: 'flex-end',
+    backgroundColor: '#FFFCF1',
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  backgroundImageContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: 0,
-    backgroundColor: '#000000',
+    paddingBottom: hp(80), // leave space so bottom tab icons are visible
   },
   backgroundImage: {
     position: 'absolute',
@@ -38,9 +29,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
-    zIndex: 1,
+    zIndex: 0,
     opacity: 0.3,
-    backgroundColor: '#000000',
   },
   homescreenBackgroundContainer: {
     position: 'absolute',
@@ -51,36 +41,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '120%',
     zIndex: 0,
-    backgroundColor: 'transparent',
-  },
-  homescreenBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-    opacity: 0.9,
-  },
-  snixxHomeText: {
-    position: 'absolute',
-    top: hp(70),
-    left: wp(0),
-    right: 0,
-    width: '100%',
-    height: wp(300),
-    alignSelf: 'center',
-    zIndex: 1,
-  },
-  backgroundOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    zIndex: 2,
   },
   cardStackContainer: {
     width: CARD_WIDTH,
@@ -88,14 +48,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'visible',
     zIndex: 1,
-    marginBottom: hp(63),
-    backgroundColor: 'transparent',
+    marginBottom: 0,
+    alignSelf: 'center', // Center the stack container
   },
   card: {
     position: 'absolute',
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: CARD_BORDER_RADIUS,
+    alignItems: 'center',
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
     shadowColor: '#000',
@@ -106,6 +67,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 16,
+    // Removed marginHorizontal - cards will be centered within cardStackContainer
+    left: 0,
+    right: 0,
   },
   cardImageContainer: {
     width: '100%',
@@ -121,6 +85,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    alignSelf: 'center',
   },
   gradientOverlay: {
     position: 'absolute',
@@ -164,6 +129,45 @@ const styles = StyleSheet.create({
   },
   badgeGenreText: {
     color: '#000000',
+  },
+  connectButtonContainer: {
+    position: 'absolute',
+    top: wp(16),
+    right: wp(16),
+    zIndex: 15,
+  },
+  connectButton: {
+    paddingHorizontal: wp(20),
+    paddingVertical: hp(10),
+    borderRadius: wp(20),
+    overflow: 'hidden',
+    minWidth: wp(120),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    marginLeft: wp(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  connectButtonText: {
+    fontSize: wp(14),
+    fontFamily: 'GTMaruBold',
+    color: 'black',
+    zIndex: 2,
+  },
+  connectButtonGlass: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: wp(20),
+  },
+  androidGlassButton: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: wp(20),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   title: {
     fontSize: wp(32),
@@ -275,7 +279,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-   
 });
 
 export default styles;
