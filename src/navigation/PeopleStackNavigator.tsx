@@ -27,10 +27,14 @@ export default function PeopleStackNavigator() {
         name="ProfileDetailsScreen" 
         component={ProfileDetailsScreen}
         options={{
-          animation: 'fade',
-          animationDuration: 350,
+          animation: 'slide_from_bottom',
+          animationDuration: 400,
           gestureEnabled: true,
           gestureDirection: 'vertical',
+          presentation: 'transparentModal',
+          contentStyle: {
+            backgroundColor: 'transparent',
+          },
         }}
       />
     </Stack.Navigator>

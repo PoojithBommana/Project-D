@@ -18,7 +18,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     justifyContent: 'flex-end',
     alignItems: 'center',
-
+  },
+  backgroundImageContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 0,
+    backgroundColor: '#000000',
   },
   backgroundImage: {
     position: 'absolute',
@@ -28,8 +38,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
-    zIndex: 0,
+    zIndex: 1,
     opacity: 0.3,
+    backgroundColor: '#000000',
   },
   homescreenBackgroundContainer: {
     position: 'absolute',
@@ -40,6 +51,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '120%',
     zIndex: 0,
+    backgroundColor: 'transparent',
   },
   homescreenBackground: {
     position: 'absolute',
@@ -77,6 +89,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     zIndex: 1,
     marginBottom: hp(63),
+    backgroundColor: 'transparent',
   },
   card: {
     position: 'absolute',

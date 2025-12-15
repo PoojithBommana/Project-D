@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { hp, wp, screenWidth, screenHeight } from '../../../utils/responsive';
+import { hp, wp } from '../../../utils/responsive';
 
 const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
@@ -7,6 +7,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  overlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    zIndex: 1,
   },
   backgroundImage: {
     position: 'absolute',
@@ -16,6 +25,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
+    zIndex: 0,
   },
   backgroundOverlay: {
     position: 'absolute',
@@ -23,10 +33,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1,
+  },
+  blackBackgroundLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+    zIndex: -1,
   },
   scrollViewContainer: {
     flex: 1,
+    zIndex: 2,
   },
   scrollView: {
     flex: 1,
@@ -79,20 +100,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   contentCard: {
-    marginTop: hp(120),
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: wp(24),
-    borderTopRightRadius: wp(24),
-    borderBottomLeftRadius: wp(16),
-    borderBottomRightRadius: wp(16),
-    overflow: 'hidden',
-    marginHorizontal: wp(0),
-    marginBottom: hp(20),
+    width: '100%',
+    flex: 1,
   },
   heroImageContainer: {
     width: '100%',
-    height: hp(400),
+    maxWidth: wp(380),
+    alignSelf: 'center',
+    height: hp(450),
     position: 'relative',
+    borderRadius: wp(24),
+    overflow: 'hidden',
+    marginTop: hp(120),
+    marginHorizontal: wp(20),
+    marginBottom: hp(20),
+    backgroundColor: '#1a1a1a',
   },
   heroImage: {
     width: '100%',
@@ -120,25 +142,9 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  actionButton: {
-    position: 'absolute',
-    bottom: hp(20),
-    right: wp(20),
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000000',
-    paddingHorizontal: wp(20),
-    paddingVertical: hp(12),
-    borderRadius: wp(24),
-    gap: wp(8),
-  },
-  actionButtonText: {
-    fontSize: wp(14),
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
   detailsSection: {
-    padding: wp(20),
+    paddingHorizontal: wp(20),
+    paddingTop: hp(10),
   },
   title: {
     fontSize: wp(32),
@@ -146,19 +152,28 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: hp(16),
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   description: {
     fontSize: wp(16),
     fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
     lineHeight: hp(24),
     marginBottom: hp(12),
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   readMoreText: {
     fontSize: wp(16),
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: hp(16),
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   infoRow: {
     flexDirection: 'row',
@@ -169,12 +184,16 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: wp(16),
     fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
     flex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   interestsSection: {
     marginTop: hp(8),
     marginBottom: hp(20),
+    paddingHorizontal: 0,
   },
   sectionTitle: {
     fontSize: wp(24),
@@ -182,6 +201,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: hp(16),
     paddingHorizontal: wp(20),
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   interestsScrollContent: {
     paddingHorizontal: wp(20),
@@ -203,15 +225,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: hp(2),
     width: wp(100),
+    marginBottom: hp(4),
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   interestRole: {
     fontSize: wp(12),
     fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     width: wp(100),
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  hobbyTag: {
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(8),
+    borderRadius: wp(20),
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginRight: wp(8),
+    marginBottom: hp(8),
+  },
+  hobbyText: {
+    fontSize: wp(14),
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  loadingText: {
+    fontSize: wp(18),
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

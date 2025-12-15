@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BlurView } from '@react-native-community/blur';
 import LinearGradient from 'react-native-linear-gradient';
@@ -18,6 +19,7 @@ import Animated, {
   withSpring,
   withTiming,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Profile } from '../../../types/Profile';
 import { hp, wp } from '../../../utils/responsive';
@@ -36,39 +38,71 @@ interface Props {
 }
 
 const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { profile } = route.params;
+  const profile = route?.params?.profile;
   const [readMore, setReadMore] = useState(false);
 
-  // Animation values
+  // Safety check - if no profile, go back
+  useEffect(() => {
+    if (!profile) {
+      setTimeout(() => {
+        navigation.goBack();
+      }, 100);
+    }
+  }, [profile, navigation]);
+
+  // Animation values - start from initial state for smooth entrance
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
   const backgroundOpacity = useSharedValue(0);
-  const contentTranslateY = useSharedValue(30);
+  const contentTranslateY = useSharedValue(50);
 
-  useEffect(() => {
-    // Smooth fade and scale entrance animation with staggered timing
-    backgroundOpacity.value = withTiming(1, {
-      duration: 300,
-      easing: Easing.out(Easing.ease),
-    });
+  // Run entrance animation whenever the screen gains focus to avoid flicker on return
+  useFocusEffect(
+    useCallback(() => {
+      opacity.value = 0;
+      scale.value = 0.95;
+      backgroundOpacity.value = 0;
+      contentTranslateY.value = 50;
 
-    opacity.value = withTiming(1, {
-      duration: 400,
-      easing: Easing.out(Easing.cubic),
-    });
-    
-    scale.value = withSpring(1, {
-      damping: 22,
-      stiffness: 100,
-      mass: 0.9,
-    });
+      opacity.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
+      });
+      scale.value = withSpring(1, {
+        damping: 20,
+        stiffness: 90,
+        mass: 0.8,
+      });
+      backgroundOpacity.value = withTiming(1, {
+        duration: 350,
+        easing: Easing.out(Easing.ease),
+      });
+      contentTranslateY.value = withSpring(0, {
+        damping: 20,
+        stiffness: 90,
+        mass: 0.8,
+      });
 
-    contentTranslateY.value = withSpring(0, {
-      damping: 22,
-      stiffness: 100,
-      mass: 0.9,
-    });
-  }, []);
+      // No special cleanup needed; values will reset on next focus
+      return () => {};
+    }, [opacity, scale, backgroundOpacity, contentTranslateY]),
+  );
+
+  // Smooth exit animation before leaving screen to avoid flicker
+  const runExitAnimation = useCallback(() => {
+    opacity.value = withTiming(
+      0,
+      { duration: 220, easing: Easing.inOut(Easing.ease) },
+      (finished) => {
+        if (finished) {
+          runOnJS(navigation.goBack)();
+        }
+      },
+    );
+    backgroundOpacity.value = withTiming(0, { duration: 180, easing: Easing.inOut(Easing.ease) });
+    contentTranslateY.value = withTiming(30, { duration: 220, easing: Easing.inOut(Easing.ease) });
+    scale.value = withTiming(0.96, { duration: 220, easing: Easing.inOut(Easing.ease) });
+  }, [navigation, opacity, backgroundOpacity, contentTranslateY, scale]);
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -89,43 +123,57 @@ const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   });
 
-  const primaryImage = profile.images && profile.images.length > 0 
+  // Safe access to profile properties
+  const primaryImage = profile?.images && profile.images.length > 0 
     ? { uri: profile.images[0] } 
     : require('../../../assets/girl.png');
 
-  const genre = profile.interests && profile.interests.length > 0 
+  const genre = profile?.interests && profile.interests.length > 0 
     ? profile.interests[0] 
     : 'Dating';
 
-  const displayBio = profile.bio || 'No bio available.';
+  const displayBio = profile?.bio || 'No bio available.';
 
+  // Always render container with black background, even if profile is missing
   return (
-    <Animated.View style={[styles.container, containerAnimatedStyle]}>
-      {/* Blurred Background */}
-      <Animated.View style={[StyleSheet.absoluteFill, backgroundAnimatedStyle]}>
-        <Image
-          source={primaryImage}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-          blurRadius={20}
-        />
-        <View style={styles.backgroundOverlay} />
-      </Animated.View>
+    <View style={styles.container}>
+      {/* Black background layer to prevent white screen */}
+      <View style={styles.blackBackgroundLayer} />
+      
+      {!profile ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      ) : (
+        <Animated.View style={[StyleSheet.absoluteFill, containerAnimatedStyle]}>
+          {/* Blurred Background - only blurred image, no card */}
+          <Animated.View style={[StyleSheet.absoluteFill, backgroundAnimatedStyle]}>
+            <Image
+              source={primaryImage}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+              blurRadius={25}
+              defaultSource={require('../../../assets/girl.png')}
+            />
+            <View style={styles.backgroundOverlay} />
+          </Animated.View>
 
-      <Animated.View 
-        style={[styles.scrollViewContainer, contentAnimatedStyle]}
-      >
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+          <Animated.View 
+            style={[styles.scrollViewContainer, contentAnimatedStyle]}
+          >
+            <ScrollView 
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              contentOffset={{ x: 0, y: 0 }}
+            >
         {/* Top Navigation Bar */}
         <View style={styles.topNavBar}>
           {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={runExitAnimation}
             activeOpacity={0.7}
           >
             <BlurView
@@ -160,7 +208,9 @@ const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               source={primaryImage}
               style={styles.heroImage}
               resizeMode="cover"
+              defaultSource={require('../../../assets/girl.png')}
             />
+            
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
               style={styles.heroGradient}
@@ -168,23 +218,20 @@ const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             
             {/* Name Overlay */}
             <View style={styles.nameOverlay}>
-              <Text style={styles.heroName}>{profile.name.toUpperCase()}</Text>
+              <Text style={styles.heroName}>{(profile?.name || 'Profile').toUpperCase()}</Text>
             </View>
 
             {/* Action Button */}
-            <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-              <Icon name="play-circle" size={wp(24)} color="#000000" />
-            
-            </TouchableOpacity>
+           
           </View>
 
-          <LiquidButton title="View Photos" />
+     
 
           {/* Profile Details Section */}
           <View style={styles.detailsSection}>
             {/* Title */}
             <Text style={styles.title}>
-              {profile.name}, {profile.age}
+              {profile?.name || 'Unknown'}, {profile?.age || 'N/A'}
             </Text>
 
             {/* Description/Bio */}
@@ -263,9 +310,11 @@ const ProfileDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             </View>
           )}
         </View>
-        </ScrollView>
-      </Animated.View>
-    </Animated.View>
+            </ScrollView>
+          </Animated.View>
+        </Animated.View>
+      )}
+    </View>
   );
 };
 
