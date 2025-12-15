@@ -1,12 +1,14 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, Image, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Animated, Dimensions, FlatList } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, Image, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Animated, Dimensions, FlatList, InteractionManager } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary, ImagePickerResponse, MediaType, PhotoQuality } from 'react-native-image-picker';
 import { GEMINI_API_KEY, GEMINI_API_URL_TEXT, GEMINI_API_URL_VISION } from '../../../config/apiConfig';
 import { WardrobeStackParamList } from './WardrobeFeature';
 import { BlurView } from '@react-native-community/blur';
-import { AIWardrobeBg, ClosetText } from '../../../assets';
+import LinearGradient from 'react-native-linear-gradient';
+import { ClosetText } from '../../../assets';
+import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -74,10 +76,58 @@ const OUTFIT_CAROUSEL_SIDE_PADDING = (SCREEN_WIDTH - OUTFIT_CARD_WIDTH) / 2;
 const CATEGORY_CARD_HEIGHT = 100;
 const CATEGORY_CARD_VERTICAL_SPACING = 16;
 const CATEGORY_CARD_VERTICAL_FULL_HEIGHT = CATEGORY_CARD_HEIGHT + CATEGORY_CARD_VERTICAL_SPACING;
-const CATEGORY_CAROUSEL_VERTICAL_PADDING = (SCREEN_HEIGHT * 0.3 - CATEGORY_CARD_HEIGHT) / 2;
+// Max scale is 1.06, so max height is 100 * 1.06 = 106px. Need extra padding for scaled cards
+const MAX_SCALED_CARD_HEIGHT = CATEGORY_CARD_HEIGHT * 1.06;
+const CATEGORY_CAROUSEL_VERTICAL_PADDING = (SCREEN_HEIGHT * 0.3 - MAX_SCALED_CARD_HEIGHT) / 2;
+// Horizontal card dimensions
+const CATEGORY_CARD_HORIZONTAL_WIDTH = 140;
+const CATEGORY_CARD_HORIZONTAL_HEIGHT = 120;
+const CATEGORY_CARD_HORIZONTAL_SPACING = 12;
+const CATEGORY_CARD_HORIZONTAL_FULL_WIDTH = CATEGORY_CARD_HORIZONTAL_WIDTH + CATEGORY_CARD_HORIZONTAL_SPACING;
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
+// Utility constants for calendar
+const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// Generate 7 days starting from today for the week view
+const generateWeekDays = (): DayData[] => {
+  const today = new Date();
+  const days: DayData[] = [];
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    
+    const isToday = i === 0;
+    const dayName = isToday ? 'Today' : weekDays[date.getDay()];
+    const monthName = monthAbbreviations[date.getMonth()];
+    const dayNumber = date.getDate();
+    const dateString = `${monthName} ${dayNumber}`;
+    
+    days.push({
+      id: `day-${i}`,
+      day: dayName,
+      date: dateString,
+      isToday: isToday,
+      weatherIcon: 'weather-sunny',
+      tempHigh: '29°',
+      tempLow: '24°',
+    });
+  }
+  
+  return days;
+};
+
 const AIScreen = ({ navigation }: AIScreenProps) => {
+  // Gradient palettes for category cards
+  const gradientPalettes = [
+    ['#4A90E2', '#87CEEB'], // Blue to sky-blue
+    ['#FF6B6B', '#FFB88C'], // Orange to pink
+    ['#9B59B6', '#E8D5FF'], // Purple to lavender
+    ['#FF8A80', '#FFB74D'], // Warm gradient
+  ];
+  
   // All hooks must be at the top level in consistent order
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -101,10 +151,10 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   // Saved outfits state - moved earlier to maintain consistent hook order
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>(() => {
     // Use lazy initializer to compute initial state
-    const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const today = new Date();
     const outfitDates: string[] = [];
     
@@ -131,7 +181,6 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   const [_focusedCategoryIndexRow1, _setFocusedCategoryIndexRow1] = useState(0);
   const [_focusedCategoryIndexRow2, _setFocusedCategoryIndexRow2] = useState(0);
   const categoryScrollYRow1 = useRef(new Animated.Value(0)).current;
-  const categoryScrollYRow2 = useRef(new Animated.Value(0)).current;
   const categoryFlatListRefRow1 = useRef<FlatList<CategoryData>>(null);
   const categoryFlatListRefRow2 = useRef<FlatList<CategoryData>>(null);
   const outfitScrollX = useRef(new Animated.Value(0)).current;
@@ -160,44 +209,15 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   const myCollectionButtonScale = useSharedValue(1);
   const chatbotTriggerButtonScale = useSharedValue(1);
 
-  // Utility functions for calendar
+  // Utility constants for calendar
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  // Generate 7 days starting from today for the week view
-  const generateWeekDays = (): DayData[] => {
-    const today = new Date();
-    const days: DayData[] = [];
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      
-      const isToday = i === 0;
-      const dayName = isToday ? 'Today' : weekDays[date.getDay()];
-      const monthName = monthAbbreviations[date.getMonth()];
-      const dayNumber = date.getDate();
-      const dateString = `${monthName} ${dayNumber}`;
-      
-      days.push({
-        id: `day-${i}`,
-        day: dayName,
-        date: dateString,
-        isToday: isToday,
-        weatherIcon: 'weather-sunny',
-        tempHigh: '29°',
-        tempLow: '24°',
-      });
-    }
-    
-    return days;
-  };
 
   const calendarDays = useMemo(() => generateWeekDays(), []);
 
-  // Mock data for collection categories - Row 1
-  const collectionCategoriesRow1: CategoryData[] = useMemo(() => ([
+  // Mock data for collection categories - Row 1 (lazy loaded only when modal opens)
+  const collectionCategoriesRow1: CategoryData[] = useMemo(() => {
+    if (!showCollectionModal) return [];
+    return [
     { 
       id: '1', 
       name: 'Shirts', 
@@ -303,10 +323,13 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         { id: '11', name: 'Ankle Boots', image: 'https://images.unsplash.com/photo-1608256246200-53bd35f3f44e?w=400&h=400&fit=crop' },
       ]
     },
-  ]), []);
+    ];
+  }, [showCollectionModal]);
 
-  // Mock data for collection categories - Row 2
-  const collectionCategoriesRow2: CategoryData[] = useMemo(() => ([
+  // Mock data for collection categories - Row 2 (lazy loaded only when modal opens)
+  const collectionCategoriesRow2: CategoryData[] = useMemo(() => {
+    if (!showCollectionModal) return [];
+    return [
     { 
       id: '7', 
       name: 'Accessories', 
@@ -387,7 +410,8 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         { id: '6', name: 'Dress Socks', image: 'https://images.unsplash.com/photo-1586350977772-b3b7e690c8e2?w=400&h=400&fit=crop' },
       ]
     },
-  ]), []);
+    ];
+  }, [showCollectionModal]);
 
   // Calculate base outfit length using useMemo to ensure stability
   const baseOutfitLength = useMemo(() => savedOutfits.length, [savedOutfits]);
@@ -415,10 +439,9 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
 
   useEffect(() => {
     if (showCollectionModal && collectionCategoriesRow2.length > 0 && categoryFlatListRefRow2.current) {
-      categoryScrollYRow2.setValue(0);
       categoryFlatListRefRow2.current.scrollToOffset({ offset: 0, animated: false });
     }
-  }, [showCollectionModal, collectionCategoriesRow2.length, categoryScrollYRow2]);
+  }, [showCollectionModal, collectionCategoriesRow2.length]);
 
   // Animate Collection Modal
   useEffect(() => {
@@ -552,8 +575,19 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     return;
   }, []);
 
+  // Defer heavy rendering until after interactions complete
+  useEffect(() => {
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+    return () => {
+      interaction.cancel();
+    };
+  }, []);
+
   useEffect(() => {
     if (baseOutfitLength === 0 || !outfitFlatListRef.current) return;
+    if (!isReady) return; // Don't initialize until ready
     const startRawIndex = baseOutfitLength;
     outfitRawIndexRef.current = startRawIndex;
     const startOffset = startRawIndex * OUTFIT_CARD_FULL_WIDTH;
@@ -561,8 +595,6 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
       offset: startOffset,
       animated: false,
     });
-    // Initialize animated value
-    outfitScrollX.setValue(startOffset);
     setFocusedOutfitIndex(0);
     
     // Auto-scrolling disabled - removed autoplay start
@@ -570,7 +602,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     return () => {
       stopOutfitAutoPlay();
     };
-  }, [baseOutfitLength, startOutfitAutoPlay, stopOutfitAutoPlay, outfitScrollX]);
+  }, [baseOutfitLength, startOutfitAutoPlay, stopOutfitAutoPlay, isReady]);
 
   const renderCategoryCardRow1 = React.useCallback(({ item, index }: { item: CategoryData; index: number }) => {
     const inputRange = [
@@ -583,7 +615,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
 
     const scale = categoryScrollYRow1.interpolate({
       inputRange,
-      outputRange: [0.75, 0.82, 1.15, 0.82, 0.75],
+      outputRange: [0.65, 0.75, 1.06, 0.75, 0.65],
       extrapolate: 'clamp',
     });
 
@@ -593,6 +625,8 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
       extrapolate: 'clamp',
     });
 
+    const gradientColors = gradientPalettes[index % gradientPalettes.length];
+    
     return (
       <AnimatedTouchableOpacity
         style={[
@@ -608,6 +642,13 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
           navigation?.navigate('Closet', { categoryData: item });
         }}
       >
+        {/* Gradient Header */}
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.categoryCardGradientHeader}
+        />
         <View style={styles.categoryHeaderVertical}>
           <View style={styles.categoryIconContainerVertical}>
             <Icon name={item.icon} size={28} color="#FFFFFF" />
@@ -631,116 +672,59 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     );
   }, [navigation, categoryScrollYRow1]);
 
-  const renderCategoryCardRow2 = React.useCallback(({ item, index }: { item: CategoryData; index: number }) => {
-    const inputRange = [
-      (index - 2) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
-      (index - 1) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
-      index * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
-      (index + 1) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
-      (index + 2) * CATEGORY_CARD_VERTICAL_FULL_HEIGHT,
-    ];
-
-    const scale = categoryScrollYRow2.interpolate({
-      inputRange,
-      outputRange: [0.75, 0.82, 1.15, 0.82, 0.75],
-      extrapolate: 'clamp',
-    });
-
-    const opacity = categoryScrollYRow2.interpolate({
-      inputRange,
-      outputRange: [0.3, 0.5, 1, 0.5, 0.3],
-      extrapolate: 'clamp',
-    });
+  const renderCategoryCardHorizontal = React.useCallback(({ item, index }: { item: CategoryData; index: number }) => {
+    const gradientColors = gradientPalettes[index % gradientPalettes.length];
 
     return (
-      <AnimatedTouchableOpacity
-        style={[
-          styles.categoryCardVertical,
-          {
-            transform: [{ scale }],
-            opacity,
-          },
-        ]}
+      <TouchableOpacity
+        style={styles.categoryCardHorizontal}
         activeOpacity={0.8}
         onPress={() => {
           setShowCollectionModal(false);
           navigation?.navigate('Closet', { categoryData: item });
         }}
       >
-        <View style={styles.categoryHeaderVertical}>
-          <View style={styles.categoryIconContainerVertical}>
-            <Icon name={item.icon} size={28} color="#FFFFFF" />
+        {/* Gradient Header */}
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.categoryCardGradientHeaderHorizontal}
+        />
+        <View style={styles.categoryHeaderHorizontal}>
+          <View style={styles.categoryIconContainerHorizontal}>
+            <Icon name={item.icon} size={24} color="#FFFFFF" />
             <TouchableOpacity 
-              style={styles.categoryAddButton}
+              style={styles.categoryAddButtonHorizontal}
               onPress={(e) => {
                 e.stopPropagation();
                 setShowCollectionModal(false);
                 navigation?.navigate('Camera');
               }}
             >
-              <Icon name="plus" size={14} color="#FFFFFF" />
+              <Icon name="plus" size={12} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <View style={styles.categoryTextContainer}>
-            <Text style={styles.categoryNameVertical}>{item.name}</Text>
-            <Text style={styles.categoryCountVertical}>{item.itemCount} items</Text>
+          <View style={styles.categoryTextContainerHorizontal}>
+            <Text style={styles.categoryNameHorizontal} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.categoryCountHorizontal}>{item.itemCount} items</Text>
           </View>
         </View>
-      </AnimatedTouchableOpacity>
+      </TouchableOpacity>
     );
-  }, [navigation, categoryScrollYRow2]);
+  }, [navigation]);
 
   const renderOutfitCard = React.useCallback(({ item, index }: { item: SavedOutfitCarouselItem; index: number }) => {
-    const inputRange = [
-      (index - 2) * OUTFIT_CARD_FULL_WIDTH,
-      (index - 1) * OUTFIT_CARD_FULL_WIDTH,
-      index * OUTFIT_CARD_FULL_WIDTH,
-      (index + 1) * OUTFIT_CARD_FULL_WIDTH,
-      (index + 2) * OUTFIT_CARD_FULL_WIDTH,
-    ];
-
-    const scale = outfitScrollX.interpolate({
-      inputRange,
-      outputRange: [0.76, 0.9, 1.14, 0.9, 0.76],
-      extrapolate: 'clamp',
-    });
-
-    const translateY = outfitScrollX.interpolate({
-      inputRange,
-      outputRange: [48, 16, -20, 16, 48],
-      extrapolate: 'clamp',
-    });
-
-    const rotate = outfitScrollX.interpolate({
-      inputRange,
-      outputRange: ['-18deg', '-10deg', '0deg', '10deg', '18deg'],
-      extrapolate: 'clamp',
-    });
-
-    const opacity = outfitScrollX.interpolate({
-      inputRange,
-      outputRange: [0.35, 0.55, 1, 0.55, 0.35],
-      extrapolate: 'clamp',
-    });
-
     const meta = item.items.slice(0, 2).join(' · ');
 
     return (
-      <AnimatedTouchableOpacity
-        style={[
-          styles.myOutfitCard,
-          { transform: [{ translateY }, { rotate }, { scale }], opacity },
-        ]}
+      <TouchableOpacity
+        style={styles.myOutfitCard}
         activeOpacity={0.9}
         onPress={() => navigation?.navigate('Studio')}
       >
-        {/* Frosted Glass Background */}
-        <BlurView
-          blurType="dark"
-          blurAmount={15}
-          style={StyleSheet.absoluteFill}
-          reducedTransparencyFallbackColor="rgba(26, 26, 26, 0.85)"
-        />
+        {/* Simple Background - replaced BlurView for better performance */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 26, 26, 0.9)', borderRadius: 28 }]} />
         {/* Glossy Overlay */}
         <View style={styles.glossyOverlay} />
         {/* Card Content */}
@@ -751,13 +735,13 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
           <Text style={styles.outfitArcName} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.outfitArcMeta} numberOfLines={1}>{meta}</Text>
         </View>
-      </AnimatedTouchableOpacity>
+      </TouchableOpacity>
     );
-  }, [navigation, outfitScrollX]);
+  }, [navigation]);
 
 
   // Helper function to format collection data for AI context
-  const getFormattedCollectionData = (): string => {
+  const getFormattedCollectionData = useCallback((): string => {
     const allCategories = [...collectionCategoriesRow1, ...collectionCategoriesRow2];
     
     if (allCategories.length === 0) {
@@ -770,7 +754,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     }).join('\n');
 
     return formattedData;
-  };
+  }, [collectionCategoriesRow1, collectionCategoriesRow2]);
 
   // Helper function to parse markdown and return formatted Text components
   const parseMarkdown = (text: string, isUser: boolean): React.ReactNode[] => {
@@ -797,7 +781,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   };
 
   // Helper function to extract category name from query
-  const extractCategory = (query: string): string | null => {
+  const extractCategory = useCallback((query: string): string | null => {
     const lowerQuery = query.toLowerCase();
     const allCategories = [...collectionCategoriesRow1, ...collectionCategoriesRow2];
     
@@ -838,16 +822,16 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     }
     
     return null;
-  };
+  }, [collectionCategoriesRow1, collectionCategoriesRow2]);
 
   // Helper function to find collection items by category
-  const findCollectionItems = (categoryName: string): CollectionItem[] => {
+  const findCollectionItems = useCallback((categoryName: string): CollectionItem[] => {
     const allCategories = [...collectionCategoriesRow1, ...collectionCategoriesRow2];
     const category = allCategories.find(cat => 
       cat.name.toLowerCase() === categoryName.toLowerCase()
     );
     return category ? category.items : [];
-  };
+  }, [collectionCategoriesRow1, collectionCategoriesRow2]);
 
   // Helper function to create image messages from collection items
   const createImageMessages = (items: CollectionItem[], categoryName: string): ChatMessage[] => {
@@ -896,7 +880,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     }
   };
 
-  const getOutfitsForDate = (year: number, month: number, day: number): SavedOutfit[] => {
+  const getOutfitsForDate = useCallback((year: number, month: number, day: number): SavedOutfit[] => {
     return savedOutfits.filter(outfit => {
       const outfitDate = parseOutfitDate(outfit.date);
       if (!outfitDate) return false;
@@ -904,7 +888,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
              outfitDate.getMonth() === month &&
              outfitDate.getDate() === day;
     });
-  };
+  }, [savedOutfits]);
 
   const parseCalendarDayDate = (dateString: string): { year: number; month: number; day: number } | null => {
     try {
@@ -923,14 +907,16 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     }
   };
 
-  const getOutfitsForCalendarDay = (day: DayData): SavedOutfit[] => {
+  const getOutfitsForCalendarDay = useCallback((day: DayData): SavedOutfit[] => {
     const parsedDate = parseCalendarDayDate(day.date);
     if (!parsedDate) return [];
     return getOutfitsForDate(parsedDate.year, parsedDate.month, parsedDate.day);
-  };
+  }, [getOutfitsForDate]);
 
   // Pre-calculate calendar days with outfits to avoid expensive calls during render
+  // Only compute when calendar section is visible (isReady) or when modal is open
   const calendarDaysWithOutfits = useMemo(() => {
+    if (!isReady && !showCalendarModal) return [];
     return calendarDays.map((day) => {
       const dayOutfits = getOutfitsForCalendarDay(day);
       const firstOutfit = dayOutfits.length > 0 ? dayOutfits[0] : null;
@@ -940,9 +926,9 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         firstOutfit,
       };
     });
-  }, [calendarDays, savedOutfits]);
+  }, [calendarDays, isReady, showCalendarModal, getOutfitsForCalendarDay]);
 
-  const generateCalendarDays = (): CalendarDay[] => {
+  const generateCalendarDays = useCallback((): CalendarDay[] => {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     const daysInMonth = lastDay.getDate();
@@ -989,7 +975,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     }
 
     return days;
-  };
+  }, [currentYear, currentMonth, getOutfitsForDate]);
 
   const handlePreviousMonth = () => {
     if (currentMonth === 0) {
@@ -1061,7 +1047,8 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     }
   };
 
-  const generatedCalendarDays = generateCalendarDays();
+  // Memoize generateCalendarDays to prevent expensive recalculation on every render
+  const generatedCalendarDays = useMemo(() => generateCalendarDays(), [generateCalendarDays]);
 
   // API Configuration - imported from config file (uses environment variables with fallback)
 
@@ -1597,14 +1584,13 @@ INSTRUCTIONS:
 
   return (
     <View style={styles.container}>
-      {/* Background Image */}
-      <Image
-        source={AIWardrobeBg}
-        style={styles.backgroundImage}
-        resizeMode="cover"
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a']}
+        start={{x: 0, y: 1}}
+        end={{x: 1, y: 0}}
+        style={styles.backgroundGradient}
       />
-      {/* Dark Overlay */}
-      <View style={styles.backgroundOverlay} />
       
       <ScrollView 
         style={styles.scrollViewContainer} 
@@ -1712,81 +1698,67 @@ INSTRUCTIONS:
             <Text style={styles.viewAllLink}>View All &gt;</Text>
           </TouchableOpacity>
         </View>
-        <Animated.FlatList
-          ref={outfitFlatListRef}
-          data={outfitCarouselData}
-          keyExtractor={(item) => item._loopKey}
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          renderItem={renderOutfitCard}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: outfitScrollX } } }],
-            { 
-              useNativeDriver: true,
-              listener: (event: any) => {
-                // Track the actual scroll position for smooth updates
-                const currentOffset = event.nativeEvent.contentOffset.x;
-                const currentIndex = Math.round(currentOffset / OUTFIT_CARD_FULL_WIDTH);
-                // Only update if there's a significant change to avoid unnecessary updates
-                if (Math.abs(currentIndex - outfitRawIndexRef.current) >= 1) {
-                  outfitRawIndexRef.current = currentIndex;
-                }
-              }
-            }
-          )}
-          disableIntervalMomentum
-          onScrollBeginDrag={() => stopOutfitAutoPlay()}
-          scrollEventThrottle={16}
-          snapToInterval={OUTFIT_CARD_FULL_WIDTH}
-          decelerationRate="fast"
-          bounces={false}
-          onMomentumScrollEnd={({ nativeEvent }) => {
-            if (baseOutfitLength === 0) return;
-            const rawIndex = Math.round(nativeEvent.contentOffset.x / OUTFIT_CARD_FULL_WIDTH);
-            outfitRawIndexRef.current = rawIndex;
-            const focusedIndex = rawIndex % baseOutfitLength;
-            setFocusedOutfitIndex(focusedIndex);
+        {isReady ? (
+          <FlatList
+            ref={outfitFlatListRef}
+            data={outfitCarouselData}
+            keyExtractor={(item) => item._loopKey}
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            renderItem={renderOutfitCard}
+            disableIntervalMomentum
+            onScrollBeginDrag={() => stopOutfitAutoPlay()}
+            scrollEventThrottle={32}
+            snapToInterval={OUTFIT_CARD_FULL_WIDTH}
+            decelerationRate="fast"
+            bounces={false}
+            onMomentumScrollEnd={({ nativeEvent }) => {
+              if (baseOutfitLength === 0) return;
+              const rawIndex = Math.round(nativeEvent.contentOffset.x / OUTFIT_CARD_FULL_WIDTH);
+              outfitRawIndexRef.current = rawIndex;
+              const focusedIndex = rawIndex % baseOutfitLength;
+              setFocusedOutfitIndex(focusedIndex);
 
-            const minIndex = baseOutfitLength - 1;
-            const maxIndex = baseOutfitLength * 2;
-            if (rawIndex <= minIndex && outfitFlatListRef.current) {
-              const target = rawIndex + baseOutfitLength;
-              outfitRawIndexRef.current = target;
-              const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
-              outfitFlatListRef.current.scrollToOffset({
-                offset: targetOffset,
-                animated: false,
-              });
-              // Sync animated value
-              outfitScrollX.setValue(targetOffset);
-            } else if (rawIndex >= maxIndex && outfitFlatListRef.current) {
-              const target = rawIndex - baseOutfitLength;
-              outfitRawIndexRef.current = target;
-              const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
-              outfitFlatListRef.current.scrollToOffset({
-                offset: targetOffset,
-                animated: false,
-              });
-              // Sync animated value
-              outfitScrollX.setValue(targetOffset);
-            }
-            // Auto-scrolling disabled - removed autoplay restart
-          }}
-          getItemLayout={(_, index) => ({
-            length: OUTFIT_CARD_FULL_WIDTH,
-            offset: OUTFIT_CARD_FULL_WIDTH * index,
-            index,
-          })}
-          contentContainerStyle={[
-            styles.myOutfitsContainer,
-            { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING },
-          ]}
-          removeClippedSubviews={true}
-          initialNumToRender={3}
-          maxToRenderPerBatch={2}
-          windowSize={5}
-          updateCellsBatchingPeriod={50}
-        />
+              const minIndex = baseOutfitLength - 1;
+              const maxIndex = baseOutfitLength * 2;
+              if (rawIndex <= minIndex && outfitFlatListRef.current) {
+                const target = rawIndex + baseOutfitLength;
+                outfitRawIndexRef.current = target;
+                const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
+                outfitFlatListRef.current.scrollToOffset({
+                  offset: targetOffset,
+                  animated: false,
+                });
+              } else if (rawIndex >= maxIndex && outfitFlatListRef.current) {
+                const target = rawIndex - baseOutfitLength;
+                outfitRawIndexRef.current = target;
+                const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
+                outfitFlatListRef.current.scrollToOffset({
+                  offset: targetOffset,
+                  animated: false,
+                });
+              }
+            }}
+            getItemLayout={(_, index) => ({
+              length: OUTFIT_CARD_FULL_WIDTH,
+              offset: OUTFIT_CARD_FULL_WIDTH * index,
+              index,
+            })}
+            contentContainerStyle={[
+              styles.myOutfitsContainer,
+              { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING },
+            ]}
+            removeClippedSubviews={true}
+            initialNumToRender={2}
+            maxToRenderPerBatch={2}
+            windowSize={5}
+            updateCellsBatchingPeriod={50}
+          />
+        ) : (
+          <View style={[styles.myOutfitsContainer, { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING, height: 200, justifyContent: 'center', alignItems: 'center' }]}>
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          </View>
+        )}
       </View>
 
       {/* Outfit Calendar Section */}
@@ -1799,18 +1771,18 @@ INSTRUCTIONS:
         </View>
 
         {/* Days Scrollable List with Integrated Outfit Cards */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.daysContainer}
-          nestedScrollEnabled={true}
-          scrollEventThrottle={16}
-          removeClippedSubviews={true}
-          disableIntervalMomentum={true}
-          decelerationRate="fast"
-        >
-          {calendarDaysWithOutfits.map((day: DayData & { dayOutfits: SavedOutfit[]; firstOutfit: SavedOutfit | null }) => {
-            return (
+        {isReady ? (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.daysContainer}
+            nestedScrollEnabled={true}
+            scrollEventThrottle={16}
+            removeClippedSubviews={true}
+            disableIntervalMomentum={true}
+            decelerationRate="fast"
+          >
+            {calendarDaysWithOutfits.map((day: DayData & { dayOutfits: SavedOutfit[]; firstOutfit: SavedOutfit | null }) => (
               <TouchableOpacity
                 key={day.id}
                 style={styles.dayItem}
@@ -1850,9 +1822,13 @@ INSTRUCTIONS:
                   )}
                 </View>
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={[styles.daysContainer, { height: 120, justifyContent: 'center', alignItems: 'center' }]}>
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          </View>
+        )}
       </View>
 
       {/* My Collection Modal */}
@@ -1865,7 +1841,7 @@ INSTRUCTIONS:
         <Reanimated.View style={[styles.modalOverlay, collectionBackdropAnimatedStyle]}>
           <BlurView
             blurType="dark"
-            blurAmount={20}
+            blurAmount={30}
             style={StyleSheet.absoluteFill}
             reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
           />
@@ -1875,16 +1851,30 @@ INSTRUCTIONS:
             activeOpacity={1}
             onPress={() => setShowCollectionModal(false)}
           />
-          <Reanimated.View style={[styles.collectionModalContent, collectionModalAnimatedStyle]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>My Collection</Text>
-              <TouchableOpacity 
-                onPress={() => setShowCollectionModal(false)}
-                style={styles.closeButton}
-              >
-                <Icon name="close" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
+          {isLiquidGlassSupported ? (
+            <LiquidGlassView
+              style={styles.collectionModalGlass}
+              effect="regular"
+              tintColor="rgba(255, 255, 255, 0.15)"
+              colorScheme="dark"
+              interactive={true}
+            >
+              <LinearGradient
+                colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.modalGradientOverlay}
+              />
+              <Reanimated.View style={[styles.collectionModalContent, collectionModalAnimatedStyle]}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>My Collection</Text>
+                  <TouchableOpacity 
+                    onPress={() => setShowCollectionModal(false)}
+                    style={styles.closeButton}
+                  >
+                    <Icon name="close" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
 
             {/* Row 1 - Categories */}
             <View style={styles.collectionRow}>
@@ -1920,17 +1910,63 @@ INSTRUCTIONS:
             </View>
 
             {/* Row 2 - Other Categories */}
-            <View style={styles.collectionRow}>
+            <View style={styles.collectionRowHorizontal}>
               <Text style={styles.collectionRowTitle}>Other Categories</Text>
-              <Animated.FlatList
+              <FlatList
                 ref={categoryFlatListRefRow2}
                 data={collectionCategoriesRow2}
                 keyExtractor={(item) => item.id}
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                renderItem={renderCategoryCardHorizontal}
+                contentContainerStyle={styles.categoryHorizontalContainer}
+                ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+                getItemLayout={(_, index) => ({
+                  length: CATEGORY_CARD_HORIZONTAL_FULL_WIDTH,
+                  offset: CATEGORY_CARD_HORIZONTAL_FULL_WIDTH * index,
+                  index,
+                })}
+                removeClippedSubviews={false}
+              />
+            </View>
+              </Reanimated.View>
+            </LiquidGlassView>
+          ) : (
+            <Reanimated.View style={[styles.collectionModalContent, collectionModalAnimatedStyle]}>
+              <BlurView
+                blurType="dark"
+                blurAmount={20}
+                style={StyleSheet.absoluteFill}
+                reducedTransparencyFallbackColor="rgba(26, 26, 26, 0.95)"
+              />
+              <LinearGradient
+                colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>My Collection</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowCollectionModal(false)}
+                  style={styles.closeButton}
+                >
+                  <Icon name="close" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+
+            {/* Row 1 - Categories */}
+            <View style={styles.collectionRow}>
+              <Text style={styles.collectionRowTitle}>Categories</Text>
+              <Animated.FlatList
+                ref={categoryFlatListRefRow1}
+                data={collectionCategoriesRow1}
+                keyExtractor={(item) => item.id}
                 horizontal={false}
                 showsVerticalScrollIndicator={false}
-                renderItem={renderCategoryCardRow2}
+                renderItem={renderCategoryCardRow1}
                 onScroll={Animated.event(
-                  [{ nativeEvent: { contentOffset: { y: categoryScrollYRow2 } } }],
+                  [{ nativeEvent: { contentOffset: { y: categoryScrollYRow1 } } }],
                   { useNativeDriver: true }
                 )}
                 scrollEventThrottle={1}
@@ -1950,8 +1986,30 @@ INSTRUCTIONS:
                 })}
                 removeClippedSubviews={false}
               />
-                      </View>
-          </Reanimated.View>
+            </View>
+
+            {/* Row 2 - Other Categories */}
+            <View style={styles.collectionRowHorizontal}>
+              <Text style={styles.collectionRowTitle}>Other Categories</Text>
+              <FlatList
+                ref={categoryFlatListRefRow2}
+                data={collectionCategoriesRow2}
+                keyExtractor={(item) => item.id}
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                renderItem={renderCategoryCardHorizontal}
+                contentContainerStyle={styles.categoryHorizontalContainer}
+                ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+                getItemLayout={(_, index) => ({
+                  length: CATEGORY_CARD_HORIZONTAL_FULL_WIDTH,
+                  offset: CATEGORY_CARD_HORIZONTAL_FULL_WIDTH * index,
+                  index,
+                })}
+                removeClippedSubviews={false}
+              />
+            </View>
+            </Reanimated.View>
+          )}
         </Reanimated.View>
       </Modal>
 
@@ -2613,7 +2671,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  backgroundImage: {
+  backgroundGradient: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -2622,15 +2680,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     zIndex: 0,
-  },
-  backgroundOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    zIndex: 1,
   },
   scrollViewContainer: {
     flex: 1,
@@ -2960,13 +3009,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   collectionModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(26, 26, 26, 0.95)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
     paddingHorizontal: 20,
     paddingBottom: 40,
     maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 15,
+    overflow: 'visible', // Allow scaled cards to be visible
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2986,6 +3041,11 @@ const styles = StyleSheet.create({
   collectionRow: {
     marginBottom: 32,
     height: SCREEN_HEIGHT * 0.3,
+    overflow: 'visible', // Allow scaled cards to be visible without clipping
+  },
+  collectionRowHorizontal: {
+    marginBottom: 32,
+    height: CATEGORY_CARD_HORIZONTAL_HEIGHT + 40, // Card height + title + padding
   },
   collectionRowTitle: {
     fontSize: 16,
@@ -3000,6 +3060,11 @@ const styles = StyleSheet.create({
   },
   categoryVerticalContainer: {
     paddingVertical: 0,
+    paddingHorizontal: 8, // Add horizontal padding to prevent edge clipping when cards scale
+  },
+  categoryHorizontalContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   categoryCard: {
     backgroundColor: '#1a1a1a',
@@ -3015,13 +3080,111 @@ const styles = StyleSheet.create({
   categoryCardVertical: {
     width: '100%',
     height: CATEGORY_CARD_HEIGHT,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(26, 26, 26, 0.9)',
     borderRadius: 16,
     padding: 16,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     marginBottom: CATEGORY_CARD_VERTICAL_SPACING,
     justifyContent: 'center',
+    overflow: 'hidden', // Keep overflow hidden for card content
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  categoryCardGradientHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '30%',
+    zIndex: 0,
+  },
+  categoryCardHorizontal: {
+    width: CATEGORY_CARD_HORIZONTAL_WIDTH,
+    height: CATEGORY_CARD_HORIZONTAL_HEIGHT,
+    backgroundColor: 'rgba(26, 26, 26, 0.9)',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  categoryCardGradientHeaderHorizontal: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '30%',
+    zIndex: 0,
+  },
+  categoryHeaderHorizontal: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+  categoryIconContainerHorizontal: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    position: 'relative',
+    overflow: 'visible',
+  },
+  categoryAddButtonHorizontal: {
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    zIndex: 10,
+  },
+  categoryTextContainerHorizontal: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  categoryNameHorizontal: {
+    fontSize: 14,
+    fontFamily: 'GTMaruBold',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  categoryCountHorizontal: {
+    fontSize: 11,
+    fontFamily: 'GTMaruRegular',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  collectionModalGlass: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  modalGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    pointerEvents: 'none',
   },
   categoryHeader: {
     alignItems: 'center',
@@ -3042,6 +3205,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
     position: 'relative',
+    overflow: 'visible', // Allow add button to extend outside without clipping
   },
   categoryTextContainer: {
     flex: 1,
@@ -3072,8 +3236,8 @@ const styles = StyleSheet.create({
   },
   categoryAddButton: {
     position: 'absolute',
-    bottom: -8,
-    right: -8,
+    bottom: -6, // Slightly adjusted to reduce clipping risk
+    right: -6, // Slightly adjusted to reduce clipping risk
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -3082,6 +3246,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#FFFFFF',
+    zIndex: 10, // Ensure button stays on top when card scales
   },
   categoryName: {
     fontSize: 12,
