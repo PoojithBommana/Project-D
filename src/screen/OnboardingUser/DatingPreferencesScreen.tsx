@@ -312,7 +312,7 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
     ]).start(() => {
       setShowConfirmModal(false);
       setTimeout(() => {
-        navigation?.navigate('OnboardingStep5', {
+        navigation?.navigate('LocationPermissionScreen', {
           firstName: route?.params?.firstName || '',
           lastName: route?.params?.lastName || '',
           username: route?.params?.username || '',
@@ -321,6 +321,7 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
           location: route?.params?.location || '',
           photo: route?.params?.photo || '',
           photos: route?.params?.photos || [],
+          datingGoal: 'go_with_flow',
           showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
           interested_in_genders: interestedGenders,
           interested_age_range: interestedAgeRange,

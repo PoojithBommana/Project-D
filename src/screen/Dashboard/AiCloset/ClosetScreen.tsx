@@ -84,7 +84,7 @@ const ClosetScreen = ({ navigation, route }: ClosetScreenProps) => {
           />
           <View style={styles.imageOverlay}>
             <TouchableOpacity style={styles.favoriteButton}>
-              <Icon name="heart-outline" size={18} color="#FFFFFF" />
+              <Icon name="heart-outline" size={18} color="#000000" />
             </TouchableOpacity>
           </View>
         </View>
@@ -139,7 +139,7 @@ const ClosetScreen = ({ navigation, route }: ClosetScreenProps) => {
       {/* Items Grid */}
       {filteredItems.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name={categoryData ? "hanger" : "hanger"} size={80} color="#FDFF8D" />
+          <Icon name={categoryData ? "hanger" : "hanger"} size={80} color="#FDFF8E" />
           <Text style={styles.emptyText}>
             {searchQuery ? 'No items found' : 'No items yet'}
           </Text>
@@ -190,18 +190,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#FDFF8D',
-    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 0,
+    backgroundColor: '#FFFCF1',
   },
   backButton: {
     padding: 8,
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
   },
   headerTitleContainer: {
     flex: 1,
@@ -231,14 +232,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   searchIcon: {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'GTMaruRegular',
+    fontFamily: 'GTMaruBold',
     color: '#000000',
     padding: 0,
   },
@@ -261,21 +262,21 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   imageContainer: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F5F5F5',
     position: 'relative',
   },
   itemImage: {
@@ -291,9 +292,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   itemInfo: {
     padding: 14,
@@ -318,16 +321,16 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#FDFF8E',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#000000',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
     zIndex: 1000,
   },
   emptyContainer: {

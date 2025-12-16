@@ -13,6 +13,7 @@ import {
   Image,
   Animated,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,7 +56,7 @@ const SafeBlurView = ({ children, style, blurType = 'dark', blurAmount = 20, fal
     );
   }
   return (
-    <View style={[style, { backgroundColor: fallbackColor || 'rgba(0, 0, 0, 0.8)' }]}>
+    <View style={[style, { backgroundColor: fallbackColor || 'rgba(255, 255, 255, 0.95)' }]}>
       {children}
     </View>
   );
@@ -367,7 +368,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 <Icon 
                   name={item.icon || placeholderIcons[selectedCollectionType as keyof typeof placeholderIcons]} 
                   size={48} 
-                  color="#FFFFFF" 
+                  color="#000000" 
                 />
               </View>
             )}
@@ -444,9 +445,10 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
   // Mock data for tops category
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFCF1" />
       {/* Background Gradient */}
       <LinearGradient
-        colors={['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a']}
+        colors={['#FFFCF1', '#FFFCF1', '#FFFCF1', '#FFFCF1']}
         start={{x: 0, y: 1}}
         end={{x: 1, y: 0}}
         style={styles.backgroundGradient}
@@ -459,12 +461,12 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
           <LiquidGlassView
             style={styles.topNavGlass}
             effect="regular"
-            tintColor="rgba(255, 255, 255, 0.15)"
+            tintColor="rgba(0, 0, 0, 0.1)"
             colorScheme="dark"
             interactive={true}
           >
             <LinearGradient
-              colors={['rgba(255, 255, 255, 0.1)', 'transparent']}
+              colors={['rgba(255, 252, 241, 0.5)', 'transparent']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={styles.topNavGradientOverlay}
@@ -474,7 +476,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 onPress={() => navigation?.goBack()}
                 style={styles.backButton}
               >
-                <Icon name="arrow-left" size={24} color="#FFFFFF" />
+                <Icon name="arrow-left" size={24} color="#000000" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.nextButton} onPress={handleNextPress}>
                 <Text style={styles.nextButtonText}>Next</Text>
@@ -487,10 +489,10 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
               style={StyleSheet.absoluteFill}
               blurType="dark"
               blurAmount={20}
-              fallbackColor="rgba(26, 26, 26, 0.8)"
+              fallbackColor="rgba(255, 255, 255, 0.95)"
             />
             <LinearGradient
-              colors={['rgba(255, 255, 255, 0.1)', 'transparent']}
+              colors={['rgba(255, 252, 241, 0.5)', 'transparent']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={StyleSheet.absoluteFill}
@@ -500,7 +502,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 onPress={() => navigation?.goBack()}
                 style={styles.backButton}
               >
-                <Icon name="arrow-left" size={24} color="#FFFFFF" />
+                <Icon name="arrow-left" size={24} color="#000000" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.nextButton} onPress={handleNextPress}>
                 <Text style={styles.nextButtonText}>Next</Text>
@@ -526,17 +528,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('hat')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.hat} size={50} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.hat} size={50} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('hat')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -555,17 +557,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('accessory')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.accessory} size={40} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.accessory} size={40} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('accessory')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -584,17 +586,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('coat')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.coat} size={70} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.coat} size={70} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('coat')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -611,18 +613,18 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                   resizeMode="cover"
                 />
               ) : (
-                <Icon name={placeholderIcons.tee} size={100} color="rgba(255, 255, 255, 0.6)" style={styles.selectedIcon} />
+                <Icon name={placeholderIcons.tee} size={100} color="#000000" style={styles.selectedIcon} />
               )}
             </View>
             <View style={styles.pinIcon}>
-              <Icon name="pin" size={14} color="#FFFFFF" />
+              <Icon name="pin" size={14} color="#000000" />
             </View>
             {selectedItems.tee ? (
               <TouchableOpacity 
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('tee')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity 
@@ -648,17 +650,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('tee-right')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.tee} size={70} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.tee} size={70} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('tee', 'tee-right')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -677,17 +679,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('pants')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.pants} size={85} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.pants} size={85} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('pants')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -706,17 +708,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('shoes')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.shoes} size={65} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.shoes} size={65} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('shoes')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -735,17 +737,17 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem('bag')}
               >
-                <Icon name="close" size={16} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Icon name={placeholderIcons.bag} size={60} color="rgba(255, 255, 255, 0.5)" style={styles.placeholderIcon} />
+              <Icon name={placeholderIcons.bag} size={60} color="#666666" style={styles.placeholderIcon} />
               <TouchableOpacity 
                 style={styles.plusButton}
                 onPress={() => handlePlusButtonPress('bag')}
               >
-                <Icon name="plus" size={16} color="#FFFFFF" />
+                <Icon name="plus" size={16} color="#000000" />
               </TouchableOpacity>
             </>
           )}
@@ -764,7 +766,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
             style={StyleSheet.absoluteFill}
             blurType="dark"
             blurAmount={30}
-            fallbackColor="rgba(0, 0, 0, 0.8)"
+            fallbackColor="rgba(255, 255, 255, 0.95)"
           />
           <View style={styles.modalBackdropDark} />
           <TouchableOpacity 
@@ -776,12 +778,12 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
             <LiquidGlassView
               style={styles.collectionModalGlass}
               effect="regular"
-              tintColor="rgba(255, 255, 255, 0.15)"
+              tintColor="rgba(0, 0, 0, 0.1)"
               colorScheme="dark"
               interactive={true}
             >
               <LinearGradient
-                colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+                colors={['rgba(255, 252, 241, 0.3)', 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.modalGradientOverlay}
@@ -795,7 +797,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                     style={styles.closeButton}
                     onPress={() => setShowCollectionModal(false)}
                   >
-                    <Icon name="close" size={24} color="#FFFFFF" />
+                    <Icon name="close" size={24} color="#000000" />
                   </TouchableOpacity>
                 </View>
 
@@ -848,10 +850,10 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={StyleSheet.absoluteFill}
                 blurType="dark"
                 blurAmount={20}
-                fallbackColor="rgba(26, 26, 26, 0.95)"
+                fallbackColor="rgba(255, 255, 255, 0.98)"
               />
               <LinearGradient
-                colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+                colors={['rgba(255, 252, 241, 0.3)', 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -865,7 +867,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                     style={styles.closeButton}
                     onPress={() => setShowCollectionModal(false)}
                   >
-                    <Icon name="close" size={24} color="#FFFFFF" />
+                    <Icon name="close" size={24} color="#000000" />
                   </TouchableOpacity>
                 </View>
 
@@ -928,7 +930,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
             style={StyleSheet.absoluteFill}
             blurType="dark"
             blurAmount={30}
-            fallbackColor="rgba(0, 0, 0, 0.8)"
+            fallbackColor="rgba(255, 255, 255, 0.95)"
           />
           <View style={styles.modalBackdropDark} />
           <TouchableOpacity 
@@ -940,12 +942,12 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
             <LiquidGlassView
               style={styles.saveModalGlass}
               effect="regular"
-              tintColor="rgba(255, 255, 255, 0.15)"
+              tintColor="rgba(0, 0, 0, 0.1)"
               colorScheme="dark"
               interactive={true}
             >
               <LinearGradient
-                colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+                colors={['rgba(255, 252, 241, 0.3)', 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.modalGradientOverlay}
@@ -957,7 +959,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                     style={styles.closeButton}
                     onPress={handleCancelSave}
                   >
-                    <Icon name="close" size={24} color="#FFFFFF" />
+                    <Icon name="close" size={24} color="#000000" />
                   </TouchableOpacity>
                 </View>
 
@@ -968,12 +970,12 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                       style={styles.inputBlur}
                       blurType="dark"
                       blurAmount={10}
-                      fallbackColor="rgba(26, 26, 26, 0.8)"
+                      fallbackColor="rgba(255, 255, 255, 0.95)"
                     />
                     <TextInput
                       style={styles.saveModalInput}
                       placeholder="Enter outfit name"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      placeholderTextColor="#999999"
                       value={outfitName}
                       onChangeText={setOutfitName}
                       autoFocus={true}
@@ -990,19 +992,19 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                       style={styles.iconPickerButtonBlur}
                       blurType="dark"
                       blurAmount={10}
-                      fallbackColor="rgba(26, 26, 26, 0.8)"
+                      fallbackColor="rgba(255, 255, 255, 0.95)"
                     />
                     {selectedIcon ? (
                       <View style={styles.selectedIconDisplay}>
-                        <Icon name={selectedIcon} size={24} color="#FFFFFF" />
+                        <Icon name={selectedIcon} size={24} color="#000000" />
                       </View>
                     ) : (
                       <View style={styles.iconPickerPlaceholder}>
-                        <Icon name="emoticon-outline" size={24} color="rgba(255, 255, 255, 0.5)" />
+                        <Icon name="emoticon-outline" size={24} color="#666666" />
                         <Text style={styles.iconPickerPlaceholderText}>Tap to select icon</Text>
                       </View>
                     )}
-                    <Icon name={showIconPicker ? "chevron-up" : "chevron-down"} size={20} color="rgba(255, 255, 255, 0.7)" />
+                    <Icon name={showIconPicker ? "chevron-up" : "chevron-down"} size={20} color="#666666" />
                   </TouchableOpacity>
 
                   {showIconPicker && (
@@ -1032,7 +1034,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                                   style={styles.iconCardBlur}
                                   blurType="dark"
                                   blurAmount={selectedIcon === icon.name ? 15 : 5}
-                                  fallbackColor={selectedIcon === icon.name ? "rgba(74, 144, 226, 0.3)" : "rgba(26, 26, 26, 0.6)"}
+                                  fallbackColor={selectedIcon === icon.name ? "rgba(253, 255, 142, 0.3)" : "rgba(245, 245, 245, 0.8)"}
                                 />
                                 {selectedIcon === icon.name && (
                                   <LinearGradient
@@ -1047,7 +1049,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                                 <Icon 
                                   name={icon.name} 
                                   size={24} 
-                                  color="#FFFFFF"
+                                  color="#000000"
                                 />
                               </View>
                             </TouchableOpacity>
@@ -1067,7 +1069,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                       style={StyleSheet.absoluteFill}
                       blurType="light"
                       blurAmount={10}
-                      fallbackColor="rgba(255, 255, 255, 0.2)"
+                      fallbackColor="rgba(245, 245, 245, 0.8)"
                     />
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
@@ -1080,10 +1082,10 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                       style={styles.saveButtonBlur}
                       blurType="light"
                       blurAmount={25}
-                      fallbackColor="rgba(255, 255, 255, 0.15)"
+                      fallbackColor="rgba(245, 245, 245, 0.6)"
                     />
                     <LinearGradient
-                      colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
+                      colors={['rgba(255, 252, 241, 0.8)', 'rgba(255, 252, 241, 0.4)']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 0, y: 1 }}
                       style={styles.saveButtonGloss}
@@ -1099,10 +1101,10 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                 style={StyleSheet.absoluteFill}
                 blurType="dark"
                 blurAmount={20}
-                fallbackColor="rgba(26, 26, 26, 0.95)"
+                fallbackColor="rgba(255, 255, 255, 0.98)"
               />
               <LinearGradient
-                colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+                colors={['rgba(255, 252, 241, 0.3)', 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -1114,7 +1116,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                     style={styles.closeButton}
                     onPress={handleCancelSave}
                   >
-                    <Icon name="close" size={24} color="#FFFFFF" />
+                    <Icon name="close" size={24} color="#000000" />
                   </TouchableOpacity>
                 </View>
 
@@ -1125,12 +1127,12 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                       style={styles.inputBlur}
                       blurType="dark"
                       blurAmount={10}
-                      fallbackColor="rgba(26, 26, 26, 0.8)"
+                      fallbackColor="rgba(255, 255, 255, 0.95)"
                     />
                     <TextInput
                       style={styles.saveModalInput}
                       placeholder="Enter outfit name"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      placeholderTextColor="#999999"
                       value={outfitName}
                       onChangeText={setOutfitName}
                       autoFocus={true}
@@ -1147,19 +1149,19 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                       style={styles.iconPickerButtonBlur}
                       blurType="dark"
                       blurAmount={10}
-                      fallbackColor="rgba(26, 26, 26, 0.8)"
+                      fallbackColor="rgba(255, 255, 255, 0.95)"
                     />
                     {selectedIcon ? (
                       <View style={styles.selectedIconDisplay}>
-                        <Icon name={selectedIcon} size={24} color="#FFFFFF" />
+                        <Icon name={selectedIcon} size={24} color="#000000" />
                       </View>
                     ) : (
                       <View style={styles.iconPickerPlaceholder}>
-                        <Icon name="emoticon-outline" size={24} color="rgba(255, 255, 255, 0.5)" />
+                        <Icon name="emoticon-outline" size={24} color="#666666" />
                         <Text style={styles.iconPickerPlaceholderText}>Tap to select icon</Text>
                       </View>
                     )}
-                    <Icon name={showIconPicker ? "chevron-up" : "chevron-down"} size={20} color="rgba(255, 255, 255, 0.7)" />
+                    <Icon name={showIconPicker ? "chevron-up" : "chevron-down"} size={20} color="#666666" />
                   </TouchableOpacity>
 
                   {showIconPicker && (
@@ -1189,7 +1191,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                                   style={styles.iconCardBlur}
                                   blurType="dark"
                                   blurAmount={selectedIcon === icon.name ? 15 : 5}
-                                  fallbackColor={selectedIcon === icon.name ? "rgba(74, 144, 226, 0.3)" : "rgba(26, 26, 26, 0.6)"}
+                                  fallbackColor={selectedIcon === icon.name ? "rgba(253, 255, 142, 0.3)" : "rgba(245, 245, 245, 0.8)"}
                                 />
                                 {selectedIcon === icon.name && (
                                   <LinearGradient
@@ -1204,7 +1206,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                                 <Icon 
                                   name={icon.name} 
                                   size={24} 
-                                  color="#FFFFFF"
+                                  color="#000000"
                                 />
                               </View>
                             </TouchableOpacity>
@@ -1224,7 +1226,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
                         style={StyleSheet.absoluteFill}
                         blurType="light"
                         blurAmount={10}
-                        fallbackColor="rgba(255, 255, 255, 0.2)"
+                        fallbackColor="rgba(245, 245, 245, 0.8)"
                       />
                       <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
@@ -1260,7 +1262,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFCF1',
   },
   backgroundGradient: {
     position: 'absolute',
@@ -1283,13 +1285,13 @@ const styles = StyleSheet.create({
   topNavGlass: {
     borderRadius: 0,
     overflow: 'hidden',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    borderBottomWidth: 2,
+    borderBottomColor: '#E0E0E0',
   },
   topNavFallback: {
-    backgroundColor: 'rgba(26, 26, 26, 0.6)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 2,
+    borderBottomColor: '#E0E0E0',
   },
   topNavGradientOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1312,7 +1314,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 16,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
     fontWeight: '500',
   },
   filterBar: {
@@ -1339,15 +1341,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#E0E0E0',
     gap: 6,
   },
   filterButtonLight: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     borderWidth: 2,
-    borderColor: '#FDFF8D',
+    borderColor: '#E0E0E0',
   },
   filterButtonText: {
     fontSize: 14,
@@ -1383,10 +1385,10 @@ const styles = StyleSheet.create({
   },
   itemPlaceholder: {
     position: 'absolute',
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1460,9 +1462,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FDFF8D',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -1479,9 +1481,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -1513,10 +1515,10 @@ const styles = StyleSheet.create({
   shirtBackground: {
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(26, 26, 26, 0.9)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -1541,11 +1543,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   categorySection: {
     paddingHorizontal: 20,
@@ -1556,7 +1558,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 12,
   },
   categoryScroll: {
@@ -1568,25 +1570,25 @@ const styles = StyleSheet.create({
   emptyItemSlot: {
     width: 60,
     height: 80,
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyLine: {
     width: 40,
     height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#E0E0E0',
   },
   categoryItemImage: {
     width: 60,
     height: 80,
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1594,9 +1596,9 @@ const styles = StyleSheet.create({
     width: 60,
     height: 80,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#FDFF8D',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -1609,28 +1611,28 @@ const styles = StyleSheet.create({
   },
   modalBackdropDark: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   collectionModalGlass: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: 'hidden',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   collectionModalFallback: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: 'hidden',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   modalGradientOverlay: {
     ...StyleSheet.absoluteFillObject,
     pointerEvents: 'none',
   },
   collectionModalContent: {
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
+    backgroundColor: '#FFFCF1',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingTop: 28,
@@ -1649,24 +1651,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+    borderBottomColor: '#E0E0E0',
   },
   modalTitle: {
     fontSize: 26,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     letterSpacing: 0.3,
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
   },
   collectionItemsScrollView: {
     marginHorizontal: 4,
@@ -1689,17 +1691,17 @@ const styles = StyleSheet.create({
   emptyCollectionText: {
     fontSize: 16,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: '#666666',
     textAlign: 'center',
   },
   collectionCarouselSurface: {
-    backgroundColor: 'rgba(31, 32, 38, 0.9)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 20,
     paddingVertical: 20,
     paddingHorizontal: 4,
     overflow: 'visible',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     minHeight: 320,
     maxHeight: 400,
   },
@@ -1712,9 +1714,9 @@ const styles = StyleSheet.create({
     width: 220,
     marginRight: 16,
     marginBottom: 20,
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     borderRadius: 18,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -1741,7 +1743,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+    backgroundColor: 'rgba(245, 245, 245, 0.5)',
   },
   collectionItemImage: {
     width: '100%',
@@ -1752,7 +1754,7 @@ const styles = StyleSheet.create({
   collectionItemIconFallback: {
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,
@@ -1767,7 +1769,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomLeftRadius: 18,
@@ -1776,7 +1778,7 @@ const styles = StyleSheet.create({
   collectionItemName: {
     fontSize: 14,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     textAlign: 'center',
   },
   // Save Modal Styles
@@ -1785,17 +1787,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     overflow: 'hidden',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   saveModalFallback: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   saveModalContent: {
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
+    backgroundColor: '#FFFCF1',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -1821,7 +1823,7 @@ const styles = StyleSheet.create({
   saveModalLabel: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 12,
   },
   inputContainer: {
@@ -1829,8 +1831,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 12,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     minHeight: 56,
   },
   inputBlur: {
@@ -1841,12 +1843,12 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 56,
     height: 56,
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
     zIndex: 1,
   },
   saveModalButtons: {
@@ -1856,7 +1858,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 0,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: '#E0E0E0',
     zIndex: 1,
     flexShrink: 0,
   },
@@ -1866,16 +1868,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     overflow: 'hidden',
   },
   cancelButton: {
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
+    backgroundColor: '#F5F5F5',
   },
   saveButton: {
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    borderWidth: 1.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: '#000000',
+    borderWidth: 2,
+    backgroundColor: '#FDFF8E',
     overflow: 'hidden',
   },
   saveButtonBlur: {
@@ -1889,13 +1892,13 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     zIndex: 1,
   },
   saveButtonText: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     zIndex: 1,
   },
   // Icon Picker Styles
@@ -1903,8 +1906,8 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 64,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -1922,11 +1925,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(74, 144, 226, 0.3)',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   iconPickerPlaceholder: {
     flexDirection: 'row',
@@ -1937,17 +1940,17 @@ const styles = StyleSheet.create({
   iconPickerPlaceholderText: {
     fontSize: 16,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: '#666666',
   },
   iconPickerGrid: {
     height: 240,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     marginBottom: 0,
     marginTop: 8,
     overflow: 'hidden',
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -1975,16 +1978,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     overflow: 'visible',
     position: 'relative',
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: '#F5F5F5',
   },
   iconCardSelected: {
-    borderColor: 'rgba(74, 144, 226, 0.8)',
+    borderColor: '#000000',
     borderWidth: 2,
-    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+    backgroundColor: '#FDFF8D',
   },
   iconCardBackground: {
     ...StyleSheet.absoluteFillObject,

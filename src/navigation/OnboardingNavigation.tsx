@@ -18,7 +18,6 @@ import OnboardingStep3 from '../screen/OnboardingUser/OnboardingStep3';
 import OnboardingStep4 from '../screen/OnboardingUser/OnboardingStep4';
 import PromptsScreen from '../screen/OnboardingUser/PromptsScreen';
 import DatingPreferencesScreen from '../screen/OnboardingUser/DatingPreferencesScreen';
-import OnboardingStep5 from '../screen/OnboardingUser/OnboardingStep5';
 import LocationPermissionScreen from '../screen/OnboardingUser/LocationPermissionScreen';
 import InterestsSelectionScreen from '../screen/OnboardingUser/InterestsSelectionScreen';
 import DevicePermissionsScreen from '../screen/OnboardingUser/DevicePermissionsScreen';
@@ -45,7 +44,6 @@ export type OnboardingStackParamList = {
   OnboardingStep4: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; showOnlyFirstLetter: boolean };
   PromptsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photos?: string[]; showOnlyFirstLetter: boolean; bio?: string; birthday?: number };
   DatingPreferencesScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean; bio?: string; birthday?: number };
-  OnboardingStep5: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; bio?: string; birthday?: number };
   LocationPermissionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; bio?: string; birthday?: number };
   InterestsSelectionScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; bio?: string; birthday?: number };
   DevicePermissionsScreen: { firstName: string; lastName: string; username?: string; gender: string; age: number; location: string; photo?: string; photos?: string[]; datingGoal: string; showOnlyFirstLetter: boolean; interested_in_genders: string[]; interested_age_range: { min: number; max: number }; hobbies: string[]; bio?: string; birthday?: number };
@@ -216,14 +214,6 @@ export default function OnboardingNavigation() {
       <OnboardingStack.Screen 
         name="DatingPreferencesScreen" 
         component={DatingPreferencesScreen}
-        options={{
-          animation: 'slide_from_right',
-          animationDuration: 350,
-        }}
-      />
-      <OnboardingStack.Screen 
-        name="OnboardingStep5" 
-        component={OnboardingStep5}
         options={{
           animation: 'slide_from_right',
           animationDuration: 350,
