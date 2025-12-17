@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { StatusBar, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import styles from '../../styles/BeliefsScreenStyles';
@@ -45,8 +46,13 @@ export default function BeliefsScreen({ navigation, route }: Props) {
     list.includes(value) ? list.filter(v => v !== value) : [...list, value];
 
   const handleNext = () => {
+    // Ensure firstName and lastName (and any other required params) are not undefined
+    if (!route?.params?.firstName || !route?.params?.lastName || !route?.params?.gender || typeof route?.params?.age !== "number") {
+      // You may want to show an error or skip navigation if required params are missing
+      return;
+    }
     navigation?.navigate('CausesCommunitiesScreen', {
-      ...route?.params,
+      ...route.params,
       beliefs: { religion, politics },
     });
   };

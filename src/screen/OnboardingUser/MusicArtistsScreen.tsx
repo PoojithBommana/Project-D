@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
@@ -15,12 +14,14 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/MusicArtistsScreenStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-// import { musicService, Playlist } from '../../services/MusicService';
+import { getApiCall } from '../../config/apiCall';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Lightbulbicon } from '../../assets';
 
 interface Props {
@@ -41,21 +42,24 @@ interface Artist {
   id: string;
   name: string;
   image?: string;
-  imageUrl?: string;
+  genres?: string[];
+  // Keep raw backend fields if any extra come through
+  [key: string]: any;
 }
 
 export default function MusicArtistsScreen({ navigation, route }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [displayedPlaylists, setDisplayedPlaylists] = useState<any[]>([]);
-  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [displayedArtists, setDisplayedArtists] = useState<Artist[]>([]);
+  const [loadingArtists, setLoadingArtists] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const [showSkipModal, setShowSkipModal] = useState(false);
   const skipModalScale = useRef(new Animated.Value(0)).current;
   const skipModalOpacity = useRef(new Animated.Value(0)).current;
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -72,37 +76,88 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
       }),
     ]).start();
     
-    // Fetch featured playlists
-    fetchPlaylists();
+    // Fetch curated artists on mount
+    fetchArtists();
   }, []);
 
-  const fetchPlaylists = async () => {
-    // setLoadingPlaylists(true);
-    // try {
-    //   const response = await musicService.fetchFeaturedPlaylists();
-    //   console.log('=== Featured Playlists API Response ===');
-    //   console.log(JSON.stringify(response, null, 2));
-    //   console.log('=======================================');
-      
-    //   if (response.success && response.playlists) {
-    //     setPlaylists(response.playlists);
-    //     setDisplayedPlaylists(response.playlists);
-    //   } else {
-    //     console.error('Failed to fetch playlists:', response.error);
-    //   }
-    // } catch (error) {
-    //   console.error('Error fetching playlists:', error);
-    // } finally {
-    //   setLoadingPlaylists(false);
-    // }
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.trim() === '') {
+      // If search is empty, show curated list
+      setDisplayedArtists(artists);
+      return;
+    }
+
+    // Debounce search by 500ms
+    searchTimeoutRef.current = setTimeout(() => {
+      searchArtists(searchQuery.trim());
+    }, 500);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const fetchArtists = async (query?: string) => {
+    setLoadingArtists(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        console.error('No access token found');
+        setLoadingArtists(false);
+        return;
+      }
+
+      const params = query ? { query } : {};
+      const response = await getApiCall('ONBOARDING', 'MUSIC_SEARCH', accessToken, params);
+
+      // Console the raw MUSIC_SEARCH response from backend for debugging
+      console.log(
+        '[MusicArtistsScreen] MUSIC_SEARCH raw response:',
+        JSON.stringify(response?.response, null, 2),
+      );
+
+      if (response?.error) {
+        console.error('Error fetching artists:', response.response);
+        setLoadingArtists(false);
+        return;
+      }
+
+      if (response?.response?.artists) {
+        // Use the artists array from backend as‑is (no filtering/mapping)
+        const artistsData: Artist[] = response.response.artists;
+        if (query) {
+          // Search results - replace displayed artists
+          setDisplayedArtists(artistsData);
+        } else {
+          // Curated list - set both artists and displayed
+          setArtists(artistsData);
+          setDisplayedArtists(artistsData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching artists:', error);
+    } finally {
+      setLoadingArtists(false);
+    }
   };
 
+  const searchArtists = useCallback((query: string) => {
+    fetchArtists(query);
+  }, []);
+
   const handleShuffle = () => {
-    if (playlists.length === 0) return;
+    if (artists.length === 0) return;
     
-    // Create a shuffled copy of the playlists
-    const shuffled = [...playlists].sort(() => Math.random() - 0.5);
-    setDisplayedPlaylists(shuffled);
+    // Create a shuffled copy of the artists
+    const shuffled = [...artists].sort(() => Math.random() - 0.5);
+    setDisplayedArtists(shuffled);
   };
 
   const animateButtonPress = () => {
@@ -128,21 +183,36 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleAddPlaylist = (playlist:any) => {
-    // Convert playlist to artist format for selection
-    const artist: Artist = {
-      id: playlist.id,
-      name: playlist.name,
-      imageUrl: playlist.images && playlist.images.length > 0 ? playlist.images[0].url : undefined,
-    };
-    handleAddArtist(artist);
+  const handleAddArtistFromList = (artistItem: Artist) => {
+    handleAddArtist(artistItem);
   };
 
   const handleRemoveArtist = (artistId: string) => {
     setSelectedArtists(selectedArtists.filter(a => a.id !== artistId));
   };
 
-  const navigateToNextStep = () => {
+  const navigateToNextStep = async () => {
+    // Extract artist IDs from selected artists
+    const musicArtistIds = selectedArtists.map(artist => artist.id);
+    // Extract genres from selected artists (flatten and dedupe)
+    const musicGenres = Array.from(
+      new Set(selectedArtists.flatMap(artist => artist.genres || []))
+    );
+
+    try {
+      // Persist selections so they are available at final onboarding step
+      await AsyncStorage.setItem(
+        'onboarding_music_artist_ids',
+        JSON.stringify(musicArtistIds),
+      );
+      await AsyncStorage.setItem(
+        'onboarding_music_genres',
+        JSON.stringify(musicGenres),
+      );
+    } catch (e) {
+      console.warn('[MusicArtistsScreen] Failed to persist music selections:', e);
+    }
+
     navigation?.navigate('HeightScreen', {
       firstName: route?.params?.firstName || '',
       lastName: route?.params?.lastName || '',
@@ -150,6 +220,9 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
       gender: route?.params?.gender || '',
       age: route?.params?.age || 0,
       showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      currently: (route?.params as any)?.currently || '',
+      music_artist_ids: musicArtistIds,
+      music_genres: musicGenres,
     });
   };
 
@@ -207,6 +280,8 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
 
   const handleSkipYes = () => {
     closeSkipModal(() => {
+      // Skip with empty arrays
+      setSelectedArtists([]);
       animateButtonPress();
       setTimeout(() => {
         navigateToNextStep();
@@ -218,7 +293,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
 
   const renderPlaceholderSlot = (index: number) => {
     const artist = selectedArtists[index];
-    const imageUrl = artist?.imageUrl || artist?.image;
+    const imageUrl = artist?.image;
     
     return (
       <View key={index} style={styles.placeholderSlot}>
@@ -238,7 +313,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
                   resizeMode="cover"
                 />
               ) : (
-                <View style={styles.artistImagePlaceholder}>
+                <View style={[styles.artistImagePlaceholder, { borderRadius: rs(8) }]}>
                   <Text style={styles.artistInitial}>{artist.name.charAt(0)}</Text>
                 </View>
               )}
@@ -258,32 +333,32 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
     );
   };
 
-  const renderPopularPlaylist = ({ item }: { item: any }) => {
+  const renderPopularArtist = ({ item }: { item: Artist }) => {
     const isSelected = selectedArtists.some(a => a.id === item.id);
-    const playlistImage = item.images && item.images.length > 0 ? item.images[0].url : null;
+    const artistImage = item.image;
     
     return (
       <TouchableOpacity
         style={styles.popularArtistCard}
-        onPress={() => isSelected ? handleRemoveArtist(item.id) : handleAddPlaylist(item)}
+        onPress={() => isSelected ? handleRemoveArtist(item.id) : handleAddArtistFromList(item)}
         activeOpacity={0.7}
       >
         <View style={styles.popularArtistImageContainer}>
-          {playlistImage ? (
+          {artistImage ? (
             <Image
-              source={{ uri: playlistImage }}
+              source={{ uri: artistImage }}
               style={styles.popularArtistImage}
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.popularArtistImagePlaceholder}>
+            <View style={[styles.popularArtistImagePlaceholder, { borderRadius: rs(12) }]}>
               <Text style={styles.popularArtistInitial}>{item.name.charAt(0)}</Text>
             </View>
           )}
           {!isSelected && (
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => handleAddPlaylist(item)}
+              onPress={() => handleAddArtistFromList(item)}
             >
               <Icon name="add" size={rs(16)} color="#FFFFFF" />
             </TouchableOpacity>
@@ -384,21 +459,21 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
                 <TouchableOpacity 
                   style={styles.shuffleButton}
                   onPress={handleShuffle}
-                  disabled={displayedPlaylists.length === 0}
+                  disabled={artists.length === 0 || searchQuery.trim() !== ''}
                   activeOpacity={0.7}
                 >
-                  <Icon name="shuffle" size={rs(20)} color={displayedPlaylists.length === 0 ? "#CCCCCC" : "#666666"} />
+                  <Icon name="shuffle" size={rs(20)} color={artists.length === 0 || searchQuery.trim() !== '' ? "#CCCCCC" : "#666666"} />
                 </TouchableOpacity>
               </View>
 
-              {loadingPlaylists ? (
+              {loadingArtists ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color="#4A90E2" />
                 </View>
-              ) : displayedPlaylists.length > 0 ? (
+              ) : displayedArtists.length > 0 ? (
                 <FlatList
-                  data={displayedPlaylists}
-                  renderItem={renderPopularPlaylist}
+                  data={displayedArtists}
+                  renderItem={renderPopularArtist}
                   keyExtractor={(item) => item.id}
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -406,7 +481,9 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
                 />
               ) : (
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No playlists available</Text>
+                  <Text style={styles.emptyText}>
+                    {searchQuery ? 'No artists found' : 'No artists available'}
+                  </Text>
                 </View>
               )}
             </View>

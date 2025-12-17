@@ -10,16 +10,15 @@ export const API_ENDPOINTS: any = {
     REFRESH_TOKEN: '/token/refresh/',
     GET_PROFILE: '/auth/profile/',
     VERIFY_FACE: '/auth/verify-face/',
+    USERNAME_CHECK: '/auth/username/check/',
   },
   SWIPE: {
     GET_USERS: '/auth/swipe/users/',
     ACTION: '/auth/swipe/action/',
   },
-  MUSIC: {
-    FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
-  },
   ONBOARDING: {
     UPDATE: '/auth/onboarding-update/',
+    MUSIC_SEARCH: '/auth/onboarding/music/search/',
   },
   CONNECTIONS: {
     SEND: '/auth/connections/send/',

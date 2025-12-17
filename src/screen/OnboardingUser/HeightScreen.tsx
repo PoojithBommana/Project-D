@@ -84,6 +84,8 @@ export default function HeightScreen({ navigation, route }: Props) {
       age: route?.params?.age || 0,
       showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
       height: selectedHeight,
+      music_artist_ids: route?.params?.music_artist_ids,
+      music_genres: route?.params?.music_genres,
     });
   };
 

@@ -99,6 +99,54 @@ export const postApiCall = async (
   }
 };
 
+export const patchApiCall = async (
+  screenName: string,
+  endpoint: string,
+  params: any,
+  accessToken?: string,
+) => {
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const responseData = await api.patch(
+      `${Base_URL}${API_ENDPOINTS[screenName][endpoint]}`,
+      params,
+      { headers },
+    );
+
+    return {
+      response: responseData.data,
+      statusCode: responseData.status,
+      statusText: responseData.statusText,
+    };
+  } catch (error: any) {
+    if (error?.response) {
+      return {
+        error: true,
+        response: error?.response?.data || { Message: error?.message || 'Server error' },
+        statusCode: error?.response?.status,
+        statusText: error?.response?.statusText,
+      };
+    } else if (error.request) {
+      return {
+        error: true,
+        response: { Message: 'Network error: Unable to reach server' },
+      };
+    } else {
+      return {
+        error: true,
+        response: { Message: error?.message || 'Unknown error occurred' },
+      };
+    }
+  }
+};
+
 export const getApiCall = async (
   screenName: string,
   endpoint: string,

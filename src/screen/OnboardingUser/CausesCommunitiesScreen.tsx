@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { StatusBar, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import styles from '../../styles/CausesCommunitiesScreenStyles';

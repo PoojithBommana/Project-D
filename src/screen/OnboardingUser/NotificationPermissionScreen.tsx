@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,9 @@ import {
   Animated,
   ScrollView,
   Image,
+  Alert,
+  PermissionsAndroid,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -53,6 +56,7 @@ export default function NotificationPermissionScreen({ navigation, route }: Prop
   const slideAnim = useRef(new Animated.Value(30)).current;
   const bellRotate = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const [isRequesting, setIsRequesting] = useState(false);
   
   // Create animated values for each notification
   const notificationAnims = useRef(
@@ -137,17 +141,136 @@ export default function NotificationPermissionScreen({ navigation, route }: Prop
     ]).start();
   };
 
-  const handleTurnOnNotifications = () => {
+  const requestNotificationPermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      try {
+        // For Android 13+ (API 33+), we need POST_NOTIFICATIONS permission
+        if (Platform.Version >= 33) {
+          // Check if permission is already granted
+          const checkResult = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+          );
+          
+          console.log('Notification permission check result:', checkResult);
+          
+          if (checkResult === true) {
+            return true;
+          }
+
+          // Request notification permission
+          console.log('Requesting notification permission...');
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+            {
+              title: 'Notification Permission',
+              message: 'SNIXX needs to send you notifications about matches, messages, and events.',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'Allow',
+            }
+          );
+          
+          console.log('Notification permission request result:', granted);
+          
+          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            return true;
+          } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+            Alert.alert(
+              'Permission Required',
+              'Notification permission was denied. Please enable it in Settings > Apps > SNIXX > Permissions > Notifications.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => Linking.openSettings() },
+              ]
+            );
+            return false;
+          } else {
+            // Permission denied
+            return false;
+          }
+        } else {
+          // For Android < 13, notifications are enabled by default
+          // No permission request needed
+          console.log('Android version < 13, notifications enabled by default');
+          return true;
+        }
+      } catch (err) {
+        console.error('Error requesting notification permission:', err);
+        Alert.alert(
+          'Error',
+          'Failed to request notification permission. Please check if the permission is declared in the app manifest.',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+    } else {
+      // iOS notification permission
+      try {
+        // For iOS, notification permissions are typically requested through push notification setup
+        // We can use react-native-permissions if available
+        let permissionsModule: any = null;
+        
+        try {
+          permissionsModule = require('react-native-permissions');
+        } catch (e) {
+          // react-native-permissions not installed
+          console.log('react-native-permissions not available. iOS notifications will be requested when push notifications are set up.');
+          // For iOS, notification permissions are usually requested automatically
+          // when setting up push notifications. We'll proceed and let the push notification setup handle it
+          return true; // Allow to proceed
+        }
+
+        if (permissionsModule) {
+          const { request, PERMISSIONS, RESULTS } = permissionsModule;
+          console.log('Requesting iOS notification permission...');
+          const result = await request(PERMISSIONS.IOS.NOTIFICATIONS);
+          console.log('iOS notification permission result:', result);
+          return result === RESULTS.GRANTED || result === RESULTS.LIMITED;
+        }
+        
+        return true;
+      } catch (err) {
+        console.error('Error requesting iOS notification permission:', err);
+        // For iOS, notification permissions are usually requested automatically
+        // when setting up push notifications. We'll proceed and let the push notification setup handle it
+        console.log('Proceeding without explicit permission request - will be handled by push notification setup');
+        return true; // Allow to proceed
+      }
+    }
+  };
+
+  const handleTurnOnNotifications = async () => {
     animateButtonPress();
-    // Navigate to activity selection screen
-    navigation?.navigate('ActivitySelectionScreen', {
-      firstName: route?.params?.firstName || '',
-      lastName: route?.params?.lastName || '',
-      username: route?.params?.username || '',
-      gender: route?.params?.gender || '',
-      age: route?.params?.age || 0,
-      showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
-    });
+    setIsRequesting(true);
+    
+    try {
+      const permissionGranted = await requestNotificationPermission();
+      
+      setIsRequesting(false);
+      
+      // Navigate to activity selection screen regardless of permission result
+      // User can still proceed even if they deny permission
+      navigation?.navigate('ActivitySelectionScreen', {
+        firstName: route?.params?.firstName || '',
+        lastName: route?.params?.lastName || '',
+        username: route?.params?.username || '',
+        gender: route?.params?.gender || '',
+        age: route?.params?.age || 0,
+        showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      });
+    } catch (error) {
+      setIsRequesting(false);
+      console.error('Error requesting notification permission:', error);
+      // Still navigate even if there's an error
+      navigation?.navigate('ActivitySelectionScreen', {
+        firstName: route?.params?.firstName || '',
+        lastName: route?.params?.lastName || '',
+        username: route?.params?.username || '',
+        gender: route?.params?.gender || '',
+        age: route?.params?.age || 0,
+        showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      });
+    }
   };
 
   const handleNotRightNow = () => {
@@ -255,9 +378,12 @@ export default function NotificationPermissionScreen({ navigation, route }: Prop
                 <TouchableOpacity
                   style={styles.turnOnButton}
                   onPress={handleTurnOnNotifications}
+                  disabled={isRequesting}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.turnOnButtonText}>Turn On Notifications</Text>
+                  <Text style={styles.turnOnButtonText}>
+                    {isRequesting ? 'Requesting...' : 'Turn On Notifications'}
+                  </Text>
                 </TouchableOpacity>
               </Animated.View>
 

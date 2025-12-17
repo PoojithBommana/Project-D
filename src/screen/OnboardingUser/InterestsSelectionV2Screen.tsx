@@ -50,13 +50,15 @@ export default function InterestsSelectionV2Screen({ navigation, route }: Props)
   };
 
   const handleNext = () => {
+    if (!route?.params) return;
     navigation?.navigate('ValuesScreen', {
-      ...route?.params,
+      ...route.params,
       interests: selected,
     });
   };
 
   const handleSkip = () => {
+    if (!route?.params) return;
     navigation?.navigate('ValuesScreen', {
       ...route?.params,
       interests: route?.params?.interests,
@@ -72,7 +74,7 @@ export default function InterestsSelectionV2Screen({ navigation, route }: Props)
         </View>
 
         <ScrollView contentContainerStyle={[styles.contentContainer, { paddingBottom: hp(40) }]}>
-          <Text style={styles.heading}>Choose 5 things you’re really into</Text>
+          <Text style={styles.heading}>Choose 3 things you’re really into</Text>
           <Text style={styles.subheading}>
             Add interests to your profile to help you match with people who love them too.
           </Text>

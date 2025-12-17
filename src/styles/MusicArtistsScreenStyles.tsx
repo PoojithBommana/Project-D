@@ -117,13 +117,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   selectedArtistSlot: {
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     position: 'relative',
+    paddingTop: hp(8),
   },
   removeButton: {
     position: 'absolute',
@@ -166,16 +168,18 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   artistImageContainer: {
-    width: wp(50),
-    height: wp(50),
-    borderRadius: wp(25),
+    width: wp(60),
+    height: wp(60),
+    borderRadius: rs(8),
     marginBottom: hp(4),
     overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+    alignSelf: 'center',
   },
   artistImage: {
     width: '100%',
     height: '100%',
-    borderRadius: wp(25),
+    resizeMode: 'cover',
   },
   artistImagePlaceholder: {
     width: '100%',
@@ -183,6 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E3F2FD',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: rs(8),
   },
   artistInitial: {
     fontSize: rf(20),
@@ -266,11 +271,11 @@ const styles = StyleSheet.create({
     marginBottom: hp(8),
     position: 'relative',
     overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
   },
   popularArtistImage: {
     width: '100%',
     height: '100%',
-    borderRadius: rs(12),
   },
   popularArtistImagePlaceholder: {
     width: '100%',
@@ -278,6 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E3F2FD',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: rs(12),
   },
   popularArtistInitial: {
     fontSize: rf(32),

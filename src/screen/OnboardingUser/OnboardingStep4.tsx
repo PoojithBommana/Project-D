@@ -40,15 +40,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'OnboardingStep4'>;
   route?: {
-    params: {
-      firstName: string;
-      lastName: string;
-      username: string;
-      gender: string;
-      age: number;
-      location: string;
-      showOnlyFirstLetter: boolean;
-    };
+    params: OnboardingStackParamList['OnboardingStep4'];
   };
 }
 
@@ -417,6 +409,12 @@ export default function OnboardingStep4({ navigation, route }: Props) {
         location: route?.params?.location || '',
         photos: selectedPhotos,
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+        // Forward music selections
+        music_artist_ids: (route?.params as any)?.music_artist_ids,
+        music_genres: (route?.params as any)?.music_genres,
+        // Forward beliefs and causes so they reach DevicePermissionsScreen
+        beliefs: (route?.params as any)?.beliefs,
+        causes: (route?.params as any)?.causes,
       });
     }, 150);
   };

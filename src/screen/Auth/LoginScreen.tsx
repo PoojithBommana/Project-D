@@ -74,8 +74,8 @@ export default class LoginScreen extends Component<Props, State> {
       });
     });
     
-    // Navigate to OnboardingNavigation
-    this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
+    // Navigate to AuthOptionsScreen
+    this.props.navigation?.navigate('AuthOptionsScreen');
   };
 
   handleTermsPress = () => {

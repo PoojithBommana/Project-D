@@ -54,6 +54,9 @@ export default function LifestyleHabitsScreen({ navigation, route }: Props) {
       showOnlyFirstLetter: route?.params?.showOnlyFirstLetter ?? false,
       height: route?.params?.height,
       habits: { drinking, smoking },
+      // Forward music selections so they reach DevicePermissionsScreen
+      music_artist_ids: route?.params?.music_artist_ids,
+      music_genres: route?.params?.music_genres,
     });
   };
 

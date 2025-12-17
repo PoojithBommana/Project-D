@@ -23,19 +23,7 @@ import { Boyicon, Girlicon, Nonbinaryicon } from '../../assets';
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'DatingPreferencesScreen'>;
   route?: {
-    params: {
-      firstName: string;
-      lastName: string;
-      username: string;
-      gender: string;
-      age: number;
-      location: string;
-      photo?: string;
-      photos?: string[];
-      showOnlyFirstLetter: boolean;
-      bio?: string;
-      birthday?: number;
-    };
+    params: OnboardingStackParamList['DatingPreferencesScreen'];
   };
 }
 
@@ -321,12 +309,18 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
           location: route?.params?.location || '',
           photo: route?.params?.photo || '',
           photos: route?.params?.photos || [],
-          datingGoal: 'go_with_flow',
+          datingGoal: 'casual',
           showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
           interested_in_genders: interestedGenders,
           interested_age_range: interestedAgeRange,
           bio: route?.params?.bio,
           birthday: route?.params?.birthday,
+          // Pass religion and causes_communities forward, derived from earlier steps
+          religion: (route?.params as any)?.beliefs?.religion?.[0],
+          causes_communities: (route?.params as any)?.causes || [],
+          // Forward music selections
+          music_artist_ids: (route?.params as any)?.music_artist_ids,
+          music_genres: (route?.params as any)?.music_genres,
         });
       }, 100);
     });

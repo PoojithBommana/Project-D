@@ -24,15 +24,7 @@ import { Plusicon } from '../../assets';
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'OnboardingStep3'>;
   route?: {
-    params: {
-      firstName: string;
-      lastName: string;
-      username: string;
-      gender: string;
-      age: number;
-      showOnlyFirstLetter: boolean;
-      height?: number;
-    };
+    params: OnboardingStackParamList['OnboardingStep3'];
   };
 }
 
@@ -171,13 +163,10 @@ export default function OnboardingStep3({ navigation, route }: Props) {
     animateButtonPress();
     setTimeout(() => {
       navigation?.navigate('OnboardingStep4', {
-        firstName: route?.params?.firstName || '',
-        lastName: route?.params?.lastName || '',
-        username: route?.params?.username || '',
-        gender: route?.params?.gender || '',
-        age: route?.params?.age || 0,
-        location: '', // Will be set in next screen
-        showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+        // Forward everything collected so far (including beliefs, causes, music, etc.)
+        ...(route?.params || ({} as any)),
+        // Location will be set in the next screen
+        location: '',
       });
     }, 150);
   };

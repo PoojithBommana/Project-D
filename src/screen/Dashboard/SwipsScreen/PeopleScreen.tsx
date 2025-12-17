@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,12 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PeopleStackParamList } from '../../../navigation/PeopleStackNavigator';
 import LinearGradient from 'react-native-linear-gradient';
 import { BlurView } from '@react-native-community/blur';
-import { SnixxHometext } from '../../../assets';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,208 +24,145 @@ import Animated, {
   Extrapolate,
   runOnJS,
   useAnimatedReaction,
+  useAnimatedScrollHandler,
 } from 'react-native-reanimated';
 import {
   Gesture,
   GestureDetector,
   GestureHandlerRootView,
-  GestureType,
 } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Profile } from '../../../types/Profile';
 import { getApiCall, postApiCall } from '../../../config/apiCall';
 import styles from './PeopleScreenStyles';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 const ROTATION_MULTIPLIER = 10;
-const PARALLAX_MULTIPLIER = 0.3;
+const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.7;
 
 interface SwipeableCardProps {
   profile: Profile;
   index: number;
   onSwipeComplete: (direction: 'left' | 'right') => void;
-  onCardTap?: (profile: Profile) => void;
   isTopCard: boolean;
   stackOffset: number;
   stackScale: number;
   stackOpacity: number;
-  shouldAnimateToTop?: boolean;
 }
 
 const SwipeableCard: React.FC<SwipeableCardProps> = ({
   profile,
   index,
   onSwipeComplete,
-  onCardTap,
   isTopCard,
   stackOffset,
   stackScale,
   stackOpacity,
-  shouldAnimateToTop = false,
 }) => {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const scale = useSharedValue(stackScale);
   const opacity = useSharedValue(stackOpacity);
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
+  const scrollY = useSharedValue(0);
+  const isScrolling = useSharedValue(false);
+  const contentHeight = useSharedValue(0);
+  const scrollViewHeight = useSharedValue(0);
+  const showBottomActions = useSharedValue(false);
 
-  // Initialize translateY with stack offset for non-top cards
   React.useEffect(() => {
-    if (shouldAnimateToTop && !isTopCard) {
-      // Smoothly animate this card to become the top card with very smooth spring
-      scale.value = withSpring(1, { 
-        damping: 25, 
-        stiffness: 150,
-        mass: 1.2,
-        overshootClamping: false,
-      });
-      opacity.value = withSpring(1, { 
-        damping: 25, 
-        stiffness: 150,
-        mass: 1.2,
-        overshootClamping: false,
-      });
-      translateY.value = withSpring(0, { 
-        damping: 25, 
-        stiffness: 150,
-        mass: 1.2,
-        overshootClamping: false,
-      });
-    } else if (!isTopCard) {
+    if (!isTopCard) {
       translateY.value = -stackOffset;
       scale.value = stackScale;
       opacity.value = stackOpacity;
+      showBottomActions.value = false; // Hide buttons when not top card
     } else {
       translateY.value = 0;
       scale.value = 1;
       opacity.value = 1;
+      showBottomActions.value = false; // Reset when card becomes top
     }
-  }, [isTopCard, stackOffset, shouldAnimateToTop, stackScale, stackOpacity]);
+  }, [isTopCard, stackOffset, stackScale, stackOpacity]);
 
+  // Scroll handler to track scroll position
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+      if (!isTopCard) return;
+      
+      const scrollPosition = event.contentOffset.y;
+      const contentHeightValue = event.contentSize.height;
+      const scrollViewHeightValue = event.layoutMeasurement.height;
+      
+      // Update content height and scroll view height
+      contentHeight.value = contentHeightValue;
+      scrollViewHeight.value = scrollViewHeightValue;
+      
+      // Show buttons when scrolled near the bottom (within 100px of bottom)
+      // Also show if content fits in view (scrollPosition is 0 or very small)
+      const threshold = 100;
+      const isAtTop = scrollPosition <= 10;
+      const isNearBottom = contentHeightValue > 0 && scrollViewHeightValue > 0 && 
+                          (scrollPosition + scrollViewHeightValue >= contentHeightValue - threshold);
+      
+      // Only show buttons when scrolled to bottom, not at top
+      showBottomActions.value = isNearBottom && !isAtTop;
+    },
+    onBeginDrag: () => {
+      isScrolling.value = true;
+    },
+    onEndDrag: () => {
+      isScrolling.value = false;
+    },
+  });
+
+  // Pan gesture for card swipe (left/right)
   const panGesture = Gesture.Pan()
     .enabled(isTopCard)
-    .activeOffsetX([-5, 5])
-    .activeOffsetY([-5, 5])
-    .onStart(() => {
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-100, 100])
+    .onStart((event) => {
       if (!isTopCard) return;
-      startX.value = translateX.value;
-      startY.value = translateY.value;
+      translateX.value = 0;
+      translateY.value = 0;
     })
     .onUpdate((event) => {
       if (!isTopCard) return;
-      translateX.value = startX.value + event.translationX;
-      translateY.value = startY.value + event.translationY;
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
     })
     .onEnd((event) => {
       if (!isTopCard) return;
+      
       const shouldSwipeLeft = translateX.value < -SWIPE_THRESHOLD;
       const shouldSwipeRight = translateX.value > SWIPE_THRESHOLD;
-      const shouldSwipeUp = translateY.value < -SWIPE_THRESHOLD * 0.5;
-
-      if (shouldSwipeUp && Math.abs(translateX.value) < SWIPE_THRESHOLD * 0.5) {
-        // Treat swipe up as opening profile details
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        if (onCardTap) {
-          runOnJS(onCardTap)(profile);
-        }
-        return;
-      }
 
       if (shouldSwipeLeft || shouldSwipeRight) {
         const direction = shouldSwipeLeft ? 'left' : 'right';
         const targetX = shouldSwipeLeft ? -SCREEN_WIDTH * 1.5 : SCREEN_WIDTH * 1.5;
         
-        // Smooth exit animation with easing
-        translateX.value = withTiming(targetX, { 
-          duration: 400,
-        });
-        translateY.value = withTiming(event.translationY, { 
-          duration: 400,
-        });
-        opacity.value = withTiming(0, { 
-          duration: 350,
-        }, () => {
+        translateX.value = withTiming(targetX, { duration: 400 });
+        translateY.value = withTiming(event.translationY, { duration: 400 });
+        opacity.value = withTiming(0, { duration: 350 }, () => {
           runOnJS(onSwipeComplete)(direction);
         });
       } else {
-        // Spring back to center with smoother animation
-        translateX.value = withSpring(0, {
-          damping: 22,
-          stiffness: 140,
-          mass: 1.0,
-          overshootClamping: false,
-        });
-        translateY.value = withSpring(0, {
-          damping: 22,
-          stiffness: 140,
-          mass: 1.0,
-          overshootClamping: false,
-        });
+        translateX.value = withSpring(0, { damping: 22, stiffness: 140 });
+        translateY.value = withSpring(0, { damping: 22, stiffness: 140 });
       }
     });
 
-  const tapGesture = Gesture.Tap()
-    .enabled(isTopCard)
-    .numberOfTaps(1)
-    .maxDuration(250)
-    .onEnd(() => {
-      // Only trigger tap if card hasn't moved significantly
-      if (Math.abs(translateX.value) < 10 && Math.abs(translateY.value) < 10) {
-        if (onCardTap) {
-          runOnJS(onCardTap)(profile);
-        }
-      }
-    });
-
-  const composedGesture = Gesture.Race(tapGesture, panGesture);
-
-  // Update scale, opacity, and position when this card becomes the top card
   useAnimatedReaction(
     () => isTopCard,
     (isTop) => {
       if (isTop) {
-        // Smoothly animate to top position with very smooth spring
-        scale.value = withSpring(1, { 
-          damping: 25, 
-          stiffness: 150,
-          mass: 1.2,
-          overshootClamping: false,
-        });
-        opacity.value = withSpring(1, { 
-          damping: 25, 
-          stiffness: 150,
-          mass: 1.2,
-          overshootClamping: false,
-        });
-        translateY.value = withSpring(0, { 
-          damping: 25, 
-          stiffness: 150,
-          mass: 1.2,
-          overshootClamping: false,
-        });
+        scale.value = withSpring(1, { damping: 25, stiffness: 150 });
+        opacity.value = withSpring(1, { damping: 25, stiffness: 150 });
+        translateY.value = withSpring(0, { damping: 25, stiffness: 150 });
       } else {
-        // Animate to stacked position with smooth spring
-        scale.value = withSpring(stackScale, { 
-          damping: 25, 
-          stiffness: 150,
-          mass: 1.2,
-          overshootClamping: false,
-        });
-        opacity.value = withSpring(stackOpacity, { 
-          damping: 25, 
-          stiffness: 150,
-          mass: 1.2,
-          overshootClamping: false,
-        });
-        translateY.value = withSpring(-stackOffset, { 
-          damping: 25, 
-          stiffness: 150,
-          mass: 1.2,
-          overshootClamping: false,
-        });
+        scale.value = withSpring(stackScale, { damping: 25, stiffness: 150 });
+        opacity.value = withSpring(stackOpacity, { damping: 25, stiffness: 150 });
+        translateY.value = withSpring(-stackOffset, { damping: 25, stiffness: 150 });
       }
     },
     [stackScale, stackOpacity, stackOffset],
@@ -250,51 +187,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     };
   });
 
-
-  const imageStyle = useAnimatedStyle(() => {
-    // Image moves exactly with card - no parallax to prevent separation
-    return {
-      transform: [{ translateX: 0 }],
-    };
-  });
-
-  const overlayStyle = useAnimatedStyle(() => {
-    const labelOpacity = interpolate(
-      Math.abs(translateX.value),
-      [SWIPE_THRESHOLD * 0.7, SWIPE_THRESHOLD],
-      [0, 1],
-      Extrapolate.CLAMP,
-    );
-
-    return {
-      opacity: labelOpacity,
-    };
-  });
-
-  const likeLabelStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateX.value,
-      [SWIPE_THRESHOLD * 0.5, SWIPE_THRESHOLD],
-      [0, 1],
-      Extrapolate.CLAMP,
-    );
-    return { opacity };
-  });
-
-  const passLabelStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateX.value,
-      [-SWIPE_THRESHOLD, -SWIPE_THRESHOLD * 0.5],
-      [1, 0],
-      Extrapolate.CLAMP,
-    );
-    return { opacity };
-  });
-
-  const primaryImage = profile.images && profile.images.length > 0 
-    ? { uri: profile.images[0] } 
-    : require('../../../assets/girl.png');
-
   const handleConnectPress = useCallback(async () => {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
@@ -309,9 +201,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
         return;
       }
 
-      console.log('=== CONNECTION SEND API Call ===');
-      console.log('Payload:', { target_user_id: targetUserId });
-
       const response = await postApiCall(
         'POST',
         'CONNECTIONS',
@@ -319,9 +208,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
         { target_user_id: targetUserId },
         accessToken,
       );
-
-      console.log('=== CONNECTION SEND API Response ===');
-      console.log('Full Response:', JSON.stringify(response, null, 2));
 
       if (response?.error) {
         const msg = response?.response?.error || response?.response?.message || 'Failed to send connection request';
@@ -337,31 +223,69 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     }
   }, [profile.id]);
 
-  // Static z-index for proper stacking (animated views need static z-index)
+  const primaryImage = profile.images && profile.images.length > 0 
+    ? { uri: profile.images[0] } 
+    : require('../../../assets/girl.png');
+
   const staticZIndex = isTopCard ? 1000 : 100 - index;
 
+  // Track visibility state for conditional rendering
+  const [showActions, setShowActions] = React.useState(false);
+  
+  // Sync animated value to state
+  useAnimatedReaction(
+    () => showBottomActions.value && isTopCard,
+    (shouldShow) => {
+      runOnJS(setShowActions)(shouldShow);
+    },
+    [isTopCard],
+  );
+  
+  // Animated style for bottom actions visibility
+  const bottomActionsStyle = useAnimatedStyle(() => {
+    const shouldShow = showBottomActions.value && isTopCard;
+    return {
+      opacity: shouldShow ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 200 }),
+      transform: [
+        {
+          translateY: shouldShow ? withTiming(0, { duration: 200 }) : withTiming(50, { duration: 200 }),
+        },
+      ],
+    };
+  });
+
   return (
-    <GestureDetector gesture={composedGesture}>
+    <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.card, cardStyle, { zIndex: staticZIndex }]}>
-        <View style={styles.cardImageContainer}>
+        {/* Scrollable Container with Image and Details */}
+        <Animated.ScrollView
+          style={styles.cardScrollContainer}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={scrollHandler}
+          onContentSizeChange={(width, height) => {
+            contentHeight.value = height;
+          }}
+          onLayout={(event) => {
+            scrollViewHeight.value = event.nativeEvent.layout.height;
+          }}
+          bounces={true}
+        >
+          {/* Image Section */}
+          <View style={styles.imageContainer}>
           <Image
             source={primaryImage}
             style={styles.cardImage}
             resizeMode="cover"
           />
-          {/* Only show gradient overlay on stacked cards, not on top card */}
-          {!isTopCard && (
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
-              style={StyleSheet.absoluteFill}
+              colors={['transparent', 'transparent', 'rgba(0,0,0,0.6)']}
+              style={styles.gradientOverlay}
               pointerEvents="none"
             />
-          )}
-        </View>
 
-        {/* Connect Button - Top Right */}
+            {/* Connect Button - Top Right with Glass Effect */}
         {isTopCard && (
-          <View style={styles.connectButtonContainer}>
             <TouchableOpacity
               style={styles.connectButton}
               onPress={handleConnectPress}
@@ -379,40 +303,377 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               )}
               <Text style={styles.connectButtonText}>Connect</Text>
             </TouchableOpacity>
+            )}
+
+
+            {/* Name overlay on image bottom */}
+            <View style={styles.imageNameOverlay}>
+              <Text style={styles.nameText}>
+                {profile.name?.split(' ')[0] || 'Unknown'}
+                <Text style={styles.ageText}>, {profile.age || 0}</Text>
+            </Text>
+            </View>
           </View>
-        )}
 
-        {/* Content */}
-        <View style={styles.cardContent}>
-          {profile.verified && profile.name && typeof profile.name === 'string' && (
-            <Text style={styles.subtitle}>
-              {(profile.name.split(' ')[0] || '').toUpperCase()}
-            </Text>
-          )}
-          {profile.name && typeof profile.name === 'string' && (
-            <Text style={styles.title}>
-              {profile.name.split(' ')[0] || ''}, {String(profile.age || 0)}
-            </Text>
-          )}
-          {profile.job && typeof profile.job === 'string' && profile.job.trim() && (
-            <Text style={styles.subtitle}>{profile.job}</Text>
-          )}
-          {typeof profile.distance === 'number' && profile.distance > 0 && (
-            <Text style={styles.dateText}>
-              {profile.distance} km away
-            </Text>
-          )}
+          {/* Details Section - Below Image */}
+          <View style={styles.detailsContainer}>
+            {/* My Bio Section */}
+            {profile.bio && (
+              <View style={styles.bioCard}>
+                <Text style={styles.sectionTitle}>My bio</Text>
+                <Text style={styles.bioText}>{profile.bio}</Text>
+                <View style={styles.divider} />
+                <TouchableOpacity style={styles.complimentButton}>
+                  <Text style={styles.complimentIcon}>💬</Text>
+                  <Text style={styles.complimentText}>Compliment</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* About me Section */}
+            {(() => {
+              const rawData = profile.rawData || {};
+              const tags = [];
+              
+              // Height - only if exists and not null
+              if (rawData.height_cm && rawData.height_cm !== null) {
+                tags.push(
+                  <View key="height" style={styles.tag}>
+                    <Text style={styles.tagIcon}>📏</Text>
+                    <Text style={styles.tagText}>{rawData.height_cm} cm</Text>
+                  </View>
+                );
+              }
+              
+              // Drinking - only if exists and not empty
+              if (rawData.drinking && rawData.drinking.trim() !== '') {
+                tags.push(
+                  <View key="drinking" style={styles.tag}>
+                    <Text style={styles.tagIcon}>🍷</Text>
+                    <Text style={styles.tagText}>{rawData.drinking}</Text>
+                  </View>
+                );
+              }
+              
+              // Smoking - only if exists and not empty
+              if (rawData.smoking && rawData.smoking.trim() !== '') {
+                tags.push(
+                  <View key="smoking" style={styles.tag}>
+                    <Text style={styles.tagIcon}>🚬</Text>
+                    <Text style={styles.tagText}>{rawData.smoking}</Text>
+                  </View>
+                );
+              }
+              
+              // Zodiac sign - only if exists and not empty
+              if (rawData.zodiac_sign && rawData.zodiac_sign.trim() !== '') {
+                tags.push(
+                  <View key="zodiac" style={styles.tag}>
+                    <Text style={styles.tagIcon}>♉</Text>
+                    <Text style={styles.tagText}>{rawData.zodiac_sign}</Text>
+                  </View>
+                );
+              }
+              
+              // Religion - only if exists and not empty
+              if (rawData.religion && rawData.religion.trim() !== '') {
+                tags.push(
+                  <View key="religion" style={styles.tag}>
+                    <Text style={styles.tagIcon}>🤔</Text>
+                    <Text style={styles.tagText}>{rawData.religion}</Text>
+                  </View>
+                );
+              }
+              
+              // Only show the section if there are tags
+              if (tags.length === 0) return null;
+              
+              return (
+                <View style={styles.aboutCard}>
+                  <Text style={styles.sectionTitle}>About me</Text>
+                  <View style={styles.tagsContainer}>
+                    {tags}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* I'm looking for Section */}
+            {(() => {
+              const rawData = profile.rawData || {};
+              const tags = [];
+              
+              // Dating preferences - only if exists
+              if (rawData.dating_preferences && Array.isArray(rawData.dating_preferences) && rawData.dating_preferences.length > 0) {
+                rawData.dating_preferences.forEach((pref: string, idx: number) => {
+                  if (pref && pref.trim() !== '') {
+                    tags.push(
+                      <View key={`pref-${idx}`} style={styles.tag}>
+                        <Text style={styles.tagIcon}>🔍</Text>
+                        <Text style={styles.tagText}>{pref}</Text>
+                      </View>
+                    );
+                  }
+                });
+              } else if (rawData.looking_for && rawData.looking_for.trim() !== '') {
+                tags.push(
+                  <View key="looking-for" style={styles.tag}>
+                    <Text style={styles.tagIcon}>🔍</Text>
+                    <Text style={styles.tagText}>{rawData.looking_for}</Text>
+                  </View>
+                );
+              }
+              
+              // Only show the section if there are tags
+              if (tags.length === 0) return null;
+              
+              return (
+                <View style={styles.lookingForCard}>
+                  <Text style={styles.sectionTitle}>I'm looking for</Text>
+                  <View style={styles.tagsContainer}>
+                    {tags}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Location Section */}
+            {(profile.location || (typeof profile.distance === 'number' && profile.distance > 0)) && (
+              <View style={styles.locationCard}>
+                <Text style={styles.sectionTitle}>My location</Text>
+                {profile.location && (
+                  <>
+                    <View style={styles.locationRow}>
+                      <Text style={styles.locationIcon}>📍</Text>
+                      <View style={styles.locationInfo}>
+                        <Text style={styles.locationText}>{profile.location}</Text>
+                        {typeof profile.distance === 'number' && profile.distance > 0 && (
+                          <Text style={styles.distanceText}>{profile.distance} km away</Text>
+                        )}
+                      </View>
+                    </View>
+                    <View style={styles.locationButtons}>
+                      <View style={styles.locationButton}>
+                        <Text style={styles.locationButtonText}>Lives in {profile.location}</Text>
+                      </View>
+                      <View style={styles.locationButton}>
+                        <Text style={styles.locationButtonText}>From {profile.location}</Text>
+                      </View>
+                    </View>
+                  </>
+                )}
+                {!profile.location && typeof profile.distance === 'number' && profile.distance > 0 && (
+                  <View style={styles.locationRow}>
+                    <Text style={styles.locationIcon}>📍</Text>
+                    <View style={styles.locationInfo}>
+                      <Text style={styles.distanceText}>{profile.distance} km away</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Interests Section */}
+            {(() => {
+              const rawData = profile.rawData || {};
+              const interests: string[] = [];
+              
+              // Get hobbies from backend - can be array or object with categories
+              if (Array.isArray(rawData.hobbies)) {
+                interests.push(...rawData.hobbies.filter(Boolean));
+              } else if (rawData.hobbies && typeof rawData.hobbies === 'object') {
+                // If hobbies is an object with categories (e.g., {creative: [...], chill: [...]})
+                Object.values(rawData.hobbies).forEach((categoryInterests: any) => {
+                  if (Array.isArray(categoryInterests)) {
+                    interests.push(...categoryInterests.filter(Boolean));
+                  }
+                });
+              }
+              
+              // Also check profile.interests as fallback
+              if (interests.length === 0 && profile.interests && profile.interests.length > 0) {
+                interests.push(...profile.interests);
+              }
+              
+              if (interests.length === 0) return null;
+              
+              return (
+                <View style={styles.interestsCard}>
+                  <Text style={styles.sectionTitle}>Interests</Text>
+                  <View style={styles.tagsContainer}>
+                    {interests.map((interest, idx) => (
+                      <View key={idx} style={styles.tag}>
+                        <Text style={styles.tagText}>{interest}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Additional Photos Section */}
+            {profile.images && profile.images.length > 1 && (
+              <View style={styles.photosCard}>
+                <Text style={styles.sectionTitle}>More Photos</Text>
+                <View style={styles.photosGrid}>
+                  {profile.images.slice(1).map((imageUri, idx) => (
+                    <Image
+                      key={idx}
+                      source={{ uri: imageUri }}
+                      style={styles.gridPhoto}
+                      resizeMode="cover"
+                    />
+                  ))}
         </View>
+              </View>
+            )}
 
-        {/* Swipe Overlay Labels */}
-        {isTopCard && (
-          <Animated.View style={styles.overlayLabelContainer} pointerEvents="none">
-            <Animated.View style={[styles.overlayLabel, styles.likeLabel, likeLabelStyle]}>
-              <Text style={[styles.overlayLabelText, styles.likeLabelText]}>LIKE</Text>
-            </Animated.View>
-            <Animated.View style={[styles.overlayLabel, styles.passLabel, passLabelStyle]}>
-              <Text style={[styles.overlayLabelText, styles.passLabelText]}>PASS</Text>
-            </Animated.View>
+            {/* Bottom Spacing for Action Buttons */}
+            <View style={{ height: 140 }} />
+          </View>
+        </Animated.ScrollView>
+
+        {/* Bottom Action Buttons - Fixed at bottom, shown only when scrolled to bottom */}
+        {isTopCard && showActions && (
+          <Animated.View style={[styles.bottomActionsContainer, bottomActionsStyle]} pointerEvents={showActions ? 'auto' : 'none'}>
+            <View style={styles.actionButtonsRow}>
+              {/* Pass Button */}
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => {
+                  translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 400 });
+                  opacity.value = withTiming(0, { duration: 350 }, () => {
+                    runOnJS(onSwipeComplete)('left');
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.passButton}>
+                  <Text style={styles.passIcon}>✕</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Superlike Button */}
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => {
+                  const performSuperlike = async () => {
+                    try {
+                      const accessToken = await AsyncStorage.getItem('accessToken');
+                      if (accessToken) {
+                        const actionPayload = {
+                          target_user_id: parseInt(profile.id, 10),
+                          action: 'superlike',
+                        };
+                        
+                        console.log('=== SWIPE ACTION API Call ===');
+                        console.log('Payload:', JSON.stringify(actionPayload, null, 2));
+                        
+                        const actionResponse = await postApiCall(
+                          'POST',
+                          'SWIPE',
+                          'ACTION',
+                          actionPayload,
+                          accessToken,
+                        );
+
+                        console.log('=== SWIPE ACTION API Response ===');
+                        console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
+                        console.log('Response Status Code:', actionResponse?.statusCode);
+                        console.log('Response Error:', actionResponse?.error);
+                        console.log('Response Data:', actionResponse?.response);
+                        console.log('===================================');
+
+                        if (actionResponse?.response?.match === true) {
+                          Alert.alert(
+                            '🎉 It\'s a Match!',
+                            actionResponse?.response?.message || 'You both liked each other!',
+                          );
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error calling superlike API:', error);
+                    }
+                  };
+                  
+                  performSuperlike();
+                  translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
+                  opacity.value = withTiming(0, { duration: 350 }, () => {
+                    runOnJS(onSwipeComplete)('right');
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.superlikeButton}>
+                  <Text style={styles.superlikeIcon}>⭐</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Like Button */}
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => {
+                  translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
+                  opacity.value = withTiming(0, { duration: 350 }, () => {
+                    runOnJS(onSwipeComplete)('right');
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.likeButton}>
+                  <Text style={styles.likeIcon}>♥</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Block and Report Text Buttons */}
+            <View style={styles.blockReportRow}>
+              <TouchableOpacity
+                style={styles.textButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Block User',
+                    'Are you sure you want to block this user?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Block',
+                        style: 'destructive',
+                        onPress: async () => {
+                          // TODO: Implement block API call
+                          Alert.alert('User blocked');
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.blockText}>Block</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.textButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Report User',
+                    'Why are you reporting this user?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Report',
+                        style: 'destructive',
+                        onPress: async () => {
+                          // TODO: Implement report API call
+                          Alert.alert('User reported');
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.reportText}>Report</Text>
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         )}
       </Animated.View>
@@ -427,33 +688,20 @@ interface PeopleScreenProps {
 const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [selectedSegment, setSelectedSegment] = useState(1); // 0: Coming Soon, 1: Now Playing, 2: Tomorrow
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleCardTap = useCallback((profile: Profile) => {
-    // Small delay for smoother transition
-    setTimeout(() => {
-      navigation?.navigate('ProfileDetailsScreen', { profile });
-    }, 50);
-  }, [navigation]);
-
   const handleSwipeComplete = useCallback(async (direction: 'left' | 'right') => {
-    setIsAnimating(true);
-    
-    // Get current profile before updating index
     const currentProfile = profiles[currentIndex];
     
-    // Call API to save swipe action
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
       if (accessToken && currentProfile) {
         const actionPayload = {
-          target_user_id: parseInt(currentProfile.id, 10), // API expects integer
-          action: direction === 'right' ? 'like' : 'dislike', // API uses 'like' or 'dislike'
+          target_user_id: parseInt(currentProfile.id, 10),
+          action: direction === 'right' ? 'like' : 'dislike',
         };
         
-        console.log('=== SWIPE ACTION API Call ===');
+        console.log('=== SWIPE ACTION API Call (handleSwipeComplete) ===');
         console.log('Payload:', JSON.stringify(actionPayload, null, 2));
         
         const actionResponse = await postApiCall(
@@ -464,76 +712,46 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
           accessToken,
         );
 
-        console.log('=== SWIPE ACTION API Response ===');
+        console.log('=== SWIPE ACTION API Response (handleSwipeComplete) ===');
         console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
+        console.log('Response Status Code:', actionResponse?.statusCode);
+        console.log('Response Error:', actionResponse?.error);
         console.log('Response Data:', actionResponse?.response);
-        console.log('Response Status:', actionResponse?.statusCode);
-        console.log('==================================');
+        console.log('======================================================');
 
-        if (actionResponse?.error) {
-          console.error('Swipe action failed:', actionResponse.response);
-          Alert.alert(
-            'Error',
-            actionResponse?.response?.error || 
-            actionResponse?.response?.message || 
-            'Failed to record swipe action'
-          );
-          // Continue with UI update even if API call fails
-        } else {
-          const responseData = actionResponse?.response;
-          console.log('Swipe action successful:', responseData);
-          
-          // Handle match response
-          if (responseData?.match === true) {
+        if (actionResponse?.response?.match === true) {
             Alert.alert(
               '🎉 It\'s a Match!',
-              responseData?.message || 'You both liked each other!',
-              [{ text: 'OK', onPress: () => {} }]
+            actionResponse?.response?.message || 'You both liked each other!',
             );
-          }
         }
       }
     } catch (error) {
       console.error('Error calling swipe action API:', error);
-      // Continue with UI update even if API call fails
     }
 
-    // Delay to ensure smooth transition animation starts after card exits
     setTimeout(() => {
-      setCurrentIndex((prev) => {
-        setIsAnimating(false);
-        return prev + 1;
-      });
+      setCurrentIndex((prev) => prev + 1);
     }, 150);
   }, [currentIndex, profiles]);
 
-  // Transform user data to Profile format
   const transformUserToProfile = (user: any): Profile => {
-    // Combine first_name and last_name
     const firstName = user.first_name || '';
     const lastName = user.last_name || '';
     const fullName = `${firstName} ${lastName}`.trim() || 'Unknown';
 
-    // Build images array - profile_photo first, then live_photo
     const images: string[] = [];
     if (user.profile_photo) images.push(user.profile_photo);
     if (user.live_photo) images.push(user.live_photo);
-    // Also check for additional photos arrays if API provides them
     if (Array.isArray(user.images)) images.push(...user.images);
     if (Array.isArray(user.photos)) images.push(...user.photos);
 
-    // Handle hobbies - can be array or object
     let interests: string[] = [];
     if (Array.isArray(user.hobbies)) {
-      // If hobbies is already an array, use it directly
       interests = user.hobbies.filter(Boolean);
     } else if (user.hobbies && typeof user.hobbies === 'object') {
-      // If hobbies is an object (e.g., {creative: [...], fun: [...]}), flatten it
-      interests = Object.values(user.hobbies)
-        .flat()
-        .filter(Boolean) as string[];
+      interests = Object.values(user.hobbies).flat().filter(Boolean) as string[];
     } else if (Array.isArray(user.interests)) {
-      // Fallback to interests if hobbies not available
       interests = user.interests.filter(Boolean);
     }
 
@@ -541,22 +759,20 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
       id: user.id?.toString() || '',
       name: fullName || 'Unknown',
       age: typeof user.age === 'number' ? user.age : 0,
-      images: images.length > 0 ? images : [], // Ensure array is never empty
+      images: images.length > 0 ? images : [],
       job: (user.job || user.profession || '').toString(),
       profession: (user.profession || user.job || '').toString(),
       education: (user.education || '').toString(),
       location: (user.location || '').toString(),
-      distance: typeof user.distance_km === 'number' ? user.distance_km : (typeof user.distance === 'number' ? user.distance : 0),
+      distance: typeof user.distance_km === 'number' ? user.distance_km : 0,
       verified: Boolean(user.verified),
       isNew: Boolean(user.is_new),
       interests: Array.isArray(interests) ? interests : [],
       bio: (user.bio || '').toString(),
-      // Preserve raw backend payload for detail screen
       rawData: user,
     };
   };
 
-  // Fetch users function - can be called on mount or for polling
   const fetchUsers = useCallback(async (isInitialLoad: boolean = false) => {
     try {
       if (isInitialLoad) {
@@ -573,62 +789,77 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
         return;
       }
 
-      // Optional: Add limit parameter (default is 15)
       const response = await getApiCall('SWIPE', 'GET_USERS', accessToken, { limit: 15 });
       
       // Console log the full API response
       console.log('=== GET_USERS API Response ===');
-      console.log('Full Response:', JSON.stringify(response, null, 2));
+      console.log('Full Response Object:', JSON.stringify(response, null, 2));
+      console.log('Response Status Code:', response?.statusCode);
+      console.log('Response Error:', response?.error);
       console.log('Response Data:', response?.response);
-      console.log('Response Status:', response?.statusCode);
-      console.log('=============================');
+      console.log('Response Type:', typeof response?.response);
+      console.log('Is Array:', Array.isArray(response?.response));
+      if (Array.isArray(response?.response)) {
+        console.log('Number of users:', response.response.length);
+        response.response.forEach((user: any, index: number) => {
+          console.log(`\n--- User ${index + 1} ---`);
+          console.log('Raw User Data:', JSON.stringify(user, null, 2));
+          console.log('User Keys:', Object.keys(user || {}));
+        });
+      }
+      console.log('===================================');
       
       if (response?.error) {
         const errorMessage = 
           response?.response?.message || 
-          response?.response?.Message || 
           response?.response?.error ||
           'Failed to load users. Please try again.';
-        console.error('API Error:', errorMessage);
         if (isInitialLoad) {
           Alert.alert('Error', errorMessage);
           setProfiles([]);
         }
       } else if (response?.response) {
-        // Console log the raw response data
-        console.log('Raw API Response Data:', response.response);
-        
-        // Transform API response to Profile format
-        // API returns array of users with: id, first_name, last_name, age, profile_photo, live_photo, hobbies, bio, distance_km, connection_status
         const apiProfiles: Profile[] = Array.isArray(response.response)
           ? response.response.map((user: any) => {
-              console.log('Processing user:', user);
-              return transformUserToProfile(user);
+              const transformed = transformUserToProfile(user);
+              console.log('Transformed Profile:', JSON.stringify(transformed, null, 2));
+              return transformed;
             })
           : [];
         
-        console.log('Transformed Profiles:', apiProfiles);
+        console.log('=== Transformed Profiles Summary ===');
+        console.log('Total Profiles:', apiProfiles.length);
+        apiProfiles.forEach((profile, idx) => {
+          console.log(`Profile ${idx + 1}:`, {
+            id: profile.id,
+            name: profile.name,
+            age: profile.age,
+            images: profile.images?.length || 0,
+            bio: profile.bio?.substring(0, 50) + '...',
+            rawDataKeys: Object.keys(profile.rawData || {}),
+          });
+        });
+        console.log('====================================');
         
         if (isInitialLoad) {
-          // On initial load, replace all profiles
           setProfiles(apiProfiles);
         } else {
-          // On polling, append only new users (avoid duplicates)
           setProfiles((prevProfiles) => {
             const existingIds = new Set(prevProfiles.map(p => p.id));
             const newProfiles = apiProfiles.filter(p => !existingIds.has(p.id));
-            
             if (newProfiles.length > 0) {
-              console.log(`Adding ${newProfiles.length} new profile(s) to the stack`);
+              console.log(`✅ Found ${newProfiles.length} new user(s) - adding to swipes`);
+              newProfiles.forEach((profile, idx) => {
+                console.log(`  - New user ${idx + 1}: ${profile.name} (ID: ${profile.id})`);
+              });
               return [...prevProfiles, ...newProfiles];
             } else {
-              console.log('No new profiles found');
+              console.log('ℹ️ No new users found in this poll');
               return prevProfiles;
             }
           });
         }
       } else {
-        console.warn('Unexpected response format:', response);
         if (isInitialLoad) {
           setProfiles([]);
         }
@@ -646,33 +877,30 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
     }
   }, []);
 
-  // Fetch users on component mount and set up polling
   useEffect(() => {
     // Initial load
     fetchUsers(true);
-
-    // Set up polling every 50 seconds
+    
+    // Poll for new users every 50 seconds
     const pollInterval = setInterval(() => {
-      console.log('Polling for new users...');
+      console.log('🔄 Polling for new users...');
       fetchUsers(false);
-    }, 50000); // 50 seconds
-
+    }, 50000); // 50 seconds = 50000ms
+    
     // Cleanup interval on unmount
     return () => {
+      console.log('🧹 Cleaning up polling interval');
       clearInterval(pollInterval);
     };
   }, [fetchUsers]);
 
-  // Show current card + next card slightly behind it
   const visibleCards = profiles.slice(currentIndex, currentIndex + 2);
-  
-  console.log(`Showing ${visibleCards.length} cards, currentIndex: ${currentIndex}, total profiles: ${profiles.length}`);
 
   if (isLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.emptyStateContainer}>
-          <ActivityIndicator size="large" color="#fff" />
+          <ActivityIndicator size="large" color="#FFD700" />
           <Text style={styles.emptyStateText}>Loading profiles...</Text>
         </View>
       </View>
@@ -691,46 +919,32 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
     );
   }
 
-  
-
   return (
     <GestureHandlerRootView style={styles.container}>
-      {/* Homescreen Background - Behind cards */}
-      <View style={styles.homescreenBackgroundContainer}>
-       
-        {/* Snixx Home Text at top */}
-        {/* <Image
-          source={SnixxHometext}
-          style={styles.snixxHomeText}
-          resizeMode="contain"
-        /> */}
-        
-        {/* Light black overlay from top to bottom */}
-      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.logoText}>snixx</Text>
+        <TouchableOpacity style={styles.headerIcon}>
+          <View style={styles.menuIcon}>
+            <View style={styles.menuIconRow}>
+              <View style={styles.menuIconCircle} />
+              <View style={styles.menuIconDash} />
+            </View>
+            <View style={styles.menuIconRow}>
+              <View style={styles.menuIconDash} />
+              <View style={styles.menuIconCircle} />
+            </View>
+          </View>
+        </TouchableOpacity>
       </View>
       
-      {/* Header Section with App Name */}
-      <View style={styles.headerSection}>
-        <Text style={styles.appNameText}>snixx</Text>
-      </View>
-
+      {/* Card Stack */}
       <View style={styles.cardStackContainer}>
         {visibleCards.map((profile, index) => {
           const isTopCard = index === 0;
-          const stackIndex = index;
-          
-          // No static stacking - cards share same position/size.
-          // The next card will only be revealed as the top card moves while swiping.
-          let stackOffset = 0;
-          let stackScale = 1;
-          let stackOpacity = 1;
-
-          // Render cards from back to front for proper stacking
-          // Cards behind should render first (lower z-index), top card renders last (higher z-index)
-          const zIndex = isTopCard ? 1000 : 900;
-
-          // No special animation needed for next card
-          const shouldAnimateToTop = false;
+          const stackOffset = 20;
+          const stackScale = 0.95;
+          const stackOpacity = 0.8;
 
           return (
             <SwipeableCard
@@ -738,16 +952,16 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
               profile={profile}
               index={index}
               onSwipeComplete={handleSwipeComplete}
-              onCardTap={handleCardTap}
               isTopCard={isTopCard}
               stackOffset={stackOffset}
               stackScale={stackScale}
               stackOpacity={stackOpacity}
-              shouldAnimateToTop={shouldAnimateToTop}
             />
           );
         }).reverse()}
       </View>
+
+   
     </GestureHandlerRootView>
   );
 };

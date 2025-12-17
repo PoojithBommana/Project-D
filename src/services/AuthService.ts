@@ -1,6 +1,8 @@
-import { GoogleAuthProvider, FacebookAuthProvider, getAuth, signInWithCredential, FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { GoogleAuthProvider, FacebookAuthProvider, getAuth, signInWithCredential, FirebaseAuthTypes, PhoneAuthProvider } from '@react-native-firebase/auth';
 import { Platform, AppState } from 'react-native';
 import { authController, SocialLoginResponse } from '../controllers/AuthController';
+import { postApiCall } from '../config/apiCall';
+import { API_ENDPOINTS } from '../config/endpoints';
 
 let GoogleSignin: any;
 try {
@@ -42,6 +44,7 @@ export interface FacebookSignInResponse extends SocialSignInResponse {
 class AuthService {
   private webClientId: string = '168980396946-p9ad718oc5bjl5ino2u07b2bh4spgfb1.apps.googleusercontent.com';
   private googleSignInConfigured: boolean = false;
+  private phoneVerificationId: string | null = null;
 
   private async clearGoogleSession(): Promise<void> {
     if (!GoogleSignin) return;
@@ -82,6 +85,117 @@ class AuthService {
 
   async resendOTP(request: { countryCode: string; phoneNumber: string }) {
     return authController.resendOTP(request);
+  }
+
+  /**
+   * Start Firebase phone number verification.
+   * Returns verificationId which must be used later with the OTP code.
+   */
+  async startPhoneVerification(fullPhoneNumber: string): Promise<{ success: boolean; verificationId?: string; error?: string }> {
+    try {
+      const auth = getAuth();
+      const confirmationResult = await auth.signInWithPhoneNumber(fullPhoneNumber);
+      this.phoneVerificationId = confirmationResult.verificationId;
+      return {
+        success: true,
+        verificationId: confirmationResult.verificationId,
+      };
+    } catch (error: any) {
+      console.error('[AuthService] startPhoneVerification error:', error);
+      let message = 'Failed to send verification code';
+      if (error?.code === 'auth/invalid-phone-number') {
+        message = 'Invalid phone number format';
+      } else if (error?.code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Please try again later.';
+      }
+      return {
+        success: false,
+        error: message,
+      };
+    }
+  }
+
+  /**
+   * Confirm OTP code with Firebase and then login/register with backend using Firebase ID token.
+   */
+  async verifyPhoneCodeAndLogin(
+    code: string,
+    phone: string,
+  ): Promise<{
+    success: boolean;
+    firebaseUser?: FirebaseAuthTypes.User;
+    backendResponse?: SocialLoginResponse | null;
+    error?: string;
+  }> {
+    try {
+      const auth = getAuth();
+
+      if (!this.phoneVerificationId) {
+        return {
+          success: false,
+          error: 'Verification ID is missing. Please request a new code.',
+        };
+      }
+
+      const credential = PhoneAuthProvider.credential(this.phoneVerificationId, code);
+      const userCredential = await auth.signInWithCredential(credential);
+      const firebaseUser = userCredential.user;
+      const firebaseIdToken = await firebaseUser.getIdToken();
+
+      // Call backend VERIFY_OTP (or dedicated phone login) endpoint with Firebase token + phone
+      let backendResponse: SocialLoginResponse | null = null;
+      try {
+        const payload = {
+          id_token: firebaseIdToken,
+          phone,
+        };
+        const apiResponse: any = await postApiCall('POST', 'AUTH', 'VERIFY_OTP', payload);
+        const data = apiResponse?.response;
+
+        if (data) {
+          backendResponse = {
+            account_exists: data.account_exists,
+            existing_user: data.existing_user,
+            can_create_new_account: data.can_create_new_account,
+            is_new: data.is_new,
+            uid: data.uid,
+            phone: data.phone,
+            next: data.next,
+            access: data.access,
+            refresh: data.refresh,
+            user_id: data.user_id,
+            onboarding_complete: data.onboarding_complete,
+            next_step: data.next_step,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            email: data.email,
+            selfie_photo: data.selfie_photo,
+            message: data.message,
+          };
+        }
+      } catch (error) {
+        console.warn('[AuthService] Backend phone verify API failed (non-blocking):', error);
+        backendResponse = null;
+      }
+
+      return {
+        success: true,
+        firebaseUser,
+        backendResponse,
+      };
+    } catch (error: any) {
+      console.error('[AuthService] verifyPhoneCodeAndLogin error:', error);
+      let message = 'Failed to verify code';
+      if (error?.code === 'auth/invalid-verification-code') {
+        message = 'Invalid verification code';
+      } else if (error?.code === 'auth/session-expired') {
+        message = 'Verification code has expired. Please request a new one.';
+      }
+      return {
+        success: false,
+        error: message,
+      };
+    }
   }
 
   async signInWithGoogle(): Promise<GoogleSignInResponse> {

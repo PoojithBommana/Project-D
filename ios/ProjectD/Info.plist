@@ -70,7 +70,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need your files access</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Schmooze needs access to your contacts to connect you with friends already on the app.</string>
+	<string>snixx needs access to your contacts to connect you with friends already on the app.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
