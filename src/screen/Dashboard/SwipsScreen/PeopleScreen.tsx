@@ -709,8 +709,10 @@ const PeopleScreen: React.FC<PeopleScreenProps> = ({ navigation }) => {
       
       </View>
       
-      {/* Top Header Section */}
-     
+      {/* Header Section with App Name */}
+      <View style={styles.headerSection}>
+        <Text style={styles.appNameText}>snixx</Text>
+      </View>
 
       <View style={styles.cardStackContainer}>
         {visibleCards.map((profile, index) => {

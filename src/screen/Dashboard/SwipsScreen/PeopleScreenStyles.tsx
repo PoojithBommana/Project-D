@@ -17,8 +17,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFCF1',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingTop: hp(50),
     paddingBottom: hp(80), // leave space so bottom tab icons are visible
   },
   backgroundImage: {
@@ -42,6 +41,12 @@ const styles = StyleSheet.create({
     height: '120%',
     zIndex: 0,
   },
+  headerSection: {
+    paddingHorizontal: wp(20),
+    paddingBottom: hp(10),
+    alignItems: 'flex-start',
+    zIndex: 1000,
+  },
   cardStackContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
@@ -50,6 +55,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
     marginBottom: 0,
     alignSelf: 'center', // Center the stack container
+    marginTop: hp(5),
   },
   card: {
     position: 'absolute',
@@ -278,6 +284,11 @@ const styles = StyleSheet.create({
     fontSize: wp(16),
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  appNameText: {
+    fontSize: wp(41),
+    fontFamily: 'GTMaruBold',
+    color: '#000000',
   },
 });
 
