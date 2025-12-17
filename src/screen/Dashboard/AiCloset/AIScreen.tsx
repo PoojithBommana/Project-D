@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, Image, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Animated, Dimensions, FlatList, InteractionManager } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, Image, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Animated, Dimensions, FlatList, InteractionManager, StatusBar, Pressable } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary, ImagePickerResponse, MediaType, PhotoQuality } from 'react-native-image-picker';
@@ -7,7 +7,7 @@ import { GEMINI_API_KEY, GEMINI_API_URL_TEXT, GEMINI_API_URL_VISION } from '../.
 import { WardrobeStackParamList } from './WardrobeFeature';
 import { BlurView } from '@react-native-community/blur';
 import LinearGradient from 'react-native-linear-gradient';
-import { ClosetText } from '../../../assets';
+import { ClosetLogo } from '../../../assets';
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 import Reanimated, {
   useSharedValue,
@@ -119,6 +119,304 @@ const generateWeekDays = (): DayData[] => {
   return days;
 };
 
+// Circular 3D Outfit Cards Component
+interface Circular3DOutfitCardsProps {
+  outfits: SavedOutfit[];
+  navigation?: NativeStackNavigationProp<WardrobeStackParamList, 'Dashboard'>;
+  onOutfitSelect?: (outfit: SavedOutfit) => void;
+}
+
+interface CircularCardProps {
+  index: number;
+  outfit: SavedOutfit | undefined;
+  rotation: ReturnType<typeof useSharedValue<number>>;
+  step: number;
+  radius: number;
+  isSelected: boolean;
+  onPress: () => void;
+}
+
+const CircularCard = ({ index, outfit, rotation, step, radius, isSelected, onPress }: CircularCardProps) => {
+  const style = useAnimatedStyle(() => {
+    const angle = rotation.value + index * step;
+
+    const x = Math.sin(angle) * radius;
+    const z = Math.cos(angle);
+
+    // Enhanced pop-up effect: scale from 0.6 to 1.35 for more prominent focused card
+    const scale = 0.6 + z * 0.75;
+    
+    // Lift focused card up smoothly: translateY from 0 to -22px when focused
+    const translateY = -(1 - z) * 22;
+
+    // Calculate z-index with boost for selected card to ensure it's always on top
+    // z ranges from -1 to 1, so we map it to 0-200, then add boost for selected
+    const baseZIndex = Math.round((z + 1) * 100); // Maps -1 to 0, 1 to 200
+    const zIndex = isSelected ? baseZIndex + 1000 : baseZIndex; // Selected card gets significant boost
+
+    return {
+      transform: [
+        { perspective: 1000 },
+        { translateY },
+        { translateX: x },
+        { scale },
+      ],
+      opacity: withTiming(0.4 + z * 0.6, { duration: 200 }),
+      zIndex,
+    };
+  });
+
+  return (
+    <Pressable onPress={onPress}>
+      <Reanimated.View
+        style={[
+          circularCardsStyles.card,
+          style,
+          isSelected && circularCardsStyles.selected,
+        ]}
+      >
+        {outfit && (
+          <View style={circularCardsStyles.cardContent}>
+            <LinearGradient
+              colors={isSelected ? ['#666666', '#888888'] : ['#F5F5F5', '#E8E8E8']}
+              style={circularCardsStyles.iconContainer}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Icon 
+                name="hanger" 
+                size={isSelected ? 32 : 28} 
+                color={isSelected ? '#FFFFFF' : '#666666'} 
+              />
+            </LinearGradient>
+            <Text style={[circularCardsStyles.cardName, isSelected && circularCardsStyles.cardNameSelected]} numberOfLines={2}>
+              {outfit.name}
+            </Text>
+          </View>
+        )}
+      </Reanimated.View>
+    </Pressable>
+  );
+};
+
+const Circular3DOutfitCards = ({ outfits, navigation: _navigation, onOutfitSelect }: Circular3DOutfitCardsProps) => {
+  const CARD_COUNT = Math.max(10, outfits.length || 10);
+  const RADIUS = 200;
+  const STEP = (2 * Math.PI) / CARD_COUNT;
+
+  const rotation = useSharedValue(0);
+  const [selected, setSelected] = useState(0);
+
+  const centerOnCard = useCallback((index: number, isLoopingForward: boolean = false, isLoopingBackward: boolean = false) => {
+    const currentRotation = rotation.value;
+    const targetAngle = -index * STEP;
+    
+    // Calculate the shortest rotation path
+    let rotationDelta = targetAngle - currentRotation;
+    
+    // Normalize rotationDelta to [-π, π] range
+    while (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
+    while (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
+    
+    // Handle seamless looping - continue in the same direction
+    if (isLoopingForward) {
+      // Going from last to first: continue forward by adding full rotation
+      if (rotationDelta < 0) {
+        rotationDelta += 2 * Math.PI;
+      }
+    } else if (isLoopingBackward) {
+      // Going from first to last: continue backward by subtracting full rotation
+      if (rotationDelta > 0) {
+        rotationDelta -= 2 * Math.PI;
+      }
+    }
+    
+    const target = currentRotation + rotationDelta;
+    
+    rotation.value = withSpring(target, {
+      damping: 28,
+      stiffness: 105,
+      mass: 1.0,
+      overshootClamping: false,
+    });
+    setSelected(index);
+  }, [STEP, rotation]);
+
+  const goToNextCard = useCallback(() => {
+    setSelected((prev) => {
+      const isAtLast = prev === CARD_COUNT - 1;
+      const next = (prev + 1) % CARD_COUNT;
+      centerOnCard(next, isAtLast, false);
+      return next;
+    });
+  }, [CARD_COUNT, centerOnCard]);
+
+  const goToPreviousCard = useCallback(() => {
+    setSelected((prev) => {
+      const isAtFirst = prev === 0;
+      const prevIndex = prev === 0 ? CARD_COUNT - 1 : prev - 1;
+      centerOnCard(prevIndex, false, isAtFirst);
+      return prevIndex;
+    });
+  }, [CARD_COUNT, centerOnCard]);
+
+  return (
+    <View style={circularCardsStyles.wrapper}>
+      <View style={circularCardsStyles.container}>
+        {Array.from({ length: CARD_COUNT }).map((_, index) => {
+          const outfit = outfits.length > 0 ? outfits[index % outfits.length] : undefined;
+          return (
+            <CircularCard
+              key={index}
+              index={index}
+              outfit={outfit}
+              rotation={rotation}
+              step={STEP}
+              radius={RADIUS}
+              isSelected={selected === index}
+              onPress={() => {
+                centerOnCard(index);
+                if (outfit && onOutfitSelect) {
+                  onOutfitSelect(outfit);
+                }
+              }}
+            />
+          );
+        })}
+      </View>
+      <View style={circularCardsStyles.arrowButtonsContainer}>
+        <TouchableOpacity
+          style={circularCardsStyles.arrowButton}
+          onPress={goToPreviousCard}
+          activeOpacity={0.7}
+        >
+          <Icon name="chevron-left" size={24} color="#000000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={circularCardsStyles.arrowButton}
+          onPress={goToNextCard}
+          activeOpacity={0.7}
+        >
+          <Icon name="chevron-right" size={24} color="#000000" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const circularCardsStyles = StyleSheet.create({
+  wrapper: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  container: {
+    width: '100%',
+    height: 380,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'visible',
+  },
+  arrowButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 24,
+    marginTop: 16,
+    paddingVertical: 8,
+  },
+  arrowButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  card: {
+    position: 'absolute',
+    width: 120,
+    height: 160,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    overflow: 'hidden',
+    // Ensure cards are centered from their center point
+    alignSelf: 'center',
+  },
+  selected: {
+    borderColor: '#666666',
+    borderWidth: 3,
+    shadowColor: '#666666',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    elevation: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  cardContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  cardName: {
+    fontSize: 13,
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginTop: 4,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+    lineHeight: 18,
+  },
+  cardNameSelected: {
+    color: '#333333',
+    fontWeight: '700',
+  },
+});
+
 const AIScreen = ({ navigation }: AIScreenProps) => {
   // Gradient palettes for category cards
   const gradientPalettes = [
@@ -139,6 +437,8 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   const [showDateOutfitModal, setShowDateOutfitModal] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showChatbotModal, setShowChatbotModal] = useState(false);
+  const [showOutfitPreviewModal, setShowOutfitPreviewModal] = useState(false);
+  const [selectedOutfitForPreview, setSelectedOutfitForPreview] = useState<SavedOutfit | null>(null);
   
   // Chatbot state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -202,6 +502,8 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
   const dateOutfitModalOpacity = useSharedValue(0);
   const chatbotModalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const chatbotModalOpacity = useSharedValue(0);
+  const outfitPreviewModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const outfitPreviewModalOpacity = useSharedValue(0);
 
   // Button press animations
   const createOutfitButtonScale = useSharedValue(1);
@@ -563,6 +865,26 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showChatbotModal]);
 
+  // Animate Outfit Preview Modal
+  useEffect(() => {
+    if (showOutfitPreviewModal) {
+      outfitPreviewModalTranslateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      outfitPreviewModalOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      outfitPreviewModalTranslateY.value = withSpring(SCREEN_HEIGHT, {
+        damping: 15,
+        stiffness: 300,
+        mass: 0.8,
+      });
+      outfitPreviewModalOpacity.value = withTiming(0, { duration: 300 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showOutfitPreviewModal]);
+
   const stopOutfitAutoPlay = React.useCallback(() => {
     if (outfitAutoIntervalRef.current) {
       clearInterval(outfitAutoIntervalRef.current);
@@ -651,7 +973,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         />
         <View style={styles.categoryHeaderVertical}>
           <View style={styles.categoryIconContainerVertical}>
-            <Icon name={item.icon} size={28} color="#FFFFFF" />
+            <Icon name={item.icon} size={28} color="#000000" />
             <TouchableOpacity 
               style={styles.categoryAddButton}
               onPress={(e) => {
@@ -660,7 +982,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
                 navigation?.navigate('Camera');
               }}
             >
-              <Icon name="plus" size={14} color="#FFFFFF" />
+              <Icon name="plus" size={14} color="#000000" />
             </TouchableOpacity>
           </View>
           <View style={styles.categoryTextContainer}>
@@ -693,7 +1015,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         />
         <View style={styles.categoryHeaderHorizontal}>
           <View style={styles.categoryIconContainerHorizontal}>
-            <Icon name={item.icon} size={24} color="#FFFFFF" />
+            <Icon name={item.icon} size={24} color="#000000" />
             <TouchableOpacity 
               style={styles.categoryAddButtonHorizontal}
               onPress={(e) => {
@@ -702,7 +1024,7 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
                 navigation?.navigate('Camera');
               }}
             >
-              <Icon name="plus" size={12} color="#FFFFFF" />
+              <Icon name="plus" size={12} color="#000000" />
             </TouchableOpacity>
           </View>
           <View style={styles.categoryTextContainerHorizontal}>
@@ -724,13 +1046,13 @@ const AIScreen = ({ navigation }: AIScreenProps) => {
         onPress={() => navigation?.navigate('Studio')}
       >
         {/* Simple Background - replaced BlurView for better performance */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 26, 26, 0.9)', borderRadius: 28 }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 252, 241, 0.95)', borderRadius: 28 }]} />
         {/* Glossy Overlay */}
         <View style={styles.glossyOverlay} />
         {/* Card Content */}
         <View style={styles.outfitCardContent}>
           <View style={styles.outfitArcIcon}>
-            <Icon name="hanger" size={26} color="#FFFFFF" />
+            <Icon name="hanger" size={26} color="#000000" />
           </View>
           <Text style={styles.outfitArcName} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.outfitArcMeta} numberOfLines={1}>{meta}</Text>
@@ -1508,6 +1830,19 @@ INSTRUCTIONS:
     };
   });
 
+  // Animated styles for Outfit Preview Modal
+  const outfitPreviewModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: outfitPreviewModalTranslateY.value }],
+    };
+  });
+
+  const outfitPreviewBackdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: outfitPreviewModalOpacity.value,
+    };
+  });
+
   // Button animated styles
   const createOutfitButtonAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -1584,11 +1919,12 @@ INSTRUCTIONS:
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFCF1" />
       {/* Background Gradient */}
       <LinearGradient
-        colors={['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a']}
-        start={{x: 0, y: 1}}
-        end={{x: 1, y: 0}}
+        colors={['#FDFF8D', '#FFFCF1']}
+        start={{x: 0, y: 0}}
+        end={{x: 0, y: 1}}
         style={styles.backgroundGradient}
       />
       
@@ -1603,10 +1939,11 @@ INSTRUCTIONS:
         disableIntervalMomentum={true}
         decelerationRate="normal"
         scrollEnabled={true}
+        contentInsetAdjustmentBehavior="never"
       >
         {/* Header */}
         <View style={styles.header}>
-        <Image source={ClosetText} style={styles.headerLogo} resizeMode="contain" />
+        <Image source={ClosetLogo} style={styles.headerLogo} resizeMode="contain" />
         <Text style={styles.mainText}>Create your own outfit with items from your closet</Text>
       </View>
 
@@ -1623,9 +1960,9 @@ INSTRUCTIONS:
             >
               <View style={[styles.actionButtonCircle, styles.actionButtonCircleBlack]}>
                 <View style={styles.iconWithPlus}>
-                  <Icon name="hanger" size={28} color="#FFFFFF" />
+                  <Icon name="hanger" size={28} color="#000000" />
                   <View style={styles.plusIconSmall}>
-                    <Icon name="plus" size={12} color="#FFFFFF" />
+                    <Icon name="plus" size={12} color="#000000" />
                   </View>
                 </View>
               </View>
@@ -1642,9 +1979,9 @@ INSTRUCTIONS:
             >
               <View style={[styles.actionButtonCircle, styles.actionButtonCircleWhite]}>
                 <View style={styles.iconWithPlus}>
-                  <Icon name="calendar-outline" size={28} color="#FFFFFF" />
+                  <Icon name="calendar-outline" size={28} color="#000000" />
                   <View style={styles.plusIconSmall}>
-                    <Icon name="plus" size={12} color="#FFFFFF" />
+                    <Icon name="plus" size={12} color="#000000" />
                   </View>
                 </View>
               </View>
@@ -1661,9 +1998,9 @@ INSTRUCTIONS:
             >
               <View style={[styles.actionButtonCircle, styles.actionButtonCircleWhite]}>
                 <View style={styles.iconWithPlus}>
-                  <Icon name="folder-multiple" size={28} color="#FFFFFF" />
+                  <Icon name="folder-multiple" size={28} color="#000000" />
                   <View style={styles.plusIconSmall}>
-                    <Icon name="plus" size={12} color="#FFFFFF" />
+                    <Icon name="plus" size={12} color="#000000" />
                   </View>
                 </View>
               </View>
@@ -1682,10 +2019,10 @@ INSTRUCTIONS:
         >
         <View style={styles.chatbotTriggerContent}>
           <View style={styles.chatbotTriggerIconContainer}>
-            <Icon name="robot" size={24} color="#FFFFFF" />
+            <Icon name="robot" size={24} color="#000000" />
           </View>
           <Text style={styles.chatbotTriggerText}>Snixxy</Text>
-          <Icon name="chevron-right" size={20} color="#FFFFFF" />
+          <Icon name="chevron-right" size={20} color="#000000" />
         </View>
       </TouchableOpacity>
       </Reanimated.View>
@@ -1693,70 +2030,23 @@ INSTRUCTIONS:
       {/* My Outfits Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>My Outfits</Text>
+          <Text style={styles.sectionTitle}>MY OUTFITS</Text>
           <TouchableOpacity onPress={() => setShowViewAllModal(true)}>
             <Text style={styles.viewAllLink}>View All &gt;</Text>
           </TouchableOpacity>
         </View>
         {isReady ? (
-          <FlatList
-            ref={outfitFlatListRef}
-            data={outfitCarouselData}
-            keyExtractor={(item) => item._loopKey}
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            renderItem={renderOutfitCard}
-            disableIntervalMomentum
-            onScrollBeginDrag={() => stopOutfitAutoPlay()}
-            scrollEventThrottle={32}
-            snapToInterval={OUTFIT_CARD_FULL_WIDTH}
-            decelerationRate="fast"
-            bounces={false}
-            onMomentumScrollEnd={({ nativeEvent }) => {
-              if (baseOutfitLength === 0) return;
-              const rawIndex = Math.round(nativeEvent.contentOffset.x / OUTFIT_CARD_FULL_WIDTH);
-              outfitRawIndexRef.current = rawIndex;
-              const focusedIndex = rawIndex % baseOutfitLength;
-              setFocusedOutfitIndex(focusedIndex);
-
-              const minIndex = baseOutfitLength - 1;
-              const maxIndex = baseOutfitLength * 2;
-              if (rawIndex <= minIndex && outfitFlatListRef.current) {
-                const target = rawIndex + baseOutfitLength;
-                outfitRawIndexRef.current = target;
-                const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
-                outfitFlatListRef.current.scrollToOffset({
-                  offset: targetOffset,
-                  animated: false,
-                });
-              } else if (rawIndex >= maxIndex && outfitFlatListRef.current) {
-                const target = rawIndex - baseOutfitLength;
-                outfitRawIndexRef.current = target;
-                const targetOffset = target * OUTFIT_CARD_FULL_WIDTH;
-                outfitFlatListRef.current.scrollToOffset({
-                  offset: targetOffset,
-                  animated: false,
-                });
-              }
+          <Circular3DOutfitCards 
+            outfits={savedOutfits} 
+            navigation={navigation}
+            onOutfitSelect={(outfit) => {
+              setSelectedOutfitForPreview(outfit);
+              setShowOutfitPreviewModal(true);
             }}
-            getItemLayout={(_, index) => ({
-              length: OUTFIT_CARD_FULL_WIDTH,
-              offset: OUTFIT_CARD_FULL_WIDTH * index,
-              index,
-            })}
-            contentContainerStyle={[
-              styles.myOutfitsContainer,
-              { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING },
-            ]}
-            removeClippedSubviews={true}
-            initialNumToRender={2}
-            maxToRenderPerBatch={2}
-            windowSize={5}
-            updateCellsBatchingPeriod={50}
           />
         ) : (
-          <View style={[styles.myOutfitsContainer, { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING, height: 200, justifyContent: 'center', alignItems: 'center' }]}>
-            <ActivityIndicator size="small" color="#FFFFFF" />
+          <View style={[styles.myOutfitsContainer, { paddingHorizontal: OUTFIT_CAROUSEL_SIDE_PADDING, height: 380, justifyContent: 'center', alignItems: 'center' }]}>
+            <ActivityIndicator size="small" color="#000000" />
           </View>
         )}
       </View>
@@ -1798,7 +2088,7 @@ INSTRUCTIONS:
                 <Text style={[styles.dayText, day.isToday && styles.dayTextToday]}>{day.day}</Text>
                 <Text style={[styles.dateText, day.isToday && styles.dateTextToday]}>{day.date}</Text>
                 <View style={styles.weatherContainer}>
-                  <Icon name="weather-sunny" size={16} color="#FFFFFF" />
+                  <Icon name="weather-sunny" size={16} color="#000000" />
                   <Text style={styles.tempText}>{day.tempHigh} {day.tempLow}</Text>
                 </View>
                 
@@ -1806,7 +2096,7 @@ INSTRUCTIONS:
                 <View style={styles.dayItemOutfitSection}>
                   {day.firstOutfit ? (
                     <View style={styles.calendarOutfitNameContainer}>
-                      <Icon name="hanger" size={16} color="#FFFFFF" />
+                      <Icon name="hanger" size={16} color="#000000" />
                       <Text style={styles.calendarOutfitName} numberOfLines={1}>{day.firstOutfit.name}</Text>
                     </View>
                   ) : (
@@ -1826,7 +2116,7 @@ INSTRUCTIONS:
           </ScrollView>
         ) : (
           <View style={[styles.daysContainer, { height: 120, justifyContent: 'center', alignItems: 'center' }]}>
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color="#000000" />
           </View>
         )}
       </View>
@@ -1872,7 +2162,7 @@ INSTRUCTIONS:
                     onPress={() => setShowCollectionModal(false)}
                     style={styles.closeButton}
                   >
-                    <Icon name="close" size={24} color="#FFFFFF" />
+                    <Icon name="close" size={24} color="#000000" />
                   </TouchableOpacity>
                 </View>
 
@@ -1951,7 +2241,7 @@ INSTRUCTIONS:
                   onPress={() => setShowCollectionModal(false)}
                   style={styles.closeButton}
                 >
-                  <Icon name="close" size={24} color="#FFFFFF" />
+                  <Icon name="close" size={24} color="#000000" />
                 </TouchableOpacity>
               </View>
 
@@ -2040,7 +2330,7 @@ INSTRUCTIONS:
                 onPress={() => setShowCalendarModal(false)}
                 style={styles.calendarBackButton}
               >
-                <Icon name="arrow-left" size={24} color="#FFFFFF" />
+                <Icon name="arrow-left" size={24} color="#000000" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.calendarMonthYear}>
                 <Text style={styles.calendarMonthYearText}>
@@ -2049,10 +2339,10 @@ INSTRUCTIONS:
               </TouchableOpacity>
               <View style={styles.calendarHeaderIcons}>
                 <TouchableOpacity style={styles.calendarHeaderIcon}>
-                  <Icon name="calendar" size={24} color="#FFFFFF" />
+                  <Icon name="calendar" size={24} color="#000000" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.calendarHeaderIcon}>
-                  <Icon name="view-grid" size={24} color="#FFFFFF" />
+                  <Icon name="view-grid" size={24} color="#000000" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -2061,7 +2351,7 @@ INSTRUCTIONS:
             {selectedOutfitForDate && (
               <View style={styles.selectedOutfitBanner}>
                 <View style={styles.selectedOutfitBannerContent}>
-                  <Icon name="hanger" size={20} color="#FFFFFF" />
+                  <Icon name="hanger" size={20} color="#000000" />
                   <Text style={styles.selectedOutfitBannerText}>
                     Select a date to assign "{selectedOutfitForDate.name}"
                   </Text>
@@ -2069,7 +2359,7 @@ INSTRUCTIONS:
                     onPress={() => setSelectedOutfitForDate(null)}
                     style={styles.selectedOutfitBannerClose}
                   >
-                    <Icon name="close" size={18} color="#FFFFFF" />
+                    <Icon name="close" size={18} color="#000000" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -2078,10 +2368,10 @@ INSTRUCTIONS:
             {/* Calendar Navigation */}
             <View style={styles.calendarNav}>
               <TouchableOpacity onPress={handlePreviousMonth} style={styles.calendarNavButton}>
-                <Icon name="chevron-left" size={24} color="#FFFFFF" />
+                <Icon name="chevron-left" size={24} color="#000000" />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleNextMonth} style={styles.calendarNavButton}>
-                <Icon name="chevron-right" size={24} color="#FFFFFF" />
+                <Icon name="chevron-right" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -2126,7 +2416,7 @@ INSTRUCTIONS:
                       <View style={styles.calendarDayOutfits}>
                         {calendarDay.outfits.slice(0, 3).map((outfit) => (
                           <View key={outfit.id} style={styles.calendarOutfitThumbnail}>
-                            <Icon name="hanger" size={12} color="#FFFFFF" />
+                            <Icon name="hanger" size={12} color="#000000" />
                           </View>
                         ))}
                         {calendarDay.outfits.length > 3 && (
@@ -2164,7 +2454,7 @@ INSTRUCTIONS:
                   >
                     {calendarDay.outfits.length > 0 ? (
                       <View style={styles.calendarOutfitCardContent}>
-                        <Icon name="hanger" size={32} color="#FFFFFF" />
+                        <Icon name="hanger" size={32} color="#000000" />
                         <Text style={styles.calendarOutfitCardDate}>{calendarDay.day}</Text>
                       </View>
                     ) : (
@@ -2172,7 +2462,7 @@ INSTRUCTIONS:
                         <View style={styles.calendarOutfitCardIcon}>
                           <Icon name="calendar-plus" size={32} color="#CCCCCC" />
                           <View style={styles.calendarOutfitCardPlus}>
-                            <Icon name="plus" size={12} color="#FFFFFF" />
+                            <Icon name="plus" size={12} color="#000000" />
                           </View>
                         </View>
                         <Text style={styles.calendarOutfitCardDate}>{calendarDay.day}</Text>
@@ -2213,7 +2503,7 @@ INSTRUCTIONS:
                 onPress={() => setShowAddToCalendarModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#FFFFFF" />
+                <Icon name="close" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -2231,7 +2521,7 @@ INSTRUCTIONS:
               >
                 <View style={styles.createNewOutfitCardContent}>
                   <View style={styles.createNewOutfitIconContainer}>
-                    <Icon name="plus" size={32} color="#FFFFFF" />
+                    <Icon name="plus" size={32} color="#000000" />
                   </View>
                   <Text style={styles.createNewOutfitCardText}>Create New Outfit</Text>
                 </View>
@@ -2245,7 +2535,7 @@ INSTRUCTIONS:
                   onPress={() => handleOutfitSelectForCalendar(outfit)}
                 >
                   <View style={styles.outfitSelectionCardHeader}>
-                    <Icon name="hanger" size={24} color="#FFFFFF" />
+                    <Icon name="hanger" size={24} color="#000000" />
                     <Text style={styles.outfitSelectionName}>{outfit.name}</Text>
                   </View>
                   <Text style={styles.outfitSelectionDate}>{outfit.date}</Text>
@@ -2295,7 +2585,7 @@ INSTRUCTIONS:
                 onPress={() => setShowViewAllModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#FFFFFF" />
+                <Icon name="close" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -2313,7 +2603,7 @@ INSTRUCTIONS:
                   }}
                 >
                   <View style={styles.outfitSelectionCardHeader}>
-                    <Icon name="hanger" size={24} color="#FFFFFF" />
+                    <Icon name="hanger" size={24} color="#000000" />
                     <Text style={styles.outfitSelectionName}>{outfit.name}</Text>
                   </View>
                   <Text style={styles.outfitSelectionDate}>{outfit.date}</Text>
@@ -2363,7 +2653,7 @@ INSTRUCTIONS:
                 onPress={() => setShowDateOutfitModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#FFFFFF" />
+                <Icon name="close" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -2386,7 +2676,7 @@ INSTRUCTIONS:
                           }}
                         >
                           <View style={styles.outfitSelectionCardHeader}>
-                            <Icon name="hanger" size={24} color="#FFFFFF" />
+                            <Icon name="hanger" size={24} color="#000000" />
                             <Text style={styles.outfitSelectionName}>{outfit.name}</Text>
                           </View>
                           <View style={styles.outfitSelectionItems}>
@@ -2415,7 +2705,7 @@ INSTRUCTIONS:
                       setShowAddToCalendarModal(true);
                     }}
                   >
-                    <Icon name="hanger" size={20} color="#FFFFFF" />
+                    <Icon name="hanger" size={20} color="#000000" />
                     <Text style={styles.dateOutfitActionText}>Select from Existing</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -2425,11 +2715,68 @@ INSTRUCTIONS:
                       navigation?.navigate('Studio');
                     }}
                   >
-                    <Icon name="plus" size={20} color="#FFFFFF" />
+                    <Icon name="plus" size={20} color="#000000" />
                     <Text style={styles.dateOutfitActionText}>Create New Outfit</Text>
                   </TouchableOpacity>
                 </View>
               </>
+            )}
+          </Reanimated.View>
+        </Reanimated.View>
+      </Modal>
+
+      {/* Outfit Preview Modal */}
+      <Modal
+        visible={showOutfitPreviewModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => setShowOutfitPreviewModal(false)}
+      >
+        <Reanimated.View style={[styles.modalOverlay, outfitPreviewBackdropAnimatedStyle]}>
+          <BlurView
+            blurType="dark"
+            blurAmount={20}
+            style={StyleSheet.absoluteFill}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+          <View style={styles.darkOverlay} />
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowOutfitPreviewModal(false)}
+          />
+          <Reanimated.View style={[styles.outfitPreviewModalContent, outfitPreviewModalAnimatedStyle]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Outfit Preview</Text>
+              <TouchableOpacity 
+                onPress={() => setShowOutfitPreviewModal(false)}
+                style={styles.closeButton}
+              >
+                <Icon name="close" size={24} color="#000000" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedOutfitForPreview && (
+              <View style={styles.outfitPreviewContent}>
+                <View style={styles.outfitPreviewHeader}>
+                  <View style={styles.outfitPreviewIconContainer}>
+                    <Icon name="hanger" size={32} color="#000000" />
+                  </View>
+                  <Text style={styles.outfitPreviewName}>{selectedOutfitForPreview.name}</Text>
+                  <Text style={styles.outfitPreviewDate}>{selectedOutfitForPreview.date}</Text>
+                </View>
+
+                <View style={styles.outfitPreviewItemsContainer}>
+                  <Text style={styles.outfitPreviewItemsTitle}>Items:</Text>
+                  <View style={styles.outfitPreviewItems}>
+                    {selectedOutfitForPreview.items.map((item, index) => (
+                      <View key={index} style={styles.outfitPreviewItemTag}>
+                        <Text style={styles.outfitPreviewItemText}>{item}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
             )}
           </Reanimated.View>
         </Reanimated.View>
@@ -2465,7 +2812,7 @@ INSTRUCTIONS:
             <View style={styles.modalHeader}>
               <View style={styles.chatbotHeaderLeft}>
                 <View style={styles.chatbotIconContainer}>
-                  <Icon name="robot" size={20} color="#FFFFFF" />
+                  <Icon name="robot" size={20} color="#000000" />
                 </View>
                 <Text style={styles.modalTitle}>AI Fashion Advisor</Text>
               </View>
@@ -2473,7 +2820,7 @@ INSTRUCTIONS:
                 style={styles.closeButton}
                 onPress={() => setShowChatbotModal(false)}
               >
-                <Icon name="close" size={24} color="#FFFFFF" />
+                <Icon name="close" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -2639,7 +2986,7 @@ INSTRUCTIONS:
                 style={styles.attachmentButton}
                 onPress={handleImagePicker}
               >
-                <Icon name="pin" size={22} color="#FFFFFF" />
+                <Icon name="pin" size={22} color="#000000" />
               </TouchableOpacity>
               <TextInput
                 style={styles.chatInput}
@@ -2669,7 +3016,7 @@ INSTRUCTIONS:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFCF1',
   },
   backgroundGradient: {
     position: 'absolute',
@@ -2693,18 +3040,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontFamily: 'GTMaruBold',
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    paddingTop: 0,
+    marginTop: Platform.OS === 'ios' ? -150 : -(StatusBar.currentHeight || 0) - 60,
+    gap: 0,
   },
   headerLogo: {
-    height: 200,
-    width: 200,
+    height: 300,
+    width: 300,
+    marginBottom: -80,
+    marginLeft: -10,
+    marginTop: 0,
   },
   mainSection: {
     paddingHorizontal: 20,
@@ -2713,7 +3058,8 @@ const styles = StyleSheet.create({
   mainText: {
     fontSize: 16,
     fontFamily: 'GTMaruRegular',
-    color: '#FFFFFF',
+    color: '#000000',
+    marginTop: 0,
     marginBottom: 40,
     lineHeight: 22,
   },
@@ -2736,14 +3082,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   actionButtonCircleBlack: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   actionButtonCircleWhite: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   iconWithPlus: {
     position: 'relative',
@@ -2757,16 +3103,16 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   actionButtonLabel: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
     textAlign: 'center',
   },
   section: {
@@ -2783,12 +3129,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
+    letterSpacing: 0.5,
   },
   viewCalendarLink: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
   },
   daysContainer: {
     paddingRight: 20,
@@ -2798,11 +3145,11 @@ const styles = StyleSheet.create({
     width: 180,
     minHeight: 160,
     borderRadius: 16,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     marginRight: 16,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -2816,7 +3163,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    borderTopColor: '#E0E0E0',
   },
   calendarOutfitNameContainer: {
     flexDirection: 'row',
@@ -2827,7 +3174,7 @@ const styles = StyleSheet.create({
   calendarOutfitName: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
     flex: 1,
     textAlign: 'center',
   },
@@ -2837,26 +3184,26 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFF8D',
   },
   dayText: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     marginBottom: 4,
   },
   dayTextToday: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontFamily: 'GTMaruBold',
   },
   dateText: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     marginBottom: 8,
   },
   dateTextToday: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontFamily: 'GTMaruMedium',
   },
   weatherContainer: {
@@ -2867,17 +3214,17 @@ const styles = StyleSheet.create({
   tempText: {
     fontSize: 11,
     fontFamily: 'GTMaruRegular',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   outfitCard: {
     width: 180,
     minHeight: 160,
     borderRadius: 16,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     marginRight: 16,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -2897,15 +3244,15 @@ const styles = StyleSheet.create({
   viewAllLink: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
   },
   myOutfitCard: {
     width: OUTFIT_CARD_WIDTH,
     height: OUTFIT_CARD_WIDTH,
     borderRadius: 28,
     marginRight: OUTFIT_CARD_SPACING,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -2915,7 +3262,7 @@ const styles = StyleSheet.create({
   },
   glossyOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(253, 255, 142, 0.1)',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     height: '40%',
@@ -2933,9 +3280,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: '#FDFF8D',
+    borderWidth: 2,
+    borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -2944,14 +3291,14 @@ const styles = StyleSheet.create({
   outfitArcName: {
     fontSize: 14,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     textAlign: 'center',
     marginBottom: 4,
   },
   outfitArcMeta: {
     fontSize: 11,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     textAlign: 'center',
   },
   outfitCardHeader: {
@@ -2963,14 +3310,14 @@ const styles = StyleSheet.create({
   outfitCardName: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginLeft: 8,
     flex: 1,
   },
   outfitCardDate: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     marginBottom: 12,
     width: '100%',
   },
@@ -2980,17 +3327,17 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   outfitItemTag: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   outfitItemText: {
     fontSize: 10,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   bookContainer: {
     paddingRight: 20,
@@ -3009,9 +3356,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   collectionModalContent: {
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#FFFCF1',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingTop: 24,
     paddingHorizontal: 20,
     paddingBottom: 40,
@@ -3033,7 +3380,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   closeButton: {
     padding: 4,
@@ -3051,7 +3398,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 16,
   },
   categoryScrollContainer: {
@@ -3067,11 +3414,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   categoryCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding:6,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     alignSelf: 'center',
     marginBottom: 12,
     marginTop: 12,
@@ -3080,11 +3427,11 @@ const styles = StyleSheet.create({
   categoryCardVertical: {
     width: '100%',
     height: CATEGORY_CARD_HEIGHT,
-    backgroundColor: 'rgba(26, 26, 26, 0.9)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     marginBottom: CATEGORY_CARD_VERTICAL_SPACING,
     justifyContent: 'center',
     overflow: 'hidden', // Keep overflow hidden for card content
@@ -3105,11 +3452,11 @@ const styles = StyleSheet.create({
   categoryCardHorizontal: {
     width: CATEGORY_CARD_HORIZONTAL_WIDTH,
     height: CATEGORY_CARD_HORIZONTAL_HEIGHT,
-    backgroundColor: 'rgba(26, 26, 26, 0.9)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     justifyContent: 'center',
     overflow: 'hidden',
     shadowColor: '#000',
@@ -3135,11 +3482,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#000000',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     position: 'relative',
     overflow: 'visible',
   },
@@ -3150,11 +3497,11 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#000000',
     zIndex: 10,
   },
   categoryTextContainerHorizontal: {
@@ -3165,19 +3512,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 2,
     textAlign: 'center',
   },
   categoryCountHorizontal: {
     fontSize: 11,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     textAlign: 'center',
   },
   collectionModalGlass: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     overflow: 'hidden',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.15)',
@@ -3199,11 +3546,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 14,
-    backgroundColor: '#000000',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     position: 'relative',
     overflow: 'visible', // Allow add button to extend outside without clipping
   },
@@ -3214,24 +3561,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 4,
   },
   categoryCountVertical: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
   },
   categoryIconContainer: {
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: '#000000',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     position: 'relative',
   },
   categoryAddButton: {
@@ -3241,24 +3588,24 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#000000',
     zIndex: 10, // Ensure button stays on top when card scales
   },
   categoryName: {
     fontSize: 12,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     textAlign: 'center',
     marginBottom: 4,
   },
   categoryCount: {
     fontSize: 10,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     textAlign: 'center',
   },
   categoryItemsContainer: {
@@ -3270,8 +3617,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 8,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
   },
   categoryItemImage: {
     width: '100%',
@@ -3279,7 +3626,7 @@ const styles = StyleSheet.create({
   },
   // Calendar Modal Styles
   calendarModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -3305,7 +3652,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   calendarHeaderIcons: {
     flexDirection: 'row',
@@ -3315,12 +3662,12 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   selectedOutfitBanner: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#000000',
   },
   selectedOutfitBannerContent: {
     flexDirection: 'row',
@@ -3331,7 +3678,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   selectedOutfitBannerClose: {
     padding: 4,
@@ -3356,7 +3703,7 @@ const styles = StyleSheet.create({
   weekDayText: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
   },
   calendarGridContainer: {
     maxHeight: 400,
@@ -3372,22 +3719,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#E0E0E0',
   },
   calendarDayCellOtherMonth: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#F5F5F5',
   },
   calendarDayCellToday: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
   },
   calendarDayNumber: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 4,
   },
   calendarDayNumberOtherMonth: {
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: '#999999',
   },
   calendarDayNumberToday: {
     fontSize: 16,
@@ -3405,9 +3752,9 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -3415,7 +3762,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -3432,7 +3779,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 12,
   },
   calendarOutfitCardsContainer: {
@@ -3442,10 +3789,10 @@ const styles = StyleSheet.create({
     width: 80,
     height: 100,
     borderRadius: 12,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     marginRight: 12,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -3464,20 +3811,20 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    backgroundColor: '#FDFF8D',
+    borderWidth: 2,
+    borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
   calendarOutfitCardDate: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   // Add to Calendar Modal Styles
   addToCalendarModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFCF1',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -3489,12 +3836,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   outfitSelectionCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   outfitSelectionCardHeader: {
     flexDirection: 'row',
@@ -3504,14 +3851,14 @@ const styles = StyleSheet.create({
   outfitSelectionName: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginLeft: 12,
     flex: 1,
   },
   outfitSelectionDate: {
     fontSize: 12,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     marginBottom: 12,
   },
   outfitSelectionItems: {
@@ -3520,25 +3867,25 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   outfitSelectionItemTag: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   outfitSelectionItemText: {
     fontSize: 10,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   createNewOutfitCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
   },
   createNewOutfitCardContent: {
@@ -3550,21 +3897,21 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#000000',
   },
   createNewOutfitCardText: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   // View All Modal Styles
   viewAllModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -3572,20 +3919,93 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     maxHeight: '80%',
   },
+  outfitPreviewModalContent: {
+    backgroundColor: '#FFFCF1',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    maxHeight: '70%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  outfitPreviewContent: {
+    paddingTop: 20,
+  },
+  outfitPreviewHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  outfitPreviewIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  outfitPreviewName: {
+    fontSize: 24,
+    fontFamily: 'GTMaruBold',
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  outfitPreviewDate: {
+    fontSize: 14,
+    fontFamily: 'GTMaruRegular',
+    color: '#666666',
+    textAlign: 'center',
+  },
+  outfitPreviewItemsContainer: {
+    marginTop: 8,
+  },
+  outfitPreviewItemsTitle: {
+    fontSize: 16,
+    fontFamily: 'GTMaruBold',
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 12,
+  },
+  outfitPreviewItems: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  outfitPreviewItemTag: {
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  outfitPreviewItemText: {
+    fontSize: 12,
+    fontFamily: 'GTMaruRegular',
+    color: '#000000',
+  },
   viewAllOutfitsContainer: {
     paddingBottom: 20,
   },
   viewAllOutfitCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   // Date-Based Outfit Modal Styles
   dateOutfitModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -3599,7 +4019,7 @@ const styles = StyleSheet.create({
   dateOutfitsTitle: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 12,
   },
   dateOutfitsList: {
@@ -3613,7 +4033,7 @@ const styles = StyleSheet.create({
   dateOutfitsEmptyText: {
     fontSize: 14,
     fontFamily: 'GTMaruMedium',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     marginTop: 12,
   },
   dateOutfitActions: {
@@ -3624,29 +4044,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     gap: 8,
   },
   dateOutfitActionButtonPrimary: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
   },
   dateOutfitActionText: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   // Chatbot Trigger Button Styles
   chatbotTriggerButton: {
     marginHorizontal: 20,
     marginBottom: 24,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -3663,11 +4083,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000000',
     marginRight: 12,
   },
   chatbotTriggerText: {
@@ -3675,11 +4095,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   // Chatbot Modal Styles
   chatbotModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFCF1',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
@@ -3702,10 +4122,10 @@ const styles = StyleSheet.create({
   chatbotSection: {
     marginHorizontal: 20,
     marginBottom: 32,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#F5F5F5',
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -3720,7 +4140,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    borderBottomColor: '#E0E0E0',
   },
   chatbotHeaderLeft: {
     flexDirection: 'row',
@@ -3730,18 +4150,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#FDFF8D',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000000',
     marginRight: 10,
   },
   chatbotTitle: {
     fontSize: 16,
     fontFamily: 'GTMaruBold',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   chatMessagesContainer: {
     maxHeight: 200,
@@ -3771,14 +4191,14 @@ const styles = StyleSheet.create({
   },
   userMessageBubble: {
     backgroundColor: '#FDFF8D',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#000000',
     borderBottomRightRadius: 4,
   },
   botMessageBubble: {
-    backgroundColor: '#2a2a2a',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -3810,9 +4230,9 @@ const styles = StyleSheet.create({
   collectionItemCard: {
     width: 160,
     marginRight: 12,
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -3850,21 +4270,21 @@ const styles = StyleSheet.create({
   collectionItemName: {
     fontSize: 13,
     fontFamily: 'GTMaruBold',
-    color: '#FFFFFF',
+    color: '#000000',
     textAlign: 'center',
   },
   userMessageText: {
     color: '#000000',
   },
   botMessageText: {
-    color: '#FFFFFF',
+    color: '#000000',
   },
   thinkingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 16,
@@ -3878,7 +4298,7 @@ const styles = StyleSheet.create({
   thinkingText: {
     fontSize: 14,
     fontFamily: 'GTMaruRegular',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#666666',
     fontStyle: 'italic',
   },
   quickSuggestionsContainer: {
@@ -3889,15 +4309,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: '#2a2a2a',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     marginRight: 8,
   },
   quickSuggestionText: {
     fontSize: 12,
     fontFamily: 'GTMaruMedium',
-    color: '#FFFFFF',
+    color: '#000000',
   },
   chatInputContainer: {
     flexDirection: 'row',
@@ -3905,30 +4325,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    borderTopColor: '#E0E0E0',
   },
   attachmentButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     marginRight: 10,
   },
   chatInput: {
     flex: 1,
     fontSize: 14,
     fontFamily: 'GTMaruRegular',
-    color: '#FFFFFF',
-    backgroundColor: '#2a2a2a',
+    color: '#000000',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     maxHeight: 80,
     marginRight: 10,
   },
@@ -3936,15 +4356,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#FDFF8E',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#000000',
   },
   sendButtonDisabled: {
-    backgroundColor: '#1a1a1a',
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#E0E0E0',
+    borderColor: '#E0E0E0',
   },
 });
 

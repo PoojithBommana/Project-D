@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
@@ -12,8 +11,8 @@ import {
   Dimensions,
   Vibration,
   Image,
-  Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import { rf, wp, hp, rs } from '../../utils/responsive';
@@ -59,7 +58,6 @@ export default function OnboardingStep2({ navigation, route }: Props) {
   const [selectedMonth, setSelectedMonth] = useState(0); // January
   const [selectedDay, setSelectedDay] = useState(0); // 1st
   const [selectedYear, setSelectedYear] = useState(2000);
-  const [showAgeModal, setShowAgeModal] = useState(false);
   const [selectedButton, setSelectedButton] = useState<'yes' | 'no'>('yes');
   
   const monthScrollRef = useRef<ScrollView | null>(null);
@@ -118,14 +116,6 @@ export default function OnboardingStep2({ navigation, route }: Props) {
       setSelectedDay(daysInSelectedMonth - 1);
     }
   }, [selectedMonth, selectedYear, daysInSelectedMonth]);
-
-  useEffect(() => {
-    // Reset modal animation values when modal is closed
-    if (!showAgeModal) {
-      modalScale.setValue(0);
-      modalOpacity.setValue(0);
-    }
-  }, [showAgeModal]);
 
   const scrollToIndex = (scrollView: ScrollView | null, index: number) => {
     if (scrollView) {
@@ -237,87 +227,18 @@ export default function OnboardingStep2({ navigation, route }: Props) {
   };
 
   const handleContinue = () => {
-    if (isButtonActive) {
-      animateButtonPress();
-      triggerHaptic();
-      setSelectedButton('yes'); // Reset to yes when modal opens
-      setShowAgeModal(true);
-      // Animate modal appearance
-      Animated.parallel([
-        Animated.spring(modalScale, {
-          toValue: 1,
-          tension: 50,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-        Animated.timing(modalOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  };
-
-  const handleYesPress = () => {
+    if (!isButtonActive) return;
+    animateButtonPress();
     triggerHaptic();
-    if (selectedButton === 'yes') {
-      // If Yes is already selected, confirm and navigate
-      const age = calculateAge();
-      // Animate modal disappearance
-      Animated.parallel([
-        Animated.spring(modalScale, {
-          toValue: 0,
-          tension: 50,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-        Animated.timing(modalOpacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setShowAgeModal(false);
-        navigation?.navigate('NotificationPermissionScreen', {
-          firstName: route?.params?.firstName || '',
-          lastName: route?.params?.lastName || '',
-          username: route?.params?.username,
-          gender: route?.params?.gender || '',
-          age: age,
-          showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
-        });
-      });
-    } else {
-      // Select Yes
-      setSelectedButton('yes');
-    }
-  };
-
-  const handleNoPress = () => {
-    triggerHaptic();
-    if (selectedButton === 'no') {
-      // If No is already selected, cancel and close modal
-      // Animate modal disappearance
-      Animated.parallel([
-        Animated.spring(modalScale, {
-          toValue: 0,
-          tension: 50,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-        Animated.timing(modalOpacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setShowAgeModal(false);
-      });
-    } else {
-      // Select No
-      setSelectedButton('no');
-    }
+    const age = calculateAge();
+    navigation?.navigate('NotificationPermissionScreen', {
+      firstName: route?.params?.firstName || '',
+      lastName: route?.params?.lastName || '',
+      username: route?.params?.username,
+      gender: route?.params?.gender || '',
+      age: age,
+      showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+    });
   };
 
   const renderPickerColumn = (
@@ -484,67 +405,8 @@ export default function OnboardingStep2({ navigation, route }: Props) {
         </Animated.View>
       </KeyboardAvoidingView>
 
-      <Modal
-        visible={showAgeModal}
-        transparent={true}
-        animationType="none"
-        onRequestClose={handleNoPress}
-      >
-        <View style={styles.modalOverlay}>
-          <Animated.View
-            style={[
-              styles.modalContent,
-              {
-                opacity: modalOpacity,
-                transform: [{ scale: modalScale }],
-              },
-            ]}
-          >
-            <View style={styles.modalIconContainer}>
-              <Image source={Birthdayicon} style={styles.modalIcon} resizeMode="contain" />
-            </View>
-            
-            <Text style={styles.modalTitle}>
-              You are <Text style={styles.modalAgeText}>{calculateAge()}</Text>
-            </Text>
-            
-            <Text style={styles.modalWarning}>
-              Make sure this is your correct age as you can't change this later
-            </Text>
-            
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.modalButtonNo,
-                  selectedButton === 'no' && styles.modalButtonSelected
-                ]}
-                onPress={handleNoPress}
-                activeOpacity={0.8}
-              >
-                <Text style={[
-                  styles.modalButtonNoText,
-                  selectedButton === 'no' && styles.modalButtonSelectedText
-                ]}>No</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.modalButtonYes,
-                  selectedButton === 'yes' && styles.modalButtonSelected
-                ]}
-                onPress={handleYesPress}
-                activeOpacity={0.8}
-              >
-                <Text style={[
-                  styles.modalButtonYesText,
-                  selectedButton === 'yes' && styles.modalButtonSelectedText
-                ]}>Yes</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
 
+  

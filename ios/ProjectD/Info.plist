@@ -64,9 +64,9 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This is for Mic permission</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>DILMIL needs access to your location to find you matches nearby.</string>
+	<string>SNIXX needs access to your location to find you matches nearby.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>DILMIL needs access to your location to find you matches nearby.</string>
+	<string>SNIXX needs access to your location to find you matches nearby.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need your files access</string>
 	<key>NSContactsUsageDescription</key>
@@ -109,6 +109,13 @@
 		<string>GTMaruMediumOblique.ttf</string>
 		<string>GTMaruRegular.ttf</string>
 		<string>GTMaruRegularOblique.ttf</string>
+		<string>BebasNeue-Regular.ttf</string>
+		<string>Coolvetica Rg It.ttf</string>
+		<string>CoolveticaHvComp.ttf</string>
+		<string>CoolveticaRg.ttf</string>
+		<string>CoolveticaRgCond.ttf</string>
+		<string>CoolveticaRgCram.ttf</string>
+		<string>Horizon_Regular.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

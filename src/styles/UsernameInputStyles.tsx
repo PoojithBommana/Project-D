@@ -92,6 +92,14 @@ const styles = StyleSheet.create({
     borderRadius: rs(12),
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   continueButtonText: {
     fontSize: rf(18),

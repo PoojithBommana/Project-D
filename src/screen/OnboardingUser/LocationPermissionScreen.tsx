@@ -80,7 +80,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: 'Location Permission',
-            message: 'DILMIL needs access to your location to find you matches nearby.',
+            message: 'SNIXX needs access to your location to find you matches nearby.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'Allow',
@@ -94,7 +94,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
         } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
           Alert.alert(
             'Permission Required',
-            'Location permission was denied. Please enable it in Settings > Apps > DILMIL > Permissions > Location.',
+            'Location permission was denied. Please enable it in Settings > Apps > SNIXX > Permissions > Location.',
             [
               { text: 'Cancel', style: 'cancel' },
               { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -128,7 +128,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
         // Fallback: guide user to enable in settings
         Alert.alert(
           'Location Permission',
-          'To enable location access, please go to Settings > Privacy & Security > Location Services and enable it for DILMIL.',
+          'To enable location access, please go to Settings > Privacy & Security > Location Services and enable it for SNIXX.',
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -199,7 +199,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
           {/* Text Content */}
           <View style={styles.textContainer}>
             <Text style={styles.heading}>
-              Allow DILMIL to use your location to find you matches
+              Allow Snixx to use your location to find you matches
             </Text>
             <Text style={styles.subheading}>
               You won't be able to match with people otherwise.
