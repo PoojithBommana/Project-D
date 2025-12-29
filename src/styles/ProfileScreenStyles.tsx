@@ -1,0 +1,285 @@
+import { StyleSheet } from 'react-native';
+import { wp, hp, rf, rs } from '../utils/responsive';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(16),
+    paddingTop: hp(12),
+    paddingBottom: hp(16),
+    backgroundColor: '#FFFFFF',
+  },
+  headerIcon: {
+    padding: wp(4),
+    marginHorizontal: wp(4),
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: hp(100),
+  },
+  profilePictureSection: {
+    paddingHorizontal: wp(16),
+    paddingTop: hp(8),
+    paddingBottom: hp(16),
+  },
+  profilePictureContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    marginBottom: hp(12),
+    width: wp(120),
+    height: wp(120),
+  },
+  mainProfilePicture: {
+    width: wp(120),
+    height: wp(120),
+    borderRadius: wp(60),
+    borderWidth: 2,
+    borderColor: '#E5E5E5',
+  },
+  thumbnailContainer: {
+    position: 'relative',
+    width: wp(50),
+    height: wp(50),
+    marginRight: wp(12),
+  },
+  thumbnailPicture: {
+    width: '100%',
+    height: '100%',
+    borderRadius: wp(25),
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  plusIconContainer: {
+    position: 'absolute',
+    bottom: -wp(4),
+    right: -wp(4),
+    width: wp(20),
+    height: wp(20),
+    borderRadius: wp(10),
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  plusIcon: {
+    width: wp(12),
+    height: wp(12),
+    tintColor: '#000000',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(4),
+    gap: wp(6),
+  },
+  profileName: {
+    fontSize: rf(24),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#000000',
+  },
+  verifiedIcon: {
+    marginLeft: wp(4),
+  },
+  usernameContainer: {
+    alignItems: 'center',
+    marginBottom: hp(12),
+  },
+  username: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#666666',
+    marginBottom: hp(2),
+  },
+  followersText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#666666',
+  },
+  accountButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: wp(20),
+    marginBottom: hp(16),
+    gap: wp(12),
+  },
+  accountButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(10),
+    borderRadius: rs(8),
+    backgroundColor: '#D3D3D3', // Darker grey for unselected
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+  },
+  accountButtonActive: {
+    backgroundColor: '#E8E8E8', // Lighter grey for selected
+    borderColor: '#D3D3D3',
+  },
+  accountButtonText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#000000',
+  },
+  accountButtonTextActive: {
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#000000',
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(8),
+    gap: wp(6),
+  },
+  locationText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#666666',
+  },
+  personalDetailsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(20),
+    gap: wp(8),
+  },
+  personalDetailsText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#000000',
+  },
+  purpleVIcon: {
+    width: wp(20),
+    height: wp(20),
+    borderRadius: wp(10),
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  purpleVText: {
+    fontSize: rf(12),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  navTabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(12),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    gap: wp(20),
+  },
+  navTab: {
+    paddingBottom: hp(8),
+    borderBottomWidth: 0,
+  },
+  navTabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+  },
+  navTabText: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#666666',
+  },
+  navTabTextActive: {
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#000000',
+  },
+  storiesGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: wp(12),
+    paddingTop: hp(16),
+    justifyContent: 'space-between',
+  },
+  storyItem: {
+    width: (wp(393) - wp(48) - wp(16)) / 3, // 3 columns with padding and gaps
+    marginBottom: hp(16),
+  },
+  storyImageContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: rs(8),
+    overflow: 'hidden',
+    marginBottom: hp(8),
+    backgroundColor: '#F5F5F5',
+  },
+  storyImage: {
+    width: '100%',
+    height: '100%',
+  },
+  storyTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: hp(4),
+  },
+  storyTitle: {
+    fontSize: rf(12),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: hp(100),
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2A2A2A',
+    paddingVertical: hp(12),
+    paddingHorizontal: wp(20),
+    borderRadius: rs(8),
+    gap: wp(8),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 10,
+  },
+  floatingButtonIcon: {
+    marginRight: wp(4),
+  },
+  floatingButtonText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+});
+
+export default styles;

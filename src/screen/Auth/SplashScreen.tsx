@@ -6,12 +6,11 @@ import { Splashlogo } from '../../assets';
 // import { hp, rf } from '../../utils/responsive';
 
 export default function SplashScreen() {
-  SplashScreenController();
-  
   return (
     <View style={styles.container}>
       <StatusBar hidden animated />
       <Image source={Splashlogo}  style={styles.spashlogo} />
+      <SplashScreenController />
     </View>
   );
 }
