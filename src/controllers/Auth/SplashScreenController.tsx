@@ -69,5 +69,5 @@ export default function SplashScreenController() {
     return () => clearTimeout(timeoutId);
   }, [checkUserStatus]);
 
-  return {};
+  return null;
 }
