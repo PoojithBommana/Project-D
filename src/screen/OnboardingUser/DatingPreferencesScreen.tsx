@@ -307,6 +307,7 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
           gender: route?.params?.gender || '',
           age: route?.params?.age || 0,
           location: route?.params?.location || '',
+          city: route?.params?.city || '',
           photo: route?.params?.photo || '',
           photos: route?.params?.photos || [],
           datingGoal: 'casual',

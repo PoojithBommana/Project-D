@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions, Platform } from 'react-native';
-import { hp, wp } from '../../../utils/responsive';
+import { hp, wp, rf, rs } from '../../../utils/responsive';
 
 const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
@@ -104,27 +104,115 @@ const styles = StyleSheet.create({
     right: 0,
     height: '40%',
   },
-
-  // Name Overlay on Image
-  imageNameOverlay: {
+  profileInfoOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     padding: wp(20),
     paddingBottom: wp(24),
+    zIndex: 5,
   },
-  nameText: {
-    fontSize: wp(34),
+  profileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(0),
+    marginBottom: hp(8),
+    gap: wp(12),
+  },
+  thumbnailContainer: {
+    position: 'relative',
+    width: wp(64),
+    height: wp(64),
+  },
+  thumbnailPicture: {
+    width: '100%',
+    height: '100%',
+    borderRadius: wp(32),
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  plusIconContainer: {
+    position: 'absolute',
+    bottom: -wp(2),
+    right: -wp(2),
+    width: wp(24),
+    height: wp(24),
+    borderRadius: wp(12),
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  plusIcon: {
+    width: wp(14),
+    height: wp(14),
+    tintColor: '#000000',
+  },
+  nameVerifiedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+  },
+  profileName: {
+    fontSize: rf(26),
+    fontFamily: 'GTMaruBold',
     fontWeight: '700',
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    letterSpacing: 0.5,
   },
-  ageText: {
-    fontSize: wp(30),
+  verifiedIcon: {
+    marginTop: hp(2),
+  },
+  usernameFollowersContainer: {
+    paddingHorizontal: wp(0),
+    marginBottom: hp(8),
+  },
+  usernameFollowersText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
     fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  profileLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(0),
+    marginBottom: hp(8),
+    gap: wp(6),
+  },
+  profileLocationIcon: {
+    marginRight: wp(2),
+  },
+  profileLocationText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.85,
+  },
+  accountButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: wp(0),
+    gap: wp(12),
+    marginTop: hp(8),
+  },
+  accountButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(12),
+    borderRadius: wp(8),
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  accountButtonText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
     color: '#FFFFFF',
   },
 
@@ -263,6 +351,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: wp(12),
     padding: wp(16),
+    paddingBottom: wp(16),
     marginBottom: hp(12),
     borderWidth: 0.5,
     borderColor: '#E5E5E5',
@@ -285,6 +374,8 @@ const styles = StyleSheet.create({
   // Bio Section
   bioText: {
     fontSize: wp(15),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
     color: '#000000',
     lineHeight: wp(22),
     marginBottom: hp(12),
@@ -295,19 +386,59 @@ const styles = StyleSheet.create({
     marginVertical: hp(12),
   },
   complimentButton: {
+    position: 'absolute',
+    bottom: hp(60),
+    left: wp(16),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
     paddingVertical: hp(10),
+    paddingHorizontal: wp(16),
+    borderRadius: wp(20),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
   },
-  complimentIcon: {
-    fontSize: wp(18),
-    marginRight: wp(8),
+  complimentButtonContainer: {
+    marginTop: hp(16),
+  },
+  complimentDivider: {
+    height: 1,
+    backgroundColor: '#E5E5E5',
+    marginBottom: 0,
+  },
+  complimentButtonBelow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: hp(16),
+    paddingHorizontal: wp(20),
+    borderRadius: 0,
+    borderBottomLeftRadius: wp(12),
+    borderBottomRightRadius: wp(12),
+    gap: wp(12),
+  },
+  complimentIconContainer: {
+    position: 'relative',
+    width: wp(26),
+    height: wp(26),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  complimentHeartIcon: {
+    position: 'absolute',
+    top: hp(6),
+    left: wp(6),
   },
   complimentText: {
     fontSize: wp(15),
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '500',
+    color: '#333333',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // Tags Container
@@ -328,13 +459,29 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5E5',
   },
   tagIcon: {
-    fontSize: wp(14),
     marginRight: wp(6),
   },
   tagText: {
     fontSize: wp(14),
     color: '#000000',
     fontWeight: '500',
+  },
+  pillTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+    paddingVertical: hp(10),
+    paddingHorizontal: wp(14),
+    borderRadius: rs(20),
+    borderWidth: 0.5,
+    borderColor: '#E8E8E8',
+    marginBottom: hp(6),
+  },
+  pillTagText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#000000',
   },
 
   // Star Highlight
@@ -425,6 +572,22 @@ const styles = StyleSheet.create({
     borderRadius: wp(12),
     backgroundColor: '#F5F5F5',
   },
+  // Photos List - One photo per row
+  photosList: {
+    flexDirection: 'column',
+    gap: hp(12),
+  },
+  photoItem: {
+    width: '100%',
+    marginBottom: hp(8),
+  },
+  fullWidthPhoto: {
+    width: '100%',
+    height: hp(450),
+    borderRadius: wp(20),
+    backgroundColor: '#F5F5F5',
+    overflow: 'hidden',
+  },
 
   // Bottom Navigation
   bottomNav: {
@@ -474,104 +637,97 @@ const styles = StyleSheet.create({
     marginTop: hp(16),
   },
 
-  // Bottom Action Buttons
-  bottomActionsContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    paddingBottom: Platform.OS === 'ios' ? hp(20) : hp(10),
-    paddingTop: hp(12),
-    borderTopWidth: 0.5,
-    borderTopColor: '#E5E5E5',
-    zIndex: 100,
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: wp(24),
-    marginBottom: hp(12),
-  },
-  actionButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  passButton: {
-    width: wp(56),
-    height: wp(56),
-    borderRadius: wp(28),
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  passIcon: {
-    fontSize: wp(24),
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  superlikeButton: {
-    width: wp(56),
-    height: wp(56),
-    borderRadius: wp(28),
-    backgroundColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  superlikeIcon: {
-    fontSize: wp(24),
-    color: '#000000',
-    fontWeight: '700',
-  },
-  likeButton: {
-    width: wp(56),
-    height: wp(56),
-    borderRadius: wp(28),
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  likeIcon: {
-    fontSize: wp(24),
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  blockReportRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: wp(24),
-  },
-  textButton: {
-    paddingVertical: hp(8),
-    paddingHorizontal: wp(16),
-  },
-  blockText: {
-    fontSize: wp(15),
-    color: '#000000',
-    fontWeight: '500',
-  },
-  reportText: {
-    fontSize: wp(15),
-    color: '#FF0000',
-    fontWeight: '500',
-  },
+  // Inline Action Buttons (in scrollable content)
+// Inline Action Buttons (in scrollable content)
+inlineActionsContainer: {
+  backgroundColor: '#FFFFFF',
+  paddingTop: hp(32),
+  paddingBottom: hp(32),
+  paddingHorizontal: wp(0),
+  marginTop: hp(0),
+  alignItems: 'center',
+},
+actionButtonsRow: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: wp(32),
+  marginBottom: hp(24),
+  paddingHorizontal: wp(0),
+},
+actionButton: {
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+actionButtonCenter: {
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: hp(-4),
+},
+passButton: {
+  width: wp(60),
+  height: wp(60),
+  borderRadius: wp(30),
+  backgroundColor: '#000000',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.25,
+  shadowRadius: 8,
+  elevation: 8,
+},
+superlikeButton: {
+  width: wp(70),
+  height: wp(70),
+  borderRadius: wp(35),
+  backgroundColor: '#F4C945',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#F4C945',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.35,
+  shadowRadius: 8,
+  elevation: 8,
+},
+likeButton: {
+  width: wp(60),
+  height: wp(60),
+  borderRadius: wp(30),
+  backgroundColor: '#000000',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.25,
+  shadowRadius: 8,
+  elevation: 8,
+},
+blockReportRow: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: wp(0),
+  paddingTop: hp(8),
+},
+textButton: {
+  paddingVertical: hp(12),
+  paddingHorizontal: wp(24),
+},
+blockText: {
+  fontSize: wp(15),
+  color: '#000000',
+  fontWeight: '600',
+  fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  letterSpacing: 0.2,
+},
+reportText: {
+  fontSize: wp(15),
+  color: '#FF3B30',
+  fontWeight: '600',
+  fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  letterSpacing: 0.2,
+},
 });
 
 export default styles;
