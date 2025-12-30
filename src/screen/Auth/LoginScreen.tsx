@@ -14,7 +14,7 @@ import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass
 import LinearGradient from 'react-native-linear-gradient';
 
 
-interface Props {
+interface Props { 
   navigation?: NativeStackNavigationProp<AuthStackParamList, 'LoginScreen'>;
 }
 
