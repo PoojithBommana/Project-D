@@ -61,6 +61,7 @@ export type OnboardingStackParamList = {
     gender: string;
     age: number;
     location: string;
+    city?: string;
     photos?: string[];
     showOnlyFirstLetter: boolean;
     bio?: string;
@@ -78,6 +79,7 @@ export type OnboardingStackParamList = {
     gender: string;
     age: number;
     location: string;
+    city?: string;
     photo?: string;
     photos?: string[];
     showOnlyFirstLetter: boolean;

@@ -760,6 +760,11 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
         payload.longitude = longitude;
       }
 
+      // City
+      if (routeParams?.city) {
+        payload.city = routeParams.city;
+      }
+
       const response = await submitOnboardingUpdate(payload, accessToken || undefined);
       console.log('[DevicePermissionsScreen] Onboarding UPDATE response:', response);
       if (!response?.success) {

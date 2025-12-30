@@ -112,6 +112,7 @@ export default function InterestsSelectionScreen({ navigation, route }: Props) {
         gender: route?.params?.gender || '',
         age: route?.params?.age || 0,
         location: route?.params?.location || '',
+        city: route?.params?.city || '',
         ...(route?.params?.latitude !== undefined &&
           route?.params?.longitude !== undefined && {
             latitude: route?.params?.latitude,

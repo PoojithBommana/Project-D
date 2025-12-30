@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  ImageBackground,
   Dimensions,
   StyleSheet,
   TouchableOpacity,
@@ -32,8 +33,11 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { Profile } from '../../../types/Profile';
 import { getApiCall, postApiCall } from '../../../config/apiCall';
+import { hp } from '../../../utils/responsive';
+import { Plusicon } from '../../../assets';
 import styles from './PeopleScreenStyles';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -68,19 +72,16 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   const isScrolling = useSharedValue(false);
   const contentHeight = useSharedValue(0);
   const scrollViewHeight = useSharedValue(0);
-  const showBottomActions = useSharedValue(false);
 
   React.useEffect(() => {
     if (!isTopCard) {
       translateY.value = -stackOffset;
       scale.value = stackScale;
       opacity.value = stackOpacity;
-      showBottomActions.value = false; // Hide buttons when not top card
     } else {
       translateY.value = 0;
       scale.value = 1;
       opacity.value = 1;
-      showBottomActions.value = false; // Reset when card becomes top
     }
   }, [isTopCard, stackOffset, stackScale, stackOpacity]);
 
@@ -98,15 +99,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       contentHeight.value = contentHeightValue;
       scrollViewHeight.value = scrollViewHeightValue;
       
-      // Show buttons when scrolled near the bottom (within 100px of bottom)
-      // Also show if content fits in view (scrollPosition is 0 or very small)
-      const threshold = 100;
-      const isAtTop = scrollPosition <= 10;
-      const isNearBottom = contentHeightValue > 0 && scrollViewHeightValue > 0 && 
-                          (scrollPosition + scrollViewHeightValue >= contentHeightValue - threshold);
-      
-      // Only show buttons when scrolled to bottom, not at top
-      showBottomActions.value = isNearBottom && !isAtTop;
     },
     onBeginDrag: () => {
       isScrolling.value = true;
@@ -223,36 +215,19 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     }
   }, [profile.id]);
 
-  const primaryImage = profile.images && profile.images.length > 0 
-    ? { uri: profile.images[0] } 
+  const rawData = profile.rawData || {};
+  const profilePhoto = rawData.profile_photo || rawData.profilePicture || rawData.profile_picture || 
+                      (profile.images && profile.images.length > 0 ? profile.images[0] : null);
+  const primaryImage = profilePhoto 
+    ? { uri: profilePhoto } 
     : require('../../../assets/girl.png');
+  
+  const bannerImage = profile.images && profile.images.length > 0 
+    ? profile.images[0] 
+    : profilePhoto;
 
   const staticZIndex = isTopCard ? 1000 : 100 - index;
 
-  // Track visibility state for conditional rendering
-  const [showActions, setShowActions] = React.useState(false);
-  
-  // Sync animated value to state
-  useAnimatedReaction(
-    () => showBottomActions.value && isTopCard,
-    (shouldShow) => {
-      runOnJS(setShowActions)(shouldShow);
-    },
-    [isTopCard],
-  );
-  
-  // Animated style for bottom actions visibility
-  const bottomActionsStyle = useAnimatedStyle(() => {
-    const shouldShow = showBottomActions.value && isTopCard;
-    return {
-      opacity: shouldShow ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 200 }),
-      transform: [
-        {
-          translateY: shouldShow ? withTiming(0, { duration: 200 }) : withTiming(50, { duration: 200 }),
-        },
-      ],
-    };
-  });
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -271,47 +246,92 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           }}
           bounces={true}
         >
-          {/* Image Section */}
+          {/* Full Page Image Section */}
           <View style={styles.imageContainer}>
-          <Image
-            source={primaryImage}
-            style={styles.cardImage}
-            resizeMode="cover"
-          />
+            <Image
+              source={primaryImage}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
             <LinearGradient
               colors={['transparent', 'transparent', 'rgba(0,0,0,0.6)']}
               style={styles.gradientOverlay}
               pointerEvents="none"
             />
 
-            {/* Connect Button - Top Right with Glass Effect */}
-        {isTopCard && (
-            <TouchableOpacity
-              style={styles.connectButton}
-              onPress={handleConnectPress}
-              activeOpacity={0.8}
-            >
-              {Platform.OS === 'ios' ? (
-                <BlurView
-                  blurType="light"
-                  blurAmount={10}
-                  style={styles.connectButtonGlass}
-                  reducedTransparencyFallbackColor="rgba(255,255,255,0.8)"
-                />
-              ) : (
-                <View style={styles.androidGlassButton} />
+            {/* Profile Info Overlay - Exact replica from ProfileScreen */}
+            <View style={styles.profileInfoOverlay}>
+              {/* Thumbnail with + icon and Name */}
+              <View style={styles.profileInfoContainer}>
+                <View style={styles.thumbnailContainer}>
+                  <Image
+                    source={
+                      profilePhoto
+                        ? { uri: profilePhoto }
+                        : require('../../../assets/user.png')
+                    }
+                    style={styles.thumbnailPicture}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.plusIconContainer}>
+                    <Image source={Plusicon} style={styles.plusIcon} />
+                  </View>
+                </View>
+                
+                {/* Name and Verified Badge */}
+                <View style={styles.nameVerifiedContainer}>
+                  <Text style={styles.profileName}>
+                    {profile.name || rawData.first_name || rawData.name || 'Unknown'}
+                  </Text>
+                  {rawData.is_verified && (
+                    <Icon name="checkmark-circle" size={18} color="#1DA1F2" style={styles.verifiedIcon} />
+                  )}
+                </View>
+              </View>
+
+              {/* Username */}
+              {rawData.username && (
+                <View style={styles.usernameFollowersContainer}>
+                  <Text style={styles.usernameFollowersText}>
+                    {rawData.username}
+                  </Text>
+                </View>
               )}
-              <Text style={styles.connectButtonText}>Connect</Text>
-            </TouchableOpacity>
-            )}
 
+              {/* Location */}
+              {(rawData.location || profile.location) && (
+                <View style={styles.profileLocationContainer}>
+                  <Icon name="location-outline" size={16} color="#FFFFFF" style={styles.profileLocationIcon} />
+                  <Text style={styles.profileLocationText}>{rawData.location || profile.location}</Text>
+                </View>
+              )}
+              {rawData.city && (
+                <View style={styles.profileLocationContainer}>
+                  <Icon name="location-outline" size={16} color="#FFFFFF" style={styles.profileLocationIcon} />
+                  <Text style={styles.profileLocationText}>{rawData.city}</Text>
+                </View>
+              )}
 
-            {/* Name overlay on image bottom */}
-            <View style={styles.imageNameOverlay}>
-              <Text style={styles.nameText}>
-                {profile.name?.split(' ')[0] || 'Unknown'}
-                <Text style={styles.ageText}>, {profile.age || 0}</Text>
-            </Text>
+              {/* Action Buttons */}
+              <View style={styles.accountButtonsContainer}>
+                <TouchableOpacity
+                  style={styles.accountButton}
+                  onPress={handleConnectPress}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.accountButtonText}>
+                    Connect
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.accountButton}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.accountButtonText}>
+                    Share Profile
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -322,11 +342,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               <View style={styles.bioCard}>
                 <Text style={styles.sectionTitle}>My bio</Text>
                 <Text style={styles.bioText}>{profile.bio}</Text>
-                <View style={styles.divider} />
-                <TouchableOpacity style={styles.complimentButton}>
-                  <Text style={styles.complimentIcon}>💬</Text>
-                  <Text style={styles.complimentText}>Compliment</Text>
-                </TouchableOpacity>
               </View>
             )}
 
@@ -335,12 +350,72 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               const rawData = profile.rawData || {};
               const tags = [];
               
+              // Email
+              if (rawData.email && rawData.email.trim() !== '') {
+                tags.push(
+                  <View key="email" style={styles.pillTag}>
+                    <Icon name="mail-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.email}</Text>
+                  </View>
+                );
+              }
+              
+              // Username
+              if (rawData.username && rawData.username.trim() !== '') {
+                tags.push(
+                  <View key="username" style={styles.pillTag}>
+                    <Icon name="person-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.username}</Text>
+                  </View>
+                );
+              }
+              
+              // City
+              if (rawData.city && rawData.city.trim() !== '') {
+                tags.push(
+                  <View key="city" style={styles.pillTag}>
+                    <Icon name="location-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.city}</Text>
+                  </View>
+                );
+              }
+              
+              // Gender
+              if (rawData.gender && rawData.gender.trim() !== '') {
+                tags.push(
+                  <View key="gender" style={styles.pillTag}>
+                    <Icon name="person-circle-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.gender}</Text>
+                  </View>
+                );
+              }
+              
+              // Age
+              if (rawData.age && rawData.age > 0) {
+                tags.push(
+                  <View key="age" style={styles.pillTag}>
+                    <Icon name="calendar-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.age} years</Text>
+                  </View>
+                );
+              }
+              
               // Height - only if exists and not null
               if (rawData.height_cm && rawData.height_cm !== null) {
                 tags.push(
-                  <View key="height" style={styles.tag}>
-                    <Text style={styles.tagIcon}>📏</Text>
-                    <Text style={styles.tagText}>{rawData.height_cm} cm</Text>
+                  <View key="height" style={styles.pillTag}>
+                    <Icon name="resize-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.height_cm} cm</Text>
+                  </View>
+                );
+              }
+              
+              // Birthday
+              if (rawData.birthday && rawData.birthday.trim() !== '') {
+                tags.push(
+                  <View key="birthday" style={styles.pillTag}>
+                    <Icon name="gift-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.birthday}</Text>
                   </View>
                 );
               }
@@ -348,9 +423,9 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               // Drinking - only if exists and not empty
               if (rawData.drinking && rawData.drinking.trim() !== '') {
                 tags.push(
-                  <View key="drinking" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🍷</Text>
-                    <Text style={styles.tagText}>{rawData.drinking}</Text>
+                  <View key="drinking" style={styles.pillTag}>
+                    <Icon name="wine-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.drinking}</Text>
                   </View>
                 );
               }
@@ -358,19 +433,19 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               // Smoking - only if exists and not empty
               if (rawData.smoking && rawData.smoking.trim() !== '') {
                 tags.push(
-                  <View key="smoking" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🚬</Text>
-                    <Text style={styles.tagText}>{rawData.smoking}</Text>
+                  <View key="smoking" style={styles.pillTag}>
+                    <Icon name="flame-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.smoking}</Text>
                   </View>
                 );
               }
               
-              // Zodiac sign - only if exists and not empty
-              if (rawData.zodiac_sign && rawData.zodiac_sign.trim() !== '') {
+              // Currently
+              if (rawData.currently && rawData.currently.trim() !== '') {
                 tags.push(
-                  <View key="zodiac" style={styles.tag}>
-                    <Text style={styles.tagIcon}>♉</Text>
-                    <Text style={styles.tagText}>{rawData.zodiac_sign}</Text>
+                  <View key="currently" style={styles.pillTag}>
+                    <Icon name="briefcase-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.currently}</Text>
                   </View>
                 );
               }
@@ -378,9 +453,19 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               // Religion - only if exists and not empty
               if (rawData.religion && rawData.religion.trim() !== '') {
                 tags.push(
-                  <View key="religion" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🤔</Text>
-                    <Text style={styles.tagText}>{rawData.religion}</Text>
+                  <View key="religion" style={styles.pillTag}>
+                    <Icon name="happy-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.religion}</Text>
+                  </View>
+                );
+              }
+              
+              // Zodiac sign - only if exists and not empty
+              if (rawData.zodiac_sign && rawData.zodiac_sign.trim() !== '') {
+                tags.push(
+                  <View key="zodiac" style={styles.pillTag}>
+                    <Icon name="star-outline" size={16} color="#000000" style={styles.tagIcon} />
+                    <Text style={styles.pillTagText}>{rawData.zodiac_sign}</Text>
                   </View>
                 );
               }
@@ -401,37 +486,20 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
             {/* I'm looking for Section */}
             {(() => {
               const rawData = profile.rawData || {};
-              const tags = [];
+              const qualities = rawData.qualities || [];
               
-              // Dating preferences - only if exists
-              if (rawData.dating_preferences && Array.isArray(rawData.dating_preferences) && rawData.dating_preferences.length > 0) {
-                rawData.dating_preferences.forEach((pref: string, idx: number) => {
-                  if (pref && pref.trim() !== '') {
-                    tags.push(
-                      <View key={`pref-${idx}`} style={styles.tag}>
-                        <Text style={styles.tagIcon}>🔍</Text>
-                        <Text style={styles.tagText}>{pref}</Text>
-                      </View>
-                    );
-                  }
-                });
-              } else if (rawData.looking_for && rawData.looking_for.trim() !== '') {
-                tags.push(
-                  <View key="looking-for" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🔍</Text>
-                    <Text style={styles.tagText}>{rawData.looking_for}</Text>
-                  </View>
-                );
-              }
-              
-              // Only show the section if there are tags
-              if (tags.length === 0) return null;
+              if (!Array.isArray(qualities) || qualities.length === 0) return null;
               
               return (
                 <View style={styles.lookingForCard}>
                   <Text style={styles.sectionTitle}>I'm looking for</Text>
                   <View style={styles.tagsContainer}>
-                    {tags}
+                    {qualities.map((quality: string, index: number) => (
+                      <View key={index} style={styles.pillTag}>
+                        <Icon name="search-outline" size={16} color="#000000" style={styles.tagIcon} />
+                        <Text style={styles.pillTagText}>{quality}</Text>
+                      </View>
+                    ))}
                   </View>
                 </View>
               );
@@ -473,37 +541,43 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               </View>
             )}
 
-            {/* Interests Section */}
+            {/* My interests Section */}
             {(() => {
               const rawData = profile.rawData || {};
-              const interests: string[] = [];
+              const activityInterests = rawData.activity_interests || [];
               
-              // Get hobbies from backend - can be array or object with categories
-              if (Array.isArray(rawData.hobbies)) {
-                interests.push(...rawData.hobbies.filter(Boolean));
-              } else if (rawData.hobbies && typeof rawData.hobbies === 'object') {
-                // If hobbies is an object with categories (e.g., {creative: [...], chill: [...]})
-                Object.values(rawData.hobbies).forEach((categoryInterests: any) => {
-                  if (Array.isArray(categoryInterests)) {
-                    interests.push(...categoryInterests.filter(Boolean));
-                  }
-                });
-              }
-              
-              // Also check profile.interests as fallback
-              if (interests.length === 0 && profile.interests && profile.interests.length > 0) {
-                interests.push(...profile.interests);
-              }
-              
-              if (interests.length === 0) return null;
+              if (!Array.isArray(activityInterests) || activityInterests.length === 0) return null;
               
               return (
                 <View style={styles.interestsCard}>
-                  <Text style={styles.sectionTitle}>Interests</Text>
+                  <Text style={styles.sectionTitle}>My interests</Text>
                   <View style={styles.tagsContainer}>
-                    {interests.map((interest, idx) => (
-                      <View key={idx} style={styles.tag}>
-                        <Text style={styles.tagText}>{interest}</Text>
+                    {activityInterests.map((interest: string, index: number) => (
+                      <View key={index} style={styles.pillTag}>
+                        <Icon name="heart-outline" size={16} color="#000000" style={styles.tagIcon} />
+                        <Text style={styles.pillTagText}>{interest}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Causes & Communities Section */}
+            {(() => {
+              const rawData = profile.rawData || {};
+              const causes = rawData.causes_communities || [];
+              
+              if (!Array.isArray(causes) || causes.length === 0) return null;
+              
+              return (
+                <View style={styles.interestsCard}>
+                  <Text style={styles.sectionTitle}>Causes & Communities</Text>
+                  <View style={styles.tagsContainer}>
+                    {causes.map((cause: string, index: number) => (
+                      <View key={index} style={styles.pillTag}>
+                        <Icon name="people-outline" size={16} color="#000000" style={styles.tagIcon} />
+                        <Text style={styles.pillTagText}>{cause}</Text>
                       </View>
                     ))}
                   </View>
@@ -515,167 +589,185 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
             {profile.images && profile.images.length > 1 && (
               <View style={styles.photosCard}>
                 <Text style={styles.sectionTitle}>More Photos</Text>
-                <View style={styles.photosGrid}>
+                <View style={styles.photosList}>
                   {profile.images.slice(1).map((imageUri, idx) => (
-                    <Image
-                      key={idx}
-                      source={{ uri: imageUri }}
-                      style={styles.gridPhoto}
-                      resizeMode="cover"
-                    />
+                    <View key={idx} style={styles.photoItem}>
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.fullWidthPhoto}
+                        resizeMode="cover"
+                      />
+                    </View>
                   ))}
-        </View>
+                </View>
+                
+                {/* Compliment Button - Below Photos */}
+                {isTopCard && (
+                  <View style={styles.complimentButtonContainer}>
+                    <View style={styles.complimentDivider} />
+                    <TouchableOpacity
+                      style={styles.complimentButtonBelow}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.complimentIconContainer}>
+                        <Icon name="chatbubble-ellipses-outline" size={22} color="#333333" />
+                        <Icon name="heart" size={10} color="#333333" style={styles.complimentHeartIcon} />
+                      </View>
+                      <Text style={styles.complimentText}>Compliment</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 
-            {/* Bottom Spacing for Action Buttons */}
-            <View style={{ height: 140 }} />
+            {/* Action Buttons - Right below More Photos */}
+            {isTopCard && (
+              <View style={styles.inlineActionsContainer}>
+                <View style={styles.actionButtonsRow}>
+                  {/* Pass Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 400 });
+                      opacity.value = withTiming(0, { duration: 350 }, () => {
+                        runOnJS(onSwipeComplete)('left');
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.passButton}>
+                      <Icon name="close" size={28} color="#FFFFFF" />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Superlike Button - Center, Larger */}
+                  <TouchableOpacity
+                    style={styles.actionButtonCenter}
+                    onPress={() => {
+                      const performSuperlike = async () => {
+                        try {
+                          const accessToken = await AsyncStorage.getItem('accessToken');
+                          if (accessToken) {
+                            const actionPayload = {
+                              target_user_id: parseInt(profile.id, 10),
+                              action: 'superlike',
+                            };
+                            
+                            console.log('=== SWIPE ACTION API Call ===');
+                            console.log('Payload:', JSON.stringify(actionPayload, null, 2));
+                            
+                            const actionResponse = await postApiCall(
+                              'POST',
+                              'SWIPE',
+                              'ACTION',
+                              actionPayload,
+                              accessToken,
+                            );
+
+                            console.log('=== SWIPE ACTION API Response ===');
+                            console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
+                            console.log('Response Status Code:', actionResponse?.statusCode);
+                            console.log('Response Error:', actionResponse?.error);
+                            console.log('Response Data:', actionResponse?.response);
+                            console.log('===================================');
+
+                            if (actionResponse?.response?.match === true) {
+                              Alert.alert(
+                                '🎉 It\'s a Match!',
+                                actionResponse?.response?.message || 'You both liked each other!',
+                              );
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error calling superlike API:', error);
+                        }
+                      };
+                      
+                      performSuperlike();
+                      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
+                      opacity.value = withTiming(0, { duration: 350 }, () => {
+                        runOnJS(onSwipeComplete)('right');
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.superlikeButton}>
+                      <Icon name="star" size={28} color="#000000" />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Like Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
+                      opacity.value = withTiming(0, { duration: 350 }, () => {
+                        runOnJS(onSwipeComplete)('right');
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.likeButton}>
+                      <Icon name="heart" size={28} color="#FFFFFF" />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Block and Report Text Buttons */}
+                <View style={styles.blockReportRow}>
+                  <TouchableOpacity
+                    style={styles.textButton}
+                    onPress={() => {
+                      Alert.alert(
+                        'Block User',
+                        'Are you sure you want to block this user?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Block',
+                            style: 'destructive',
+                            onPress: async () => {
+                              // TODO: Implement block API call
+                              Alert.alert('User blocked');
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Text style={styles.blockText}>Block</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.textButton}
+                    onPress={() => {
+                      Alert.alert(
+                        'Report User',
+                        'Why are you reporting this user?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Report',
+                            style: 'destructive',
+                            onPress: async () => {
+                              // TODO: Implement report API call
+                              Alert.alert('User reported');
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Text style={styles.reportText}>Report</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Bottom Spacing */}
+            <View style={{ height: hp(40) }} />
           </View>
         </Animated.ScrollView>
-
-        {/* Bottom Action Buttons - Fixed at bottom, shown only when scrolled to bottom */}
-        {isTopCard && showActions && (
-          <Animated.View style={[styles.bottomActionsContainer, bottomActionsStyle]} pointerEvents={showActions ? 'auto' : 'none'}>
-            <View style={styles.actionButtonsRow}>
-              {/* Pass Button */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 400 });
-                  opacity.value = withTiming(0, { duration: 350 }, () => {
-                    runOnJS(onSwipeComplete)('left');
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.passButton}>
-                  <Text style={styles.passIcon}>✕</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Superlike Button */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  const performSuperlike = async () => {
-                    try {
-                      const accessToken = await AsyncStorage.getItem('accessToken');
-                      if (accessToken) {
-                        const actionPayload = {
-                          target_user_id: parseInt(profile.id, 10),
-                          action: 'superlike',
-                        };
-                        
-                        console.log('=== SWIPE ACTION API Call ===');
-                        console.log('Payload:', JSON.stringify(actionPayload, null, 2));
-                        
-                        const actionResponse = await postApiCall(
-                          'POST',
-                          'SWIPE',
-                          'ACTION',
-                          actionPayload,
-                          accessToken,
-                        );
-
-                        console.log('=== SWIPE ACTION API Response ===');
-                        console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
-                        console.log('Response Status Code:', actionResponse?.statusCode);
-                        console.log('Response Error:', actionResponse?.error);
-                        console.log('Response Data:', actionResponse?.response);
-                        console.log('===================================');
-
-                        if (actionResponse?.response?.match === true) {
-                          Alert.alert(
-                            '🎉 It\'s a Match!',
-                            actionResponse?.response?.message || 'You both liked each other!',
-                          );
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error calling superlike API:', error);
-                    }
-                  };
-                  
-                  performSuperlike();
-                  translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
-                  opacity.value = withTiming(0, { duration: 350 }, () => {
-                    runOnJS(onSwipeComplete)('right');
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.superlikeButton}>
-                  <Text style={styles.superlikeIcon}>⭐</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Like Button */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
-                  opacity.value = withTiming(0, { duration: 350 }, () => {
-                    runOnJS(onSwipeComplete)('right');
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.likeButton}>
-                  <Text style={styles.likeIcon}>♥</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Block and Report Text Buttons */}
-            <View style={styles.blockReportRow}>
-              <TouchableOpacity
-                style={styles.textButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Block User',
-                    'Are you sure you want to block this user?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Block',
-                        style: 'destructive',
-                        onPress: async () => {
-                          // TODO: Implement block API call
-                          Alert.alert('User blocked');
-                        },
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.blockText}>Block</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.textButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Report User',
-                    'Why are you reporting this user?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Report',
-                        style: 'destructive',
-                        onPress: async () => {
-                          // TODO: Implement report API call
-                          Alert.alert('User reported');
-                        },
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.reportText}>Report</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        )}
       </Animated.View>
     </GestureDetector>
   );

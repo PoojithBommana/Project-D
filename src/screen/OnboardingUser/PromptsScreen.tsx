@@ -40,6 +40,7 @@ interface Props {
 export default function PromptsScreen({ navigation, route }: Props) {
   const [bio, setBio] = useState('');
   const [username, setUsername] = useState(route?.params?.username || '');
+  const [city, setCity] = useState('');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isUsernameValid, setIsUsernameValid] = useState(!!route?.params?.username);
@@ -51,6 +52,7 @@ export default function PromptsScreen({ navigation, route }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const bioInputRef = useRef<TextInput>(null);
   const usernameInputRef = useRef<TextInput>(null);
+  const cityInputRef = useRef<TextInput>(null);
   const usernameCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check username availability against backend /auth/username/check/ (case-insensitive)
@@ -242,6 +244,7 @@ export default function PromptsScreen({ navigation, route }: Props) {
         gender: route?.params?.gender || '',
         age: route?.params?.age || 0,
         location: route?.params?.location || '',
+        city: city.trim() || '',
         photo: profilePhoto || undefined,
         photos: route?.params?.photos || [],
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
@@ -314,8 +317,8 @@ export default function PromptsScreen({ navigation, route }: Props) {
                   onChangeText={handleUsernameChange}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={() => bioInputRef.current?.focus()}
+                  returnKeyType="next"
+                  onSubmitEditing={() => cityInputRef.current?.focus()}
                   accessibilityLabel="Username input"
                   accessibilityHint="Enter your username"
                 />
@@ -334,6 +337,27 @@ export default function PromptsScreen({ navigation, route }: Props) {
                   Username is not available
                 </Text>
               )}
+            </View>
+
+            {/* City Section */}
+            <View style={styles.usernameSection}>
+              <Text style={styles.sectionLabel}>City</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  ref={cityInputRef}
+                  style={styles.usernameInput}
+                  placeholder="Enter your city"
+                  placeholderTextColor="#999999"
+                  value={city}
+                  onChangeText={setCity}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => bioInputRef.current?.focus()}
+                  accessibilityLabel="City input"
+                  accessibilityHint="Enter your city"
+                />
+              </View>
             </View>
 
             {/* Profile Photo Container */}
