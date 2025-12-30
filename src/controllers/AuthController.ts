@@ -24,6 +24,9 @@ export interface SocialLoginResponse {
   existing_user?: any;
   can_create_new_account?: boolean;
   is_new?: boolean;
+  uid?: string;
+  phone?: string | null;
+  next?: string;
   access?: string;
   refresh?: string;
   user_id?: number;
@@ -130,6 +133,7 @@ export interface CreateNewAccountResponse {
   access?: string;
   refresh?: string;
   next_step?: string;
+  user_id?: number;
   error?: string;
 }
 
@@ -264,7 +268,27 @@ class AuthController {
         return {
           account_exists: true,
           existing_user: data.existing_user,
+          can_create_new_account: data?.can_create_new_account ?? false,
+          onboarding_complete: data?.onboarding_complete ?? data?.existing_user?.onboarding_complete,
+          user_id: data?.existing_user?.id ?? data?.user_id,
+          access: data?.access,
+          refresh: data?.refresh,
+          message: data?.message,
+        };
+      }
+
+      if (data?.account_exists === false) {
+        return {
+          account_exists: false,
+          uid: data?.uid,
+          email: data?.email,
+          phone: data?.phone,
+          next: data?.next,
           can_create_new_account: data?.can_create_new_account ?? true,
+          access: data?.access,
+          refresh: data?.refresh,
+          user_id: data?.user_id,
+          onboarding_complete: data?.onboarding_complete,
           message: data?.message,
         };
       }
@@ -428,6 +452,7 @@ class AuthController {
           access: data.access,
           refresh: data.refresh,
           next_step: data?.next_step,
+          user_id: data?.user_id,
         };
       }
 

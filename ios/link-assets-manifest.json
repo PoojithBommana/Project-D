@@ -2,6 +2,30 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/fonts/BebasNeue-Regular.ttf",
+      "sha1": "8b3aaeb978f3cb5f575860774b50c332338563c1"
+    },
+    {
+      "path": "src/assets/fonts/Coolvetica Rg It.ttf",
+      "sha1": "a9a5cab202a6e27f73c665973a16469dda1b7d8f"
+    },
+    {
+      "path": "src/assets/fonts/CoolveticaHvComp.ttf",
+      "sha1": "58ea71cf85da42fb5a2ec3d79551aa5f8b155272"
+    },
+    {
+      "path": "src/assets/fonts/CoolveticaRg.ttf",
+      "sha1": "42a2a343152d79df631aa19fa08223d4d285c883"
+    },
+    {
+      "path": "src/assets/fonts/CoolveticaRgCond.ttf",
+      "sha1": "a0a3992704705be0597d8ebffbfc8dbad5918d71"
+    },
+    {
+      "path": "src/assets/fonts/CoolveticaRgCram.ttf",
+      "sha1": "ee3c5b656fcd7965f906297835150708b3cf836f"
+    },
+    {
       "path": "src/assets/fonts/GTMaruBlack.ttf",
       "sha1": "d8a9a2eaefe184429d242408768e293ab677f709"
     },

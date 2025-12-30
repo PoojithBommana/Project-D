@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: rs(12),
     borderWidth: 2,
-    borderColor: '#FEFFAF',
+    borderColor: 'grey',
     paddingHorizontal: wp(16),
     fontSize: rf(16),
     fontFamily: 'GTMaruBold',
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     height: rs(20),
     borderRadius: rs(4),
     borderWidth: rs(2),
-    borderColor: '#FEFFAF',
+    borderColor: 'black',
     marginRight: wp(12),
     marginTop: rs(2),
     justifyContent: 'center',
@@ -127,9 +127,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     backgroundColor: '#FDFF8E',
     borderRadius: rs(12),
-   
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   continueButtonActive: {
     backgroundColor: '#FDFF8E',
@@ -142,6 +149,13 @@ const styles = StyleSheet.create({
   },
   continueButtonTextActive: {
     color: 'black',
+  },
+
+  errorText: {
+    marginTop: hp(6),
+    fontSize: rf(12),
+    fontFamily: 'GTMaruBold',
+    color: '#FF3B30',
   },
 
 });

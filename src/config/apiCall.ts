@@ -30,10 +30,11 @@ api.interceptors.response.use(response => {
 export default api;
 
 export const postApiCall = async (
-  method:string,
+  method: string,
   screenName: string,
   endpoint: string,
   params: any,
+  accessToken?: string,
 ) => {
   try {
     const commonParams = {
@@ -57,14 +58,66 @@ export const postApiCall = async (
     const finalParams = { ...commonParams, ...params };
     // console.log('Params', commonParams);
     console.log(finalParams, '----->>>finalParams');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     let responseData = await api.post(
       `${Base_URL}${API_ENDPOINTS[screenName][endpoint]}`,
       finalParams,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+      { headers },
+    );
+
+    return {
+      response: responseData.data,
+      statusCode: responseData.status,
+      statusText: responseData.statusText,
+    };
+  } catch (error: any) {
+    if (error?.response) {
+      return {
+        error: true,
+        response: error?.response?.data || { Message: error?.message || 'Server error' },
+        statusCode: error?.response?.status,
+        statusText: error?.response?.statusText,
+      };
+    } else if (error.request) {
+      return {
+        error: true,
+        response: { Message: 'Network error: Unable to reach server' },
+      };
+    } else {
+      return {
+        error: true,
+        response: { Message: error?.message || 'Unknown error occurred' },
+      };
+    }
+  }
+};
+
+export const patchApiCall = async (
+  screenName: string,
+  endpoint: string,
+  params: any,
+  accessToken?: string,
+) => {
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const responseData = await api.patch(
+      `${Base_URL}${API_ENDPOINTS[screenName][endpoint]}`,
+      params,
+      { headers },
     );
 
     return {
@@ -98,6 +151,7 @@ export const getApiCall = async (
   screenName: string,
   endpoint: string,
   accessToken?: string,
+  params?: Record<string, any>,
 ) => {
   try {
     const headers: Record<string, string> = {
@@ -110,6 +164,7 @@ export const getApiCall = async (
 
     const responseData = await api.get(API_ENDPOINTS[screenName][endpoint], {
       headers,
+      params,
     });
 
     return {

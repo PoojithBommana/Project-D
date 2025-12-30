@@ -4,7 +4,7 @@ import { wp, hp, rf, rs } from '../utils/responsive';
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#90CAF9',
+    backgroundColor: '#FFFCF1',
   },
   container: {
     flex: 1,
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     marginTop: hp(100),
     alignSelf: 'center',
     borderWidth: 2,
-    borderColor: '#FEFFAF',
+    borderColor: 'grey',
     width: '100%',
   },
   title: {
@@ -150,6 +150,14 @@ const styles = StyleSheet.create({
     marginTop: hp(20),
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   continueButtonText: {
     fontSize: rf(18),

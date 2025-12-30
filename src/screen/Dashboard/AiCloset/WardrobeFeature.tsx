@@ -23,7 +23,7 @@ export interface CategoryData {
 
 export type WardrobeStackParamList = {
   Dashboard: undefined;
-  Closet: { newItemImage?: string; categoryData?: CategoryData } | undefined;
+  Closet: { newItemImage?: string; newItemName?: string; categoryData?: CategoryData } | undefined;
   Studio: undefined;
   Camera: undefined;
 };

@@ -1,7 +1,7 @@
 import { Text, View, Alert, TouchableOpacity, StatusBar, Animated, Image, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { Component } from 'react';
-// import Video from 'react-native-video'; // Commented out - bgvideo.mp4 file not found
+import Video from 'react-native-video'; // Commented out - bgvideo.mp4 file not found
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -9,7 +9,7 @@ import styles from '../../styles/LoginScreenStyles';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { rf } from '../../utils/responsive';
 import { Applogoicon, Staricon } from '../../assets/index';
-// import { Bgvideo } from '../../assets/index'; // Commented out - bgvideo.mp4 file not found
+import { Bgvideo } from '../../assets/index'; // Commented out - bgvideo.mp4 file not found
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -74,7 +74,7 @@ export default class LoginScreen extends Component<Props, State> {
       });
     });
     
-    // Navigate to AuthOptionsScreen instead of directly signing in
+    // Navigate to AuthOptionsScreen
     this.props.navigation?.navigate('AuthOptionsScreen');
   };
 
@@ -89,10 +89,9 @@ export default class LoginScreen extends Component<Props, State> {
   render() {
     return (
       <View style={styles.container}>
-        {/* Background video - commented out until bgvideo.mp4 file is added */}
-        {/* <Video
-          ref={(ref) => {
-            this.videoRef = ref;
+         <Video
+          ref={(ref: any) => {
+            (this as any).videoRef = ref;
           }}
           source={Bgvideo}
           style={styles.backgroundVideo}
@@ -103,7 +102,7 @@ export default class LoginScreen extends Component<Props, State> {
           playInBackground={false}
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
-        /> */}
+        /> 
         <SafeAreaView style={styles.overlayContainer}>
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 

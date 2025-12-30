@@ -106,17 +106,26 @@ const styles = StyleSheet.create({
   continueButton: {
     width: '100%',
     height: hp(56),
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#FDFF8E',
     borderRadius: rs(12),
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   continueButtonActive: {
-    backgroundColor: '#FDFF8D',
+    backgroundColor: '#FDFF8E',
   },
   continueButtonDisabled: {
     backgroundColor: '#E0E0E0',
-    opacity: 0.6,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   continueButtonText: {
     fontSize: rf(18),

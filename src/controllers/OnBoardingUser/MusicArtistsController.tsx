@@ -37,6 +37,19 @@ class MusicController {
    */
   async fetchFeaturedPlaylists(): Promise<FeaturedPlaylistsResponse> {
     try {
+      // FEATURED_PLAYLISTS is not configured in current API_ENDPOINTS.
+      // Safely short‑circuit instead of throwing.
+      if (!API_ENDPOINTS.MUSIC || !API_ENDPOINTS.MUSIC.FEATURED_PLAYLISTS) {
+        console.warn(
+          '[MusicController] FEATURED_PLAYLISTS endpoint is not configured in API_ENDPOINTS.MUSIC. Skipping fetchFeaturedPlaylists.',
+        );
+        return {
+          success: false,
+          error: 'FEATURED_PLAYLISTS endpoint not configured',
+          playlists: [],
+        };
+      }
+
       const apiResponse: any = await getExternalApiCall(
         API_ENDPOINTS.MUSIC.FEATURED_PLAYLISTS
       );

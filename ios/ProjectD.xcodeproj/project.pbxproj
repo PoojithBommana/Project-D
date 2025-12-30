@@ -9,19 +9,25 @@
 /* Begin PBXBuildFile section */
 		0C80B921A6F3F58F76C31292 /* libPods-ProjectD.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-ProjectD.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
-		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		E5F0632BF1DBC14800CC4A14 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
-		6A9327749BFE4EFD89123A1F /* GTMaruBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7BB8341B08A9491396504CF0 /* GTMaruBlack.ttf */; };
+		1450133447D44888AA0D5496 /* GTMaruRegular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 34E4CBE6696A403486EA62EC /* GTMaruRegular.ttf */; };
+		282E31F9BE084C568F2EF0BF /* GTMaruRegularOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A55A3231822D4B4186B57FCC /* GTMaruRegularOblique.ttf */; };
 		395EB5F8DBF448B4B33E939D /* GTMaruBlackOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1CFB459D89BA4C75A9253787 /* GTMaruBlackOblique.ttf */; };
 		5805A1C8DBD34B199097A585 /* GTMaruBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 730FE67871074A2292D7D2FA /* GTMaruBold.ttf */; };
 		64768A6CB8944FF39BA5CB51 /* GTMaruBoldOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C28C21BD3414F7DB515FEBC /* GTMaruBoldOblique.ttf */; };
+		6A9327749BFE4EFD89123A1F /* GTMaruBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7BB8341B08A9491396504CF0 /* GTMaruBlack.ttf */; };
+		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		B70CE2D2140F4D789C90233C /* GTMaruLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 33339C8B1FEC43E2BE98C090 /* GTMaruLight.ttf */; };
-		E370505CC10C433381ACE0C7 /* GTMaruLightOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 88CFD4100476469B86CB8532 /* GTMaruLightOblique.ttf */; };
-		EFDB2B9C62A24D3887276CF0 /* GTMaruMedium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 81E137D854B64E20ABDEF468 /* GTMaruMedium.ttf */; };
 		C0E43EEDAF7446B2A0CFE438 /* GTMaruMediumOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7A9698C0C72C4896949F944E /* GTMaruMediumOblique.ttf */; };
-		1450133447D44888AA0D5496 /* GTMaruRegular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 34E4CBE6696A403486EA62EC /* GTMaruRegular.ttf */; };
-		282E31F9BE084C568F2EF0BF /* GTMaruRegularOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A55A3231822D4B4186B57FCC /* GTMaruRegularOblique.ttf */; };
+		E370505CC10C433381ACE0C7 /* GTMaruLightOblique.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 88CFD4100476469B86CB8532 /* GTMaruLightOblique.ttf */; };
+		E5F0632BF1DBC14800CC4A14 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		EFDB2B9C62A24D3887276CF0 /* GTMaruMedium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 81E137D854B64E20ABDEF468 /* GTMaruMedium.ttf */; };
+		DE54D52924B94D33A19BDDCC /* BebasNeue-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D4411B35942D4D7190C0FF51 /* BebasNeue-Regular.ttf */; };
+		887E0508993A470FA8772B24 /* Coolvetica Rg It.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D3C1FCDED974445081B85FC1 /* Coolvetica Rg It.ttf */; };
+		63A24C97ADD04566834B2C80 /* CoolveticaHvComp.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D972E7874C8041A38D9BD570 /* CoolveticaHvComp.ttf */; };
+		47471208316F46DABB9726A5 /* CoolveticaRg.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 37939C2B429B427AACA7A756 /* CoolveticaRg.ttf */; };
+		4CE5094B705D4368A175C5BA /* CoolveticaRgCond.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C506CC0F51FC4882968B58BA /* CoolveticaRgCond.ttf */; };
+		1E853EA6C37A48339BE1C8AF /* CoolveticaRgCram.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 511C6973A36E48FD91430923 /* CoolveticaRgCram.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,22 +35,28 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ProjectD/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ProjectD/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = ProjectD/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1CFB459D89BA4C75A9253787 /* GTMaruBlackOblique.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruBlackOblique.ttf; path = ../src/assets/fonts/GTMaruBlackOblique.ttf; sourceTree = "<group>"; };
+		33339C8B1FEC43E2BE98C090 /* GTMaruLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruLight.ttf; path = ../src/assets/fonts/GTMaruLight.ttf; sourceTree = "<group>"; };
+		34E4CBE6696A403486EA62EC /* GTMaruRegular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruRegular.ttf; path = ../src/assets/fonts/GTMaruRegular.ttf; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-ProjectD.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ProjectD.debug.xcconfig"; path = "Target Support Files/Pods-ProjectD/Pods-ProjectD.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-ProjectD.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ProjectD.release.xcconfig"; path = "Target Support Files/Pods-ProjectD/Pods-ProjectD.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-ProjectD.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ProjectD.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		730FE67871074A2292D7D2FA /* GTMaruBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruBold.ttf; path = ../src/assets/fonts/GTMaruBold.ttf; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ProjectD/AppDelegate.swift; sourceTree = "<group>"; };
+		7A9698C0C72C4896949F944E /* GTMaruMediumOblique.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruMediumOblique.ttf; path = ../src/assets/fonts/GTMaruMediumOblique.ttf; sourceTree = "<group>"; };
+		7BB8341B08A9491396504CF0 /* GTMaruBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruBlack.ttf; path = ../src/assets/fonts/GTMaruBlack.ttf; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ProjectD/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		81E137D854B64E20ABDEF468 /* GTMaruMedium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruMedium.ttf; path = ../src/assets/fonts/GTMaruMedium.ttf; sourceTree = "<group>"; };
+		88CFD4100476469B86CB8532 /* GTMaruLightOblique.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruLightOblique.ttf; path = ../src/assets/fonts/GTMaruLightOblique.ttf; sourceTree = "<group>"; };
+		8C28C21BD3414F7DB515FEBC /* GTMaruBoldOblique.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruBoldOblique.ttf; path = ../src/assets/fonts/GTMaruBoldOblique.ttf; sourceTree = "<group>"; };
+		A55A3231822D4B4186B57FCC /* GTMaruRegularOblique.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = GTMaruRegularOblique.ttf; path = ../src/assets/fonts/GTMaruRegularOblique.ttf; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		7BB8341B08A9491396504CF0 /* GTMaruBlack.ttf */ = {isa = PBXFileReference; name = "GTMaruBlack.ttf"; path = "../src/assets/fonts/GTMaruBlack.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		1CFB459D89BA4C75A9253787 /* GTMaruBlackOblique.ttf */ = {isa = PBXFileReference; name = "GTMaruBlackOblique.ttf"; path = "../src/assets/fonts/GTMaruBlackOblique.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		730FE67871074A2292D7D2FA /* GTMaruBold.ttf */ = {isa = PBXFileReference; name = "GTMaruBold.ttf"; path = "../src/assets/fonts/GTMaruBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		8C28C21BD3414F7DB515FEBC /* GTMaruBoldOblique.ttf */ = {isa = PBXFileReference; name = "GTMaruBoldOblique.ttf"; path = "../src/assets/fonts/GTMaruBoldOblique.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		33339C8B1FEC43E2BE98C090 /* GTMaruLight.ttf */ = {isa = PBXFileReference; name = "GTMaruLight.ttf"; path = "../src/assets/fonts/GTMaruLight.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		88CFD4100476469B86CB8532 /* GTMaruLightOblique.ttf */ = {isa = PBXFileReference; name = "GTMaruLightOblique.ttf"; path = "../src/assets/fonts/GTMaruLightOblique.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		81E137D854B64E20ABDEF468 /* GTMaruMedium.ttf */ = {isa = PBXFileReference; name = "GTMaruMedium.ttf"; path = "../src/assets/fonts/GTMaruMedium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		7A9698C0C72C4896949F944E /* GTMaruMediumOblique.ttf */ = {isa = PBXFileReference; name = "GTMaruMediumOblique.ttf"; path = "../src/assets/fonts/GTMaruMediumOblique.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		34E4CBE6696A403486EA62EC /* GTMaruRegular.ttf */ = {isa = PBXFileReference; name = "GTMaruRegular.ttf"; path = "../src/assets/fonts/GTMaruRegular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		A55A3231822D4B4186B57FCC /* GTMaruRegularOblique.ttf */ = {isa = PBXFileReference; name = "GTMaruRegularOblique.ttf"; path = "../src/assets/fonts/GTMaruRegularOblique.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D4411B35942D4D7190C0FF51 /* BebasNeue-Regular.ttf */ = {isa = PBXFileReference; name = "BebasNeue-Regular.ttf"; path = "../src/assets/fonts/BebasNeue-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D3C1FCDED974445081B85FC1 /* Coolvetica Rg It.ttf */ = {isa = PBXFileReference; name = "Coolvetica Rg It.ttf"; path = "../src/assets/fonts/Coolvetica Rg It.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D972E7874C8041A38D9BD570 /* CoolveticaHvComp.ttf */ = {isa = PBXFileReference; name = "CoolveticaHvComp.ttf"; path = "../src/assets/fonts/CoolveticaHvComp.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		37939C2B429B427AACA7A756 /* CoolveticaRg.ttf */ = {isa = PBXFileReference; name = "CoolveticaRg.ttf"; path = "../src/assets/fonts/CoolveticaRg.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		C506CC0F51FC4882968B58BA /* CoolveticaRgCond.ttf */ = {isa = PBXFileReference; name = "CoolveticaRgCond.ttf"; path = "../src/assets/fonts/CoolveticaRgCond.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		511C6973A36E48FD91430923 /* CoolveticaRgCram.ttf */ = {isa = PBXFileReference; name = "CoolveticaRgCram.ttf"; path = "../src/assets/fonts/CoolveticaRgCram.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +105,12 @@
 				7A9698C0C72C4896949F944E /* GTMaruMediumOblique.ttf */,
 				34E4CBE6696A403486EA62EC /* GTMaruRegular.ttf */,
 				A55A3231822D4B4186B57FCC /* GTMaruRegularOblique.ttf */,
+				D4411B35942D4D7190C0FF51 /* BebasNeue-Regular.ttf */,
+				D3C1FCDED974445081B85FC1 /* Coolvetica Rg It.ttf */,
+				D972E7874C8041A38D9BD570 /* CoolveticaHvComp.ttf */,
+				37939C2B429B427AACA7A756 /* CoolveticaRg.ttf */,
+				C506CC0F51FC4882968B58BA /* CoolveticaRgCond.ttf */,
+				511C6973A36E48FD91430923 /* CoolveticaRgCram.ttf */,
 			);
 			name = Resources;
 			path = "";
@@ -211,6 +229,12 @@
 				C0E43EEDAF7446B2A0CFE438 /* GTMaruMediumOblique.ttf in Resources */,
 				1450133447D44888AA0D5496 /* GTMaruRegular.ttf in Resources */,
 				282E31F9BE084C568F2EF0BF /* GTMaruRegularOblique.ttf in Resources */,
+				DE54D52924B94D33A19BDDCC /* BebasNeue-Regular.ttf in Resources */,
+				887E0508993A470FA8772B24 /* Coolvetica Rg It.ttf in Resources */,
+				63A24C97ADD04566834B2C80 /* CoolveticaHvComp.ttf in Resources */,
+				47471208316F46DABB9726A5 /* CoolveticaRg.ttf in Resources */,
+				4CE5094B705D4368A175C5BA /* CoolveticaRgCond.ttf in Resources */,
+				1E853EA6C37A48339BE1C8AF /* CoolveticaRgCram.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

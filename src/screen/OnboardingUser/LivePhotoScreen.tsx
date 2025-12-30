@@ -17,31 +17,17 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, Asset } from 'react-native-image-picker';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import styles from '../../styles/LivePhotoScreenStyles';
-import { submitOnboardingUpdate } from '../../utils/onboardingUpdate';
+import { uploadImageAndGetUrl } from '../../utils/imageUpload';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { postApiCall } from '../../config/apiCall';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'LivePhotoScreen'>;
   route?: {
     params: {
+      // Route params are no longer required for submitting onboarding here.
+      // We keep this structure for navigation typing but don't rely on it.
       firstName: string;
-      lastName: string;
-      username?: string;
-      gender: string;
-      age: number;
-      location: string;
-      photo?: string;
-      birthday: number;
-      photos?: string[];
-      datingGoal: string;
-      currently: string;
-      favorite_artist: string;
-      bio: string;
-      hobbies: string[];
-      known_languages: string[];
-      interested_in_genders: string[];
-      interested_age_range: number[];
-      showOnlyFirstLetter: boolean;
     };
   };
 }
@@ -155,45 +141,101 @@ export default function LivePhotoScreen({ navigation, route }: Props) {
     setIsSaving(true);
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        Alert.alert('Authentication required', 'Please log in again.');
+        setIsSaving(false);
+        return;
+      }
 
-      const livePhotoPayload = livePhoto.base64
-        ? `data:${livePhoto.type || 'image/jpeg'};base64,${livePhoto.base64}`
-        : livePhoto.uri;
-
-      const response = await submitOnboardingUpdate(
-        {
-          first_name: route?.params?.firstName || '',
-          last_name: route?.params?.lastName || '',
-          gender: route?.params?.gender || '',
-          birthday: route?.params?.birthday,
-          currently: route?.params?.currently || '',
-          favorite_artist: route?.params?.favorite_artist || '',
-          photos: route?.params?.photos || [],
-          username: route?.params?.username || '',
-          bio: route?.params?.bio || '',
-          hobbies: route?.params?.hobbies || [],
-          known_languages: route?.params?.known_languages || [],
-          dating_goal: route?.params?.datingGoal || '',
-          interested_in_genders: route?.params?.interested_in_genders || [],
-          interested_age_range: route?.params?.interested_age_range,
-          selfie_photo: livePhotoPayload,
-        },
-        accessToken || undefined,
+      // Read stored profile photo URL (set during onboarding UPDATE)
+      const storedProfilePhotoUrl = await AsyncStorage.getItem(
+        'onboarding_profile_photo_url',
       );
-      if (!response?.success) {
+      if (!storedProfilePhotoUrl) {
         Alert.alert(
-          'Could not create profile',
-          response?.error || 'Please try again in a moment.',
+          'Profile photo missing',
+          'We could not find your profile photo to compare with. Please go back and ensure a profile photo is added.',
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      // Upload live selfie to Cloudinary to get a CDN URL
+      const selfieUrl = await uploadImageAndGetUrl({
+        uri: livePhoto.uri,
+        type: livePhoto.type,
+        fileName: (livePhoto as any)?.fileName,
+      });
+
+      // Verify face by comparing live photo with stored profile photo
+      const verifyResponse = await postApiCall(
+        'POST',
+        'AUTH',
+        'VERIFY_FACE',
+        {
+          profile_photo: storedProfilePhotoUrl,
+          live_photo: selfieUrl,
+        },
+        accessToken,
+      );
+
+      console.log('[LivePhotoScreen] VERIFY_FACE response:', verifyResponse);
+
+      if (verifyResponse?.error) {
+        const errorMessage =
+          verifyResponse?.response?.message ||
+          verifyResponse?.response?.Message ||
+          'Face verification failed. Please try again.';
+        setIsSaving(false);
+        Alert.alert(
+          'Verification failed',
+          errorMessage,
+          [
+            {
+              text: 'Change profile photo',
+              onPress: () => {
+                (navigation as any)?.navigate('PromptsScreen', {
+                  ...(route?.params || {}),
+                  fromLivePhotoRetry: true,
+                });
+              },
+            },
+            { text: 'Try again', style: 'cancel' },
+          ],
+          { cancelable: true },
         );
         return;
       }
-      await AsyncStorage.setItem('onboarding_complete', 'true');
+
+      if (!verifyResponse?.response?.verified) {
+        setIsSaving(false);
+        Alert.alert(
+          'Verification failed',
+          verifyResponse?.response?.message ||
+            'Your face could not be verified. Please ensure your live photo matches your profile photos.',
+          [
+            {
+              text: 'Change profile photo',
+              onPress: () => {
+                (navigation as any)?.navigate('PromptsScreen', {
+                  ...(route?.params || {}),
+                  fromLivePhotoRetry: true,
+                });
+              },
+            },
+            { text: 'Try again', style: 'cancel' },
+          ],
+          { cancelable: true },
+        );
+        return;
+      }
+
       navigateToHome();
     } catch (error) {
-      console.error('Error completing onboarding with live photo:', error);
+      console.error('Error verifying face with live photo:', error);
       Alert.alert(
         'Something went wrong',
-        'We could not finish creating your profile. Please try again.',
+        'We could not verify your face. Please try again.',
       );
     } finally {
       setIsSaving(false);

@@ -4,24 +4,26 @@ export const API_ENDPOINTS: any = {
     VERIFY_OTP: '/auth/verify-otp',
     RESEND_OTP: '/auth/resend-otp',
     SOCIAL_LOGIN: '/auth/login/',
-    USE_EXISTING_ACCOUNT: '/auth/use-existing-account/',
-    CREATE_NEW_ACCOUNT: '/auth/create-new-account/',
+    USE_EXISTING_ACCOUNT: '/auth/account/existing/',
+    CREATE_NEW_ACCOUNT: '/auth/account/new/',
     LOGOUT: '/auth/logout/',
-    REFRESH_TOKEN: '/auth/token/refresh/',
+    REFRESH_TOKEN: '/token/refresh/',
     GET_PROFILE: '/auth/profile/',
+    VERIFY_FACE: '/auth/verify-face/',
+    USERNAME_CHECK: '/auth/username/check/',
   },
-  PROFILE: {
-    GET_PROFILES: '/profiles',
-    GET_PROFILE: '/profiles/:id',
-    UPDATE_PROFILE: '/profiles/:id',
-    SWIPE_ACTION: '/profiles/swipe',
-    GET_MATCHES: '/profiles/matches',
-  },
- 
-  MUSIC: {
-    FEATURED_PLAYLISTS: 'https://apis2.ccbp.in/spotify-clone/featured-playlists',
+  SWIPE: {
+    GET_USERS: '/auth/swipe/users/',
+    ACTION: '/auth/swipe/action/',
   },
   ONBOARDING: {
-    UPDATE: '/auth/onboarding/update/',
+    UPDATE: '/auth/onboarding-update/',
+    MUSIC_SEARCH: '/auth/onboarding/music/search/',
+  },
+  CONNECTIONS: {
+    SEND: '/auth/connections/send/',
+  },
+  WARDROBE: {
+    COLLECTION_ITEMS: '/wardrobe/collection-items/',
   },
 };

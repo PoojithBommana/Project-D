@@ -18,6 +18,7 @@ export interface Profile {
   profession?: string;
   job?: string;
   isNew?: boolean;
+  rawData?: any; // Raw backend payload for detail screen access
 }
 
 export interface SwipeAction {

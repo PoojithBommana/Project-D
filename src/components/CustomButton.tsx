@@ -1,154 +1,130 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator , Image, ImageSourcePropType} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { StyleSheet, Text, View, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
-export interface CustomButtonProps {
-  title: string;
+interface Props {
+  title?: string;
+  variant?: 'primary' | 'borderless';
   onPress?: () => void;
-  variant?: 'primary' | 'outlined' | 'social' | 'borderless';
-  disabled?: boolean;
-  loading?: boolean;
-  iconName?: string;
-  iconColor?: string;
-  iconSize?: number;
   customStyle?: ViewStyle;
   textStyle?: TextStyle;
-  imageUrl?: ImageSourcePropType;
-  iconStyle?: ViewStyle;
 }
 
-const CustomButton: React.FC<CustomButtonProps> = ({
-  title,
-  onPress,
+const LiquidButton = ({
+  title = 'Button',
   variant = 'primary',
-  disabled = false,
-  loading = false,
-  iconName,
-  iconColor,
-  iconSize = 20,
+  onPress,
   customStyle,
   textStyle,
-  iconStyle,
-  imageUrl,
-}) => {
-  const getButtonStyle = (): ViewStyle => {
-    const baseStyle: ViewStyle = {
-      borderRadius: variant === 'social' ? 25 : 30,
-      paddingVertical: variant === 'social' ? 14 : 16,
-      paddingHorizontal: variant === 'social' ? 20 : 0,
-      width: variant === 'social' ? '100%' : '100%',
-      flexDirection: variant === 'social' ? 'row' : 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      opacity: disabled || loading ? 0.6 : 1,
-    };
-
-    switch (variant) {
-      case 'primary':
-        return {
-          ...baseStyle,
-          backgroundColor: '#f8f99a', // Tagline color
-        };
-      case 'outlined':
-        return {
-          ...baseStyle,
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderColor: '#FFFFFF',
-        };
-      case 'borderless':
-        return {
-          ...baseStyle,
-          backgroundColor: 'transparent',
-          borderWidth: 0,
-        };
-      case 'social':
-        return {
-          ...baseStyle,
-          backgroundColor: 'transparent',
-          marginVertical: 5,
-        };
-      default:
-        return baseStyle;
-    }
-  };
-
-  const getTextStyle = (): TextStyle => {
-    const baseStyle: TextStyle = {
-      fontSize: 16,
-      textAlign: 'center',
-      fontFamily: variant === 'primary' ? 'OpenSans-Bold' : 'OpenSans-SemiBold',
-    };
-
-    switch (variant) {
-      case 'primary':
-        return {
-          ...baseStyle,
-          color: '#000000', // Dark text for readability on light yellow background
-        };
-      case 'outlined':
-        return {
-          ...baseStyle,
-          color: '#FFFFFF',
-        };
-      case 'borderless':
-        return {
-          ...baseStyle,
-          color: '#FFFFFF',
-        };
-      case 'social':
-        return {
-          ...baseStyle,
-          color: '#FFFFFF',
-          marginLeft: (iconName || imageUrl) ? 12 : 0,
-        };
-      default:
-        return baseStyle;
-    }
-  };
+}: Props) => {
+  if (variant === 'borderless') {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onPress}
+        style={[styles.borderlessButton, customStyle]}
+      >
+        <Text style={[styles.borderlessText, textStyle]}>{title}</Text>
+      </TouchableOpacity>
+    );
+  }
 
   return (
-    <TouchableOpacity
-      style={[getButtonStyle(), customStyle]}
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.7}
-      accessibilityRole="button"
-      accessibilityLabel={title}
-      accessibilityState={{ disabled: disabled || loading }}
-    >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? '#000000' : variant === 'social' ? '#9C27B0' : '#FFFFFF'}
-          size="small"
-        />
-      ) : (
-        <>
-          {imageUrl && (
-            <Image source={imageUrl} style={styles.icon} />
-          )}
-          {iconName && !imageUrl && (
-            <Icon
-              name={iconName}
-              size={iconSize}
-              color={iconColor || '#FFFFFF'}
-              style={[styles.icon, iconStyle]}
-            />
-          )}
-          <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-        </>
-      )}
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.container}>
+      {/* 1. The Outer Metallic Ring (Border) */}
+      <View style={styles.borderWrapper}>
+        {/* 2. The Main Dark Body Gradient */}
+        <LinearGradient
+          colors={['#5e5e5e', '#2a2a2a', '#1a1a1a']}
+          locations={[0, 0.45, 1]}
+          style={[styles.innerButton, customStyle]}
+        >
+          {/* 3. The "Liquid Glass" Gloss Effect (Top Half Only) */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.25)', 'rgba(255,255,255,0.02)']}
+            style={styles.glossOverlay}
+          />
+
+          {/* 4. Top Edge Specular Highlight (The distinct white rim inside) */}
+          <View style={styles.topInnerHighlight} />
+
+          {/* 5. Text with Drop Shadow */}
+          <Text style={[styles.text, textStyle]}>{title}</Text>
+        </LinearGradient>
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  icon: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
+  container: {
+    alignSelf: 'center',
+    margin: 20,
+  },
+  borderWrapper: {
+    padding: 2, // Acts as the border thickness
+    borderRadius: 50,
+    backgroundColor: '#b0b0b0', // Silver/Metallic border color
+    
+    // Outer Shadow for 3D "pop"
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 8, // Android shadow
+  },
+  innerButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 45,
+    borderRadius: 48, 
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden', // Clips the glass overlay inside the border
+    borderWidth: 1.5,
+    borderColor: '#000', // The dark stroke between the silver rim and the button body
+  },
+  glossOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '52%', // slightly more than half to match the "bulge" look
+    borderTopLeftRadius: 48,
+    borderTopRightRadius: 48,
+    borderBottomLeftRadius: 10, // Slight curve at the bottom of the gloss
+    borderBottomRightRadius: 10,
+  },
+  topInnerHighlight: {
+    position: 'absolute',
+    top: 2,
+    left: 15,
+    right: 15,
+    height: 1, 
+    backgroundColor: 'rgba(255,255,255,0.5)', // Strong specular highlight
+    borderRadius: 2,
+  },
+  text: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: '700',
+    // System font usually works best for the "Button" look, 
+    // but on iOS specific fonts like Helvetica Neue Bold fit the era perfectly.
+    fontFamily: 'sans-serif', // Using a cross-platform default font-family to avoid Platform reference error
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: -1 }, // Negative Y pushes shadow up (embossed)
+    textShadowRadius: 1,
+    zIndex: 10,
+  },
+  borderlessButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  borderlessText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 
-export default CustomButton;
-
+export default LiquidButton;

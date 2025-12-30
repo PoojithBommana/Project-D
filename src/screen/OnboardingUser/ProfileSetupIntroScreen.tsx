@@ -1,17 +1,8 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Animated,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/ProfileSetupIntroStyles';
 import { Setupprofileimage } from '../../assets';
 
@@ -20,8 +11,6 @@ interface Props {
 }
 
 export default function ProfileSetupIntroScreen({ navigation }: Props) {
-  const progress = 25;
-
   const handleContinue = () => {
     navigation?.navigate('UserOnboarding');
   };
@@ -32,7 +21,7 @@ export default function ProfileSetupIntroScreen({ navigation }: Props) {
       
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Let's set up your DilMil profile!!!</Text>
+          <Text style={styles.title}>Let's set up your Snixx profile!!!</Text>
         </View>
 
         <View style={styles.imageContainer}>

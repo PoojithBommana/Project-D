@@ -202,8 +202,6 @@ export default class RegisterScreen extends Component<Props, State> {
             onPress={this.handleContinue}
             customStyle={styles.continueButton}
             textStyle={styles.continueButtonText}
-            loading={loading}
-            disabled={loading}
           />
           
           <Text style={styles.privacyText}>

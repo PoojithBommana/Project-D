@@ -19,6 +19,9 @@ import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation'
 import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/DevicePermissionsScreenStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { submitOnboardingUpdate } from '../../utils/onboardingUpdate';
+import { uploadImageAndGetUrl } from '../../utils/imageUpload';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'DevicePermissionsScreen'>;
@@ -34,6 +37,25 @@ interface Props {
       photos?: string[];
       datingGoal: string;
       showOnlyFirstLetter: boolean;
+      interested_in_genders: string[];
+      interested_age_range: { min: number; max: number };
+      hobbies: string[];
+      currently?: string;
+      known_languages?: string[];
+      height_cm?: number;
+      drinking?: string;
+      smoking?: string;
+      activity_interests?: string[];
+      qualities?: string[];
+      zodiac_sign?: string;
+      music_genres?: string[];
+      music_artist_ids?: string[];
+      religion?: string;
+      causes_communities?: string[];
+      latitude?: number;
+      longitude?: number;
+      bio?: string;
+      birthday?: number;
     };
   };
 }
@@ -55,14 +77,14 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
     {
       id: 'contacts',
       title: 'Contacts',
-      description: 'So you can connect with friends already on Schmooze',
+      description: 'So you can connect with friends already on snixx',
       icon: 'contacts',
       granted: false,
     },
     {
       id: 'media',
       title: 'Media Storage',
-      description: 'So you can store Schmooze memes on your phone',
+      description: 'So you can store snixx memes on your phone',
       icon: 'folder',
       granted: false,
     },
@@ -225,7 +247,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
               PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
               {
                 title: 'Contacts Permission',
-                message: 'Schmooze needs access to your contacts to connect you with friends.',
+                message: 'snixx needs access to your contacts to connect you with friends.',
                 buttonNeutral: 'Ask Me Later',
                 buttonNegative: 'Cancel',
                 buttonPositive: 'Allow',
@@ -240,7 +262,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
               if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
                 Alert.alert(
                   'Permission Required',
-                  'Contacts permission was denied. Please enable it in Settings > Apps > Schmooze > Permissions.',
+                  'Contacts permission was denied. Please enable it in Settings > Apps > snixx > Permissions.',
                   [
                     { text: 'Cancel', style: 'cancel' },
                     { 
@@ -288,7 +310,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
             // So we'll mark it as enabled and let the user know they need to enable it in settings
             Alert.alert(
               'Contacts Permission',
-              'To enable contacts access, please go to Settings > Privacy & Security > Contacts and enable it for Schmooze.',
+              'To enable contacts access, please go to Settings > Privacy & Security > Contacts and enable it for snixx.',
               [
                 { text: 'Cancel', style: 'cancel', onPress: () => updatePermissionStatus(permissionId, false) },
                 { 
@@ -324,7 +346,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
                 PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
                 {
                   title: 'Media Permission',
-                  message: 'Schmooze needs access to your photos and media.',
+                  message: 'snixx needs access to your photos and media.',
                   buttonNeutral: 'Ask Me Later',
                   buttonNegative: 'Cancel',
                   buttonPositive: 'Allow',
@@ -345,7 +367,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
                 PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
                 {
                   title: 'Storage Permission',
-                  message: 'Schmooze needs access to your photos and media.',
+                  message: 'snixx needs access to your photos and media.',
                   buttonNeutral: 'Ask Me Later',
                   buttonNegative: 'Cancel',
                   buttonPositive: 'Allow',
@@ -390,7 +412,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
               PermissionsAndroid.PERMISSIONS.CAMERA,
               {
                 title: 'Camera Permission',
-                message: 'Schmooze needs access to your camera to take photos.',
+                message: 'snixx needs access to your camera to take photos.',
                 buttonNeutral: 'Ask Me Later',
                 buttonNegative: 'Cancel',
                 buttonPositive: 'Allow',
@@ -432,18 +454,348 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
 
   const handleGetStarted = async () => {
     animateButtonPress();
+
     // Request all permissions that are enabled, sequentially
     for (const perm of permissions) {
       if (perm.granted) {
         await requestPermission(perm.id);
         // Small delay between requests for better UX
-        await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
+        // so the permission dialogs don't feel too abrupt.
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 300));
       }
     }
-    // Continue to next screen after a short delay
-    setTimeout(() => {
-      navigateToNext();
-    }, 500);
+
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        Alert.alert('Authentication required', 'Please log in again.');
+        return;
+      }
+
+      const routeParams = route?.params as any;
+
+      // Fallback: read music selections from AsyncStorage if not on route
+      let storedMusicArtistIds: string[] | undefined;
+      let storedMusicGenres: string[] | undefined;
+      try {
+        const storedIdsJson = await AsyncStorage.getItem('onboarding_music_artist_ids');
+        const storedGenresJson = await AsyncStorage.getItem('onboarding_music_genres');
+        storedMusicArtistIds = storedIdsJson ? JSON.parse(storedIdsJson) : undefined;
+        storedMusicGenres = storedGenresJson ? JSON.parse(storedGenresJson) : undefined;
+      } catch (e) {
+        console.warn('[DevicePermissionsScreen] Failed to read stored music selections:', e);
+      }
+
+      // Normalize dating goal to API `connection_goal` values
+      const mapConnectionGoal = (goal: string): string => {
+        const goalLower = (goal || '').toLowerCase().replace(/-/g, '_');
+        const goalMap: Record<string, string> = {
+          casual: 'casual',
+          long_term: 'long_term',
+          longterm: 'long_term',
+          short_term: 'short_term',
+          shortterm: 'short_term',
+          go_with_flow: 'casual',
+          'go with flow': 'casual',
+          friendship: 'friendship',
+          friends: 'friendship',
+        };
+        return goalMap[goalLower] || 'casual';
+      };
+
+      const normalizedDatingGoal = mapConnectionGoal(routeParams?.datingGoal || '');
+
+      // Collect profile photo and gallery photos from previous steps.
+      // - `photo` is treated as the dedicated profile photo.
+      // - `photos` is treated as the gallery.
+      const profileSourceUri: string | undefined = routeParams?.photo;
+      const gallerySourceUris: string[] = (routeParams?.photos || []).filter(Boolean);
+
+      let profileUploadedUrl: string | undefined;
+      const galleryUploadedUrls: string[] = [];
+
+      // Upload or normalize the dedicated profile photo first
+      if (profileSourceUri) {
+        if (
+          profileSourceUri.startsWith('http://') ||
+          profileSourceUri.startsWith('https://')
+        ) {
+          profileUploadedUrl = profileSourceUri;
+        } else {
+          profileUploadedUrl = await uploadImageAndGetUrl({ uri: profileSourceUri });
+        }
+      }
+
+      // Upload / normalize gallery photos, skipping duplicates of the profile photo
+      for (const uri of gallerySourceUris) {
+        if (!uri) continue;
+        if (profileSourceUri && uri === profileSourceUri) {
+          // Already handled as profile photo above
+          continue;
+        }
+        if (uri.startsWith('http://') || uri.startsWith('https://')) {
+          if (!galleryUploadedUrls.includes(uri)) {
+            galleryUploadedUrls.push(uri);
+          }
+        } else {
+          const uploadedUrl = await uploadImageAndGetUrl({ uri });
+          if (!galleryUploadedUrls.includes(uploadedUrl)) {
+            galleryUploadedUrls.push(uploadedUrl);
+          }
+        }
+      }
+
+      // Bio is required and must be non-empty
+      const userBio = routeParams?.bio?.trim() || '';
+      const finalBio =
+        userBio ||
+        `Hi! I'm ${routeParams?.firstName || 'here'} and I'm looking forward to meeting new people!`;
+
+      const payload: Record<string, any> = {
+        first_name: routeParams?.firstName || '',
+        last_name: routeParams?.lastName || '',
+        gender: routeParams?.gender || '',
+        username: routeParams?.username || '',
+        bio: finalBio,
+        connection_goal: normalizedDatingGoal,
+        interested_in_genders: routeParams?.interested_in_genders || [],
+        interested_age_range: routeParams?.interested_age_range || { min: 18, max: 99 },
+      };
+
+      // Add birthday (Required - format: YYYY-MM-DD)
+      if (routeParams?.birthday) {
+        const birthdayDate = new Date(routeParams.birthday);
+        if (!isNaN(birthdayDate.getTime())) {
+          const year = birthdayDate.getFullYear();
+          const month = String(birthdayDate.getMonth() + 1).padStart(2, '0');
+          const day = String(birthdayDate.getDate()).padStart(2, '0');
+          payload.birthday = `${year}-${month}-${day}`;
+        }
+      } else {
+        const age = routeParams?.age || 0;
+        if (age > 0) {
+          const currentYear = new Date().getFullYear();
+          const birthYear = currentYear - age;
+          payload.birthday = `${birthYear}-01-01`;
+        }
+      }
+
+      // Currently (Required: "studying" or "working")
+      if (routeParams?.currently) {
+        payload.currently = routeParams.currently;
+      } else {
+        payload.currently = 'working';
+      }
+
+      // Photos and profile_photo
+      const finalPhotos: string[] = [];
+      if (profileUploadedUrl) {
+        finalPhotos.push(profileUploadedUrl);
+        payload.profile_photo = profileUploadedUrl;
+        // Persist profile photo so LivePhotoScreen can use it for VERIFY_FACE comparison
+        try {
+          await AsyncStorage.setItem('onboarding_profile_photo_url', profileUploadedUrl);
+        } catch (e) {
+          console.warn('[DevicePermissionsScreen] Failed to store profile photo URL:', e);
+        }
+      }
+      // Append gallery photos (deduped) after the profile photo
+      for (const url of galleryUploadedUrls) {
+        if (!finalPhotos.includes(url)) {
+          finalPhotos.push(url);
+        }
+      }
+
+      payload.photos = finalPhotos;
+
+      // NOTE: We intentionally do NOT send `live_photo` from this screen.
+      // The real live selfie is captured and used only for VERIFY_FACE in LivePhotoScreen.
+
+      // Hobbies
+      if (routeParams?.hobbies && routeParams.hobbies.length > 0) {
+        payload.hobbies = routeParams.hobbies;
+      } else {
+        payload.hobbies = ['photography'];
+      }
+
+      // Known languages
+      if (routeParams?.known_languages && routeParams.known_languages.length > 0) {
+        payload.known_languages = routeParams.known_languages;
+      } else {
+        payload.known_languages = ['English'];
+      }
+
+      // Height in cm
+      if (routeParams?.height_cm) {
+        payload.height_cm = routeParams.height_cm;
+      } else {
+        payload.height_cm = 170;
+      }
+
+      // Drinking
+      if (routeParams?.drinking) {
+        payload.drinking = routeParams.drinking;
+      } else {
+        payload.drinking = 'sometimes';
+      }
+
+      // Smoking
+      if (routeParams?.smoking) {
+        payload.smoking = routeParams.smoking;
+      } else {
+        payload.smoking = 'no';
+      }
+
+      // Activity interests
+      if (routeParams?.activity_interests && routeParams.activity_interests.length >= 3) {
+        payload.activity_interests = routeParams.activity_interests;
+      } else {
+        payload.activity_interests = ['hiking', 'travel', 'photography'];
+      }
+
+      // Qualities
+      if (routeParams?.qualities && routeParams.qualities.length >= 3) {
+        payload.qualities = routeParams.qualities;
+      } else {
+        payload.qualities = ['kindness', 'humor', 'loyalty'];
+      }
+
+      // Zodiac sign
+      if (routeParams?.zodiac_sign) {
+        payload.zodiac_sign = routeParams.zodiac_sign;
+      } else {
+        payload.zodiac_sign = 'aries';
+      }
+
+      // Music genres
+      if (routeParams?.music_genres && routeParams.music_genres.length >= 1) {
+        payload.music_genres = routeParams.music_genres;
+      } else if (storedMusicGenres && storedMusicGenres.length >= 1) {
+        payload.music_genres = storedMusicGenres;
+      } else {
+        payload.music_genres = ['pop'];
+      }
+
+      // Music artist ids
+      const musicArtistIds: string[] | undefined =
+        (routeParams as any)?.music_artist_ids ||
+        (routeParams as any)?.musicArtistIds ||
+        storedMusicArtistIds;
+      if (Array.isArray(musicArtistIds) && musicArtistIds.length >= 1) {
+        if (musicArtistIds.length <= 10) {
+          payload.music_artist_ids = musicArtistIds;
+        } else {
+          payload.music_artist_ids = musicArtistIds.slice(0, 10);
+        }
+      } else {
+        console.warn(
+          '[DevicePermissionsScreen] music_artist_ids not provided - backend will report this in remaining_required if required',
+          { routeMusicArtistIds: (routeParams as any)?.music_artist_ids },
+        );
+      }
+
+      // Religion (optional) – map display label to backend enum slug
+      if (routeParams?.religion) {
+        const mapReligion = (label: string): string | undefined => {
+          const key = (label || '').toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
+          const mapping: Record<string, string> = {
+            agnostic: 'agnostic',
+            atheist: 'atheist',
+            buddhist: 'buddhist',
+            catholic: 'catholic',
+            christian: 'christian',
+            hindu: 'hindu',
+            jain: 'jain',
+            jewish: 'jewish',
+            mormon: 'mormon',
+            latter_day_saint: 'latter_day_saint',
+            'latter-day_saint': 'latter_day_saint',
+            muslim: 'muslim',
+            zoroastrian: 'zoroastrian',
+            sikh: 'sikh',
+            spiritual: 'spiritual',
+            other: 'other',
+          };
+          return mapping[key];
+        };
+
+        const mapped = mapReligion(routeParams.religion);
+        if (mapped) {
+          payload.religion = mapped;
+        } else {
+          console.warn('[DevicePermissionsScreen] Unknown religion label, skipping:', routeParams.religion);
+        }
+      }
+
+      // Causes / communities (optional)
+      if (routeParams?.causes_communities) {
+        payload.causes_communities = routeParams.causes_communities;
+      }
+
+      // Location
+      let latitude: number | undefined = routeParams?.latitude;
+      let longitude: number | undefined = routeParams?.longitude;
+
+      // If we don't have numeric lat/lng but we have a "lat,lon" string, parse it
+      if ((!latitude || !longitude) && typeof routeParams?.location === 'string') {
+        const parts = routeParams.location.split(/[, ]+/).filter(Boolean);
+        if (parts.length >= 2) {
+          const lat = parseFloat(parts[0]);
+          const lon = parseFloat(parts[1]);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            latitude = latitude ?? lat;
+            longitude = longitude ?? lon;
+          }
+        }
+      }
+
+      if (routeParams?.location) {
+        payload.location =
+          typeof routeParams.location === 'string' && latitude != null && longitude != null
+            ? `${latitude},${longitude}`
+            : routeParams.location;
+      }
+      if (latitude != null && longitude != null) {
+        payload.latitude = latitude;
+        payload.longitude = longitude;
+      }
+
+      const response = await submitOnboardingUpdate(payload, accessToken || undefined);
+      console.log('[DevicePermissionsScreen] Onboarding UPDATE response:', response);
+      if (!response?.success) {
+        Alert.alert(
+          'Could not complete onboarding',
+          response?.error || 'Please try again in a moment.',
+        );
+        return;
+      }
+
+      // If onboarding is not yet complete, block navigation and show what's missing
+      if (!response.onboarding_complete) {
+        const missingFields = response.remaining_required;
+        const missingMessage =
+          missingFields && missingFields.length > 0
+            ? `Please complete these details before continuing:\n\n${missingFields.join(', ')}`
+            : 'Some required details are still missing. Please go back and complete all onboarding steps.';
+
+        Alert.alert('Profile not complete', missingMessage);
+        return;
+      }
+
+      // Mark onboarding as complete locally
+      await AsyncStorage.setItem('onboarding_complete', 'true');
+
+      // Continue to live selfie verification after a short delay
+      setTimeout(() => {
+        navigateToNext();
+      }, 500);
+    } catch (error) {
+      console.error('[DevicePermissionsScreen] Failed to call onboarding UPDATE:', error);
+      Alert.alert(
+        'Something went wrong',
+        'We could not finish creating your profile. Please try again.',
+      );
+    }
   };
 
   const navigateToNext = () => {
@@ -458,6 +810,11 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
       photos: route?.params?.photos || [],
       datingGoal: route?.params?.datingGoal || '',
       showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+      interested_in_genders: route?.params?.interested_in_genders || [],
+      interested_age_range: route?.params?.interested_age_range || { min: 18, max: 22 },
+      hobbies: route?.params?.hobbies || [],
+      bio: route?.params?.bio,
+      birthday: route?.params?.birthday,
     });
   };
 
@@ -476,9 +833,9 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
       >
         {/* Heading */}
         <View style={styles.headingContainer}>
-          <Text style={styles.heading}>Get the most out of Schmooze</Text>
+          <Text style={styles.heading}>Get the most out of snixx</Text>
           <Text style={styles.subheading}>
-            Permissions required to help Schmooze provide a tailored experience
+            Permissions required to help snixx provide a tailored experience
           </Text>
         </View>
 

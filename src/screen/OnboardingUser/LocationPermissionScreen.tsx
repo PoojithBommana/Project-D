@@ -2,7 +2,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   StatusBar,
   Animated,
   TouchableOpacity,
@@ -12,6 +11,7 @@ import {
   PermissionsAndroid,
   Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import { rf, hp, wp, rs } from '../../utils/responsive';
@@ -32,6 +32,8 @@ interface Props {
       photos?: string[];
       datingGoal: string;
       showOnlyFirstLetter: boolean;
+      interested_in_genders: string[];
+      interested_age_range: { min: number; max: number };
     };
   };
 }
@@ -78,7 +80,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: 'Location Permission',
-            message: 'DILMIL needs access to your location to find you matches nearby.',
+            message: 'SNIXX needs access to your location to find you matches nearby.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'Allow',
@@ -92,7 +94,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
         } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
           Alert.alert(
             'Permission Required',
-            'Location permission was denied. Please enable it in Settings > Apps > DILMIL > Permissions > Location.',
+            'Location permission was denied. Please enable it in Settings > Apps > SNIXX > Permissions > Location.',
             [
               { text: 'Cancel', style: 'cancel' },
               { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -126,7 +128,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
         // Fallback: guide user to enable in settings
         Alert.alert(
           'Location Permission',
-          'To enable location access, please go to Settings > Privacy & Security > Location Services and enable it for DILMIL.',
+          'To enable location access, please go to Settings > Privacy & Security > Location Services and enable it for SNIXX.',
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -137,27 +139,140 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
     }
   };
 
+  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+    return new Promise((resolve) => {
+      // Try to use @react-native-community/geolocation if available
+      let Geolocation: any = null;
+      let getCurrentPositionFn: any = null;
+      
+      try {
+        // Try to require the community geolocation package dynamically
+        const geolocationModule = require('@react-native-community/geolocation');
+        
+        // The package might export as default or named export
+        // Check different possible export structures
+        if (geolocationModule && typeof geolocationModule.getCurrentPosition === 'function') {
+          getCurrentPositionFn = geolocationModule.getCurrentPosition;
+        } else if (geolocationModule && geolocationModule.default && typeof geolocationModule.default.getCurrentPosition === 'function') {
+          getCurrentPositionFn = geolocationModule.default.getCurrentPosition;
+        } else if (geolocationModule && geolocationModule.default) {
+          Geolocation = geolocationModule.default;
+          getCurrentPositionFn = Geolocation.getCurrentPosition;
+        } else {
+          Geolocation = geolocationModule;
+          getCurrentPositionFn = Geolocation?.getCurrentPosition;
+        }
+      } catch (e) {
+        // Package not installed or not accessible
+        console.warn('Geolocation package not accessible. Proceeding without coordinates.');
+        console.warn('To enable location tracking, ensure @react-native-community/geolocation is installed and properly linked.');
+        resolve(null);
+        return;
+      }
+
+      // Check if we have a valid getCurrentPosition function
+      if (!getCurrentPositionFn || typeof getCurrentPositionFn !== 'function') {
+        console.warn('Geolocation package loaded but getCurrentPosition is not available.');
+        console.warn('This might mean the package needs to be properly linked. Proceeding without coordinates.');
+        console.warn('Try: cd ios && pod install (for iOS) or rebuild the app (for Android)');
+        resolve(null);
+        return;
+      }
+
+      // Use the geolocation package
+      // First try with high accuracy, if that fails, try with lower accuracy
+      let locationObtained = false;
+      
+      const tryGetLocation = (highAccuracy: boolean, attempt: number) => {
+        try {
+          getCurrentPositionFn(
+            (position: { coords: { latitude: number; longitude: number } }) => {
+              if (!locationObtained) {
+                locationObtained = true;
+                console.log('Location obtained:', position.coords.latitude, position.coords.longitude);
+                resolve({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                });
+              }
+            },
+            (error: { message?: string; code?: number; TIMEOUT?: number; PERMISSION_DENIED?: number }) => {
+              console.error(`Error getting location (attempt ${attempt}, highAccuracy: ${highAccuracy}):`, error);
+              
+              // If high accuracy timed out, try with lower accuracy
+              if (highAccuracy && error.code === error.TIMEOUT && attempt === 1) {
+                console.log('High accuracy timed out, trying with lower accuracy...');
+                setTimeout(() => {
+                  if (!locationObtained) {
+                    tryGetLocation(false, 2);
+                  }
+                }, 500);
+              } else {
+                // All attempts failed or other error - don't block user flow
+                if (!locationObtained) {
+                  locationObtained = true;
+                  resolve(null);
+                }
+              }
+            },
+            {
+              enableHighAccuracy: highAccuracy,
+              timeout: highAccuracy ? 10000 : 15000, // Shorter timeout for high accuracy, longer for fallback
+              maximumAge: highAccuracy ? 0 : 60000, // For fallback, accept cached location up to 1 minute old
+            }
+          );
+        } catch (error) {
+          console.error('Error calling getCurrentPosition:', error);
+          if (!locationObtained) {
+            locationObtained = true;
+            resolve(null);
+          }
+        }
+      };
+      
+      // Start with high accuracy
+      tryGetLocation(true, 1);
+    });
+  };
+
   const handleAllowLocation = async () => {
     setIsLoading(true);
     try {
       const permissionGranted = await requestLocationPermission();
       
-      setIsLoading(false);
-      
       if (permissionGranted) {
-        // Navigate to next screen
+        // Get actual location coordinates
+        const location = await getCurrentLocation();
+        
+        setIsLoading(false);
+        
+        // Navigate to next screen - include location if available, otherwise proceed without it
+        const locationString = location 
+          ? `${location.latitude},${location.longitude}` 
+          : route?.params?.location || '';
+        
         (navigation as any)?.navigate('InterestsSelectionScreen', {
           firstName: route?.params?.firstName || '',
           lastName: route?.params?.lastName || '',
           username: route?.params?.username || '',
           gender: route?.params?.gender || '',
           age: route?.params?.age || 0,
-          location: route?.params?.location || '',
+          location: locationString,
+          ...(location && {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }),
           photo: route?.params?.photo,
           photos: route?.params?.photos || [],
           datingGoal: route?.params?.datingGoal || '',
           showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+          interested_in_genders: route?.params?.interested_in_genders || [],
+          interested_age_range: route?.params?.interested_age_range || { min: 18, max: 22 },
+          religion: (route?.params as any)?.religion,
+          causes_communities: (route?.params as any)?.causes_communities || [],
         });
+      } else {
+        setIsLoading(false);
       }
     } catch (error) {
       setIsLoading(false);
@@ -195,7 +310,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
           {/* Text Content */}
           <View style={styles.textContainer}>
             <Text style={styles.heading}>
-              Allow DILMIL to use your location to find you matches
+              Allow Snixx to use your location to find you matches
             </Text>
             <Text style={styles.subheading}>
               You won't be able to match with people otherwise.

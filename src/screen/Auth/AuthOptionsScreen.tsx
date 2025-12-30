@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
   Animated,
@@ -12,6 +11,7 @@ import {
   TextInput,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { AuthStackParamList } from '../../navigation/AuthNavigation';
@@ -19,6 +19,7 @@ import styles from '../../styles/AuthOptionsScreenStyles.tsx';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../../services/AuthService';
+import { authController } from '../../controllers/AuthController';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { ActivityIndicator } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -67,7 +68,7 @@ export default class AuthOptionsScreen extends Component<Props, State> {
     ]).start();
   }
 
-  handleSendOtp = () => {
+  handleSendOtp = async () => {
     if (this.state.phoneNumber.length < 10) {
       Alert.alert('Error', 'Please enter a valid phone number');
       return;
@@ -76,14 +77,21 @@ export default class AuthOptionsScreen extends Component<Props, State> {
     Keyboard.dismiss();
     this.setState({ isLoading: true });
 
-    // Simulate OTP sending
-    setTimeout(() => {
-      this.setState({ 
-        isLoading: false, 
-        showOtpInput: true 
-      });
-      Alert.alert('OTP Sent', `OTP sent to ${this.state.countryCode} ${this.state.phoneNumber}`);
-    }, 1500);
+    const fullPhone = `${this.state.countryCode}${this.state.phoneNumber}`;
+    const result = await authService.startPhoneVerification(fullPhone);
+
+    this.setState({ isLoading: false });
+
+    if (!result.success) {
+      Alert.alert('Error', result.error || 'Failed to send verification code');
+      return;
+    }
+
+    this.setState({
+      showOtpInput: true,
+    });
+
+    Alert.alert('OTP Sent', `OTP sent to ${this.state.countryCode} ${this.state.phoneNumber}`);
   };
 
   handleVerifyOtp = async () => {
@@ -95,21 +103,41 @@ export default class AuthOptionsScreen extends Component<Props, State> {
     Keyboard.dismiss();
     this.setState({ isLoading: true });
 
-    // Simulate OTP verification
-    setTimeout(() => {
-      this.setState({ isLoading: false });
-      // Navigate to onboarding after successful verification
+    const fullPhone = `${this.state.countryCode}${this.state.phoneNumber}`;
+    const result = await authService.verifyPhoneCodeAndLogin(this.state.otp, fullPhone);
+
+    this.setState({ isLoading: false });
+
+    if (!result.success) {
+      Alert.alert('Error', result.error || 'Failed to verify code');
+      return;
+    }
+
+    const backend = result.backendResponse;
+
+    // If backend provided tokens & onboarding status, follow same flow as Google login
+    if (backend?.access && backend?.refresh) {
+      // Rely on SplashScreenController to route based on stored tokens
       const rootNavigation = this.props.navigation?.getParent()?.getParent();
       if (rootNavigation) {
-        rootNavigation.dispatch(
-          CommonActions.navigate({
-            name: 'OnboardingNavigation',
-          })
-        );
+        rootNavigation.navigate('TabNavigation');
       } else {
-        this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
+        this.props.navigation?.getParent()?.navigate('TabNavigation');
       }
-    }, 1500);
+      return;
+    }
+
+    // Fallback: navigate to onboarding flow
+    const rootNavigation = this.props.navigation?.getParent()?.getParent();
+    if (rootNavigation) {
+      rootNavigation.dispatch(
+        CommonActions.navigate({
+          name: 'OnboardingNavigation',
+        })
+      );
+    } else {
+      this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
+    }
   };
 
   handleGoogleSignIn = async () => {
@@ -120,76 +148,36 @@ export default class AuthOptionsScreen extends Component<Props, State> {
 
       if (result.success && result.user) {
         const backend = result.backendResponse;
+        console.log('[AuthOptions] Firebase user', result.user?.uid, result.user?.email);
+        console.log('[AuthOptions] backend login response', backend);
 
-        if (backend?.account_exists && backend?.existing_user) {
+        if (!backend) {
           this.setState({ isLoading: false });
-          const rootNavigation = this.props.navigation?.getParent()?.getParent();
-          if (rootNavigation) {
-            rootNavigation.navigate('OnboardingNavigation', {
-              screen: 'AccountSelectionScreen',
-              params: {
-                existingUser: backend.existing_user,
-                firebaseUid: result.user?.uid,
-                email: backend.existing_user?.email || result.user?.email,
-                phone: backend.existing_user?.phone || result.user?.phoneNumber,
-              },
-            });
-          } else {
-            this.props.navigation?.getParent()?.navigate('OnboardingNavigation', {
-              screen: 'AccountSelectionScreen',
-              params: {
-                existingUser: backend.existing_user,
-                firebaseUid: result.user?.uid,
-                email: backend.existing_user?.email || result.user?.email,
-                phone: backend.existing_user?.phone || result.user?.phoneNumber,
-              },
-            });
-          }
+          Alert.alert('Login failed', 'Could not reach server. Please try again.');
           return;
         }
 
-        if (backend?.access && backend?.refresh) {
-          await AsyncStorage.multiSet([
-            ['accessToken', backend.access],
-            ['refreshToken', backend.refresh],
-            ['userId', backend.user_id ? String(backend.user_id) : result.user?.uid || ''],
-            ['onboarding_complete', backend.onboarding_complete ? 'true' : 'false'],
-          ]);
-          this.setState({ isLoading: false });
-
-          if (backend.onboarding_complete) {
-            const rootNavigation = this.props.navigation?.getParent()?.getParent();
-            if (rootNavigation) {
-              rootNavigation.navigate('TabNavigation');
-            } else {
-              this.props.navigation?.getParent()?.navigate('TabNavigation');
-            }
-            return;
-          }
-
-          const rootNavigation = this.props.navigation?.getParent()?.getParent();
-          if (rootNavigation) {
-            rootNavigation.dispatch(
-              CommonActions.navigate({
-                name: 'OnboardingNavigation',
-              })
-            );
-          } else {
-            this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
-          }
-          return;
-        }
+        // After SOCIAL_LOGIN, always go to AccountSelectionScreen.
+        // AccountSelectionScreen will handle choosing existing vs new account
+        // and call USE_EXISTING_ACCOUNT / CREATE_NEW_ACCOUNT as needed.
+        const rootNavigation = this.props.navigation?.getParent()?.getParent();
+        const screenParams = {
+          screen: 'AccountSelectionScreen',
+          params: {
+            existingUser: backend?.existing_user || null,
+            firebaseUid: result.user?.uid,
+            email: backend?.existing_user?.email || backend?.email || result.user?.email,
+            phone: backend?.existing_user?.phone || backend?.phone || result.user?.phoneNumber,
+            canCreateNewAccount: backend?.can_create_new_account ?? true,
+          },
+        };
 
         this.setState({ isLoading: false });
-        const rootNavigation = this.props.navigation?.getParent()?.getParent();
+
         if (rootNavigation) {
-          rootNavigation.dispatch(
-            CommonActions.navigate({
-              name: 'OnboardingNavigation',
-            })
-          );
+          rootNavigation.navigate('OnboardingNavigation', screenParams);
         } else {
-          this.props.navigation?.getParent()?.navigate('OnboardingNavigation');
+          this.props.navigation?.getParent()?.navigate('OnboardingNavigation', screenParams);
         }
       } else {
         this.setState({ isLoading: false });

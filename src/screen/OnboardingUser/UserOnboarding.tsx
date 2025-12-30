@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
   Animated,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -27,6 +27,8 @@ export default function UserOnboarding({ navigation }: Props) {
   const [lastName, setLastName] = useState('');
   const [showOnlyFirstLetter, setShowOnlyFirstLetter] = useState(false);
   const [isButtonActive, setIsButtonActive] = useState(false);
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
   const firstNameInputRef = useRef<TextInput>(null);
   const lastNameInputRef = useRef<TextInput>(null);
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -52,11 +54,17 @@ export default function UserOnboarding({ navigation }: Props) {
 
   const handleFirstNameChange = (text: string) => {
     setFirstName(text);
+    if (text.trim().length > 0 && firstNameError) {
+      setFirstNameError('');
+    }
     updateButtonState(text, lastName);
   };
 
   const handleLastNameChange = (text: string) => {
     setLastName(text);
+    if (text.trim().length > 0 && lastNameError) {
+      setLastNameError('');
+    }
     updateButtonState(firstName, text);
   };
 
@@ -104,16 +112,33 @@ export default function UserOnboarding({ navigation }: Props) {
   };
 
   const handleContinue = () => {
-    if (firstName.trim().length > 0 && lastName.trim().length > 0) {
-      animateButtonPress();
-      setTimeout(() => {
-        navigation?.navigate('GenderSelectionScreen', {
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          showOnlyFirstLetter,
-        });
-      }, 150);
+    const trimmedFirst = firstName.trim();
+    const trimmedLast = lastName.trim();
+
+    let hasError = false;
+
+    if (trimmedFirst.length === 0) {
+      setFirstNameError('First name is required');
+      hasError = true;
     }
+
+    if (trimmedLast.length === 0) {
+      setLastNameError('Last name is required');
+      hasError = true;
+    }
+
+    if (hasError) {
+      return;
+    }
+
+    animateButtonPress();
+    setTimeout(() => {
+      navigation?.navigate('GenderSelectionScreen', {
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        showOnlyFirstLetter,
+      });
+    }, 150);
   };
 
   const getPrivacyExample = () => {
@@ -169,6 +194,9 @@ export default function UserOnboarding({ navigation }: Props) {
               accessibilityLabel="First name input"
               accessibilityHint="Enter your first name"
             />
+            {firstNameError ? (
+              <Text style={styles.errorText}>{firstNameError}</Text>
+            ) : null}
           </View>
 
           <View style={styles.inputContainer}>
@@ -186,6 +214,9 @@ export default function UserOnboarding({ navigation }: Props) {
               accessibilityLabel="Last name input"
               accessibilityHint="Enter your last name"
             />
+            {lastNameError ? (
+              <Text style={styles.errorText}>{lastNameError}</Text>
+            ) : null}
           </View>
 
           <TouchableOpacity

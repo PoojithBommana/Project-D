@@ -29,6 +29,14 @@ interface Props {
       photos?: string[];
       datingGoal: string;
       showOnlyFirstLetter: boolean;
+      interested_in_genders: string[];
+      interested_age_range: { min: number; max: number };
+      bio?: string;
+      birthday?: number;
+      latitude?: number;
+      longitude?: number;
+      religion?: string;
+      causes_communities?: string[];
     };
   };
 }
@@ -104,10 +112,22 @@ export default function InterestsSelectionScreen({ navigation, route }: Props) {
         gender: route?.params?.gender || '',
         age: route?.params?.age || 0,
         location: route?.params?.location || '',
+        ...(route?.params?.latitude !== undefined &&
+          route?.params?.longitude !== undefined && {
+            latitude: route?.params?.latitude,
+            longitude: route?.params?.longitude,
+          }),
         photo: route?.params?.photo,
         photos: route?.params?.photos || [],
         datingGoal: route?.params?.datingGoal || '',
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+        interested_in_genders: route?.params?.interested_in_genders || [],
+        interested_age_range: route?.params?.interested_age_range || { min: 18, max: 22 },
+        hobbies: selectedInterests,
+        bio: route?.params?.bio,
+        birthday: route?.params?.birthday,
+        religion: route?.params?.religion,
+        causes_communities: route?.params?.causes_communities || [],
       });
     }
   };

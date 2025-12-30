@@ -26,20 +26,14 @@ import { rf, wp, hp, rs } from '../../utils/responsive';
 import styles from '../../styles/PromptsScreenStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Plusicon, Checkicon } from '../../assets';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { uploadImageAndGetUrl } from '../../utils/imageUpload';
+import { getApiCall } from '../../config/apiCall';
 
 interface Props {
   navigation?: NativeStackNavigationProp<OnboardingStackParamList, 'PromptsScreen'>;
   route?: {
-    params: {
-      firstName: string;
-      lastName: string;
-      username?: string;
-      gender: string;
-      age: number;
-      location: string;
-      photos?: string[];
-      showOnlyFirstLetter: boolean;
-    };
+    params: OnboardingStackParamList['PromptsScreen'];
   };
 }
 
@@ -57,8 +51,9 @@ export default function PromptsScreen({ navigation, route }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const bioInputRef = useRef<TextInput>(null);
   const usernameInputRef = useRef<TextInput>(null);
+  const usernameCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Simulate username availability check
+  // Check username availability against backend /auth/username/check/ (case-insensitive)
   const checkUsernameAvailability = async (text: string) => {
     if (text.trim().length === 0) {
       setIsUsernameAvailable(null);
@@ -67,15 +62,32 @@ export default function PromptsScreen({ navigation, route }: Props) {
     }
 
     setIsChecking(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      // For now, simulate: username is available if length > 3
-      // In real implementation, this would be an API call to check DB
-      const isAvailable = text.trim().length > 3;
-      setIsUsernameAvailable(isAvailable);
-      setIsUsernameValid(isAvailable);
+    try {
+      const value = text.trim();
+
+      // Call public username check endpoint: GET /auth/username/check/?username=value
+      const res = await getApiCall('AUTH', 'USERNAME_CHECK', undefined, { username: value });
+
+      // Expected shape: { available: boolean, reason: string | null }
+      const data: any = res?.response || {};
+      const available = !!data.available;
+
+      if (available) {
+        setIsUsernameAvailable(true);
+        setIsUsernameValid(true);
+      } else {
+        // reason could be "taken" or validation error
+        console.warn('[PromptsScreen] Username not available:', data?.reason);
+        setIsUsernameAvailable(false);
+        setIsUsernameValid(false);
+      }
+    } catch (error: any) {
+      console.error('[PromptsScreen] Username availability check error:', error);
+      setIsUsernameAvailable(false);
+      setIsUsernameValid(false);
+    } finally {
       setIsChecking(false);
-    }, 500);
+    }
   };
 
   useEffect(() => {
@@ -112,14 +124,13 @@ export default function PromptsScreen({ navigation, route }: Props) {
       }
     );
 
-    // Check username availability if username is provided from route
-    if (route?.params?.username && route.params.username.length > 0) {
-      checkUsernameAvailability(route.params.username);
-    }
-
     return () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
+      if (usernameCheckTimeoutRef.current) {
+        clearTimeout(usernameCheckTimeoutRef.current);
+        usernameCheckTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -142,7 +153,13 @@ export default function PromptsScreen({ navigation, route }: Props) {
 
   const handleUsernameChange = (text: string) => {
     setUsername(text);
-    checkUsernameAvailability(text);
+    // Debounce backend username checks while the user is typing
+    if (usernameCheckTimeoutRef.current) {
+      clearTimeout(usernameCheckTimeoutRef.current);
+    }
+    usernameCheckTimeoutRef.current = setTimeout(() => {
+      checkUsernameAvailability(text);
+    }, 500);
   };
 
   const handleSelectProfilePhoto = () => {
@@ -176,7 +193,48 @@ export default function PromptsScreen({ navigation, route }: Props) {
       return;
     }
     animateButtonPress();
-    setTimeout(() => {
+    const isRetry = (route?.params as any)?.fromLivePhotoRetry;
+
+    setTimeout(async () => {
+      if (isRetry) {
+        // Retry flow: user came from LivePhotoScreen after failed verification.
+        // Update stored profile photo and go directly back to LivePhotoScreen.
+        try {
+          const rawProfileUri =
+            profilePhoto ||
+            route?.params?.photo ||
+            (route?.params?.photos && route.params.photos[0]) ||
+            null;
+
+          if (!rawProfileUri) {
+            Alert.alert(
+              'Profile photo required',
+              'Please add a profile photo before continuing.',
+            );
+            return;
+          }
+
+          let profileUrl = rawProfileUri;
+          if (!rawProfileUri.startsWith('http://') && !rawProfileUri.startsWith('https://')) {
+            profileUrl = await uploadImageAndGetUrl({ uri: rawProfileUri });
+          }
+
+          await AsyncStorage.setItem('onboarding_profile_photo_url', profileUrl);
+
+          (navigation as any)?.navigate('LivePhotoScreen', {
+            firstName: route?.params?.firstName || '',
+          });
+        } catch (e) {
+          console.error('[PromptsScreen] Failed to update profile photo for retry:', e);
+          Alert.alert(
+            'Error',
+            'We could not update your profile photo. Please try again.',
+          );
+        }
+        return;
+      }
+
+      // Normal onboarding flow
       navigation?.navigate('DatingPreferencesScreen', {
         firstName: route?.params?.firstName || '',
         lastName: route?.params?.lastName || '',
@@ -187,6 +245,14 @@ export default function PromptsScreen({ navigation, route }: Props) {
         photo: profilePhoto || undefined,
         photos: route?.params?.photos || [],
         showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+        bio,
+        birthday: route?.params?.birthday,
+        // Forward music selections
+        music_artist_ids: (route?.params as any)?.music_artist_ids,
+        music_genres: (route?.params as any)?.music_genres,
+        // Forward beliefs and causes
+        beliefs: (route?.params as any)?.beliefs,
+        causes: (route?.params as any)?.causes,
       });
     }, 150);
   };

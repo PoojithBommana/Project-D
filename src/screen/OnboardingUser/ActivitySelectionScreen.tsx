@@ -3,13 +3,13 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
   Animated,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigation';
 import { rf, wp, hp, rs } from '../../utils/responsive';
@@ -131,6 +131,7 @@ export default function ActivitySelectionScreen({ navigation, route }: Props) {
           gender: route?.params?.gender || '',
           age: route?.params?.age || 0,
           showOnlyFirstLetter: route?.params?.showOnlyFirstLetter || false,
+          currently: selectedActivity, // Pass the selected activity as 'currently'
         });
       }, 150);
     }
