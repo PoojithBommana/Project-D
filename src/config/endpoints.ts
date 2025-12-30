@@ -9,8 +9,11 @@ export const API_ENDPOINTS: any = {
     LOGOUT: '/auth/logout/',
     REFRESH_TOKEN: '/token/refresh/',
     GET_PROFILE: '/auth/profile/',
+    UPDATE_PROFILE: '/auth/profile/',
     VERIFY_FACE: '/auth/verify-face/',
     USERNAME_CHECK: '/auth/username/check/',
+    GET_BLOCKED_USERS: '/auth/blocked-users/',
+    UNBLOCK_USER: '/auth/unblock-user/',
   },
   SWIPE: {
     GET_USERS: '/auth/swipe/users/',

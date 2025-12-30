@@ -54,7 +54,17 @@ const ProfileScreen = () => {
             <TouchableOpacity style={styles.headerIcon}>
               <Icon name="create-outline" size={24} color="#000000" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerIcon}>
+            <TouchableOpacity 
+              style={styles.headerIcon}
+              onPress={() => {
+                const rootNavigation = (navigation as any)?.getParent()?.getParent();
+                if (rootNavigation) {
+                  rootNavigation.navigate('SettingsStackNavigator', { screen: 'SettingsScreen' });
+                } else {
+                  (navigation as any)?.getParent()?.navigate('SettingsStackNavigator', { screen: 'SettingsScreen' });
+                }
+              }}
+            >
               <Icon name="settings-outline" size={24} color="#000000" />
             </TouchableOpacity>
           </View>
