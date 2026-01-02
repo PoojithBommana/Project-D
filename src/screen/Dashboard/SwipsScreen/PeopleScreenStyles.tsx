@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions, Platform } from 'react-native';
-import { hp, wp } from '../../../utils/responsive';
+import { hp, wp, rf, rs } from '../../../utils/responsive';
 
 const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
@@ -84,25 +84,247 @@ const styles = StyleSheet.create({
   cardScrollContainer: {
     flex: 1,
   },
+  scrollContent: {
+    paddingTop: hp(110),
+    paddingBottom: hp(120),
+    backgroundColor: 'transparent',
+  },
 
-  // Image Section
-  imageContainer: {
+  // Fixed Banner Background
+  fixedBannerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     width: '100%',
-    height: IMAGE_HEIGHT,
-    position: 'relative',
-    backgroundColor: '#000000',
+    height: hp(600),
+    zIndex: 0,
   },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  gradientOverlay: {
+  bannerGradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '40%',
+    height: hp(300),
+  },
+  headerOverBanner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(16),
+    paddingTop: hp(50),
+    paddingBottom: hp(16),
+    backgroundColor: 'transparent',
+    zIndex: 10,
+  },
+  headerCenter: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingRight: wp(16),
+  },
+  headerShareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(8),
+    paddingHorizontal: wp(16),
+    borderRadius: rs(24),
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    gap: wp(6),
+  },
+  headerShareText: {
+    fontSize: rf(15),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(4),
+  },
+  profilePictureSection: {
+    paddingTop: hp(250),
+    paddingBottom: hp(20),
+    zIndex: 2,
+    backgroundColor: 'transparent',
+  },
+  profileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(20),
+    marginBottom: hp(8),
+    gap: wp(12),
+  },
+  thumbnailContainer: {
+    position: 'relative',
+    width: wp(64),
+    height: wp(64),
+  },
+  thumbnailPicture: {
+    width: '100%',
+    height: '100%',
+    borderRadius: wp(32),
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  plusIconContainer: {
+    position: 'absolute',
+    bottom: -wp(2),
+    right: -wp(2),
+    width: wp(24),
+    height: wp(24),
+    borderRadius: wp(12),
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  plusIcon: {
+    width: wp(14),
+    height: wp(14),
+    tintColor: '#000000',
+  },
+  nameVerifiedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+  },
+  profileName: {
+    fontSize: rf(26),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  verifiedIcon: {
+    marginTop: hp(2),
+  },
+  usernameFollowersContainer: {
+    paddingHorizontal: wp(20),
+    marginBottom: hp(16),
+  },
+  usernameFollowersText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  accountButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: wp(20),
+    gap: wp(12),
+  },
+  accountButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(12),
+    borderRadius: rs(24),
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  accountButtonActive: {
+    backgroundColor: 'rgba(100, 100, 100, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  accountButtonText: {
+    fontSize: rf(15),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  accountButtonTextActive: {
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  locationBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: wp(20),
+    marginTop: hp(16),
+    marginBottom: hp(12),
+    paddingVertical: hp(10),
+    paddingHorizontal: wp(16),
+    borderRadius: rs(20),
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    gap: wp(6),
+  },
+  locationBarText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.85,
+  },
+  personalDetailsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(16),
+    paddingHorizontal: wp(20),
+    gap: wp(8),
+  },
+  personalDetailsText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.85,
+  },
+  purpleVIcon: {
+    width: wp(22),
+    height: wp(22),
+    borderRadius: wp(11),
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  purpleVText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  imagesContainer: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    paddingHorizontal: wp(20),
+    marginTop: hp(20),
+  },
+  imageItem: {
+    width: '100%',
+    marginBottom: hp(16),
+  },
+  gridImage: {
+    width: '100%',
+    height: hp(500),
+    borderRadius: wp(12),
+  },
+  noImagesContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: hp(60),
+    backgroundColor: 'transparent',
+  },
+  noImagesText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 
   // Name Overlay on Image
@@ -189,9 +411,10 @@ const styles = StyleSheet.create({
 
   // Details Container (Below Image)
   detailsContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: wp(16),
+    backgroundColor: '#fffcf1',
+    paddingHorizontal: wp(20),
     paddingTop: hp(20),
+    paddingBottom: hp(40),
   },
 
   // Card Sections (Bio, About, Looking For, etc.)
@@ -275,18 +498,20 @@ const styles = StyleSheet.create({
 
   // Section Titles
   sectionTitle: {
-    fontSize: wp(18),
+    fontSize: rf(18),
+    fontFamily: 'GTMaruBold',
     fontWeight: '700',
     color: '#000000',
     marginBottom: hp(12),
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // Bio Section
   bioText: {
-    fontSize: wp(15),
+    fontSize: rf(15),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
     color: '#000000',
-    lineHeight: wp(22),
+    lineHeight: rf(22),
     marginBottom: hp(12),
   },
   divider: {
@@ -299,13 +524,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: hp(10),
-  },
-  complimentIcon: {
-    fontSize: wp(18),
-    marginRight: wp(8),
+    gap: wp(8),
   },
   complimentText: {
-    fontSize: wp(15),
+    fontSize: rf(15),
+    fontFamily: 'GTMaruMedium',
     fontWeight: '600',
     color: '#000000',
   },
@@ -332,25 +555,10 @@ const styles = StyleSheet.create({
     marginRight: wp(6),
   },
   tagText: {
-    fontSize: wp(14),
-    color: '#000000',
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
     fontWeight: '500',
-  },
-
-  // Star Highlight
-  starHighlight: {
-    position: 'absolute',
-    top: hp(12),
-    right: wp(16),
-    width: wp(40),
-    height: wp(40),
-    borderRadius: wp(20),
-    backgroundColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  starIcon: {
-    fontSize: wp(22),
+    color: '#000000',
   },
 
   // Location Section
@@ -552,25 +760,34 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  blockReportRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  commentButtonContainer: {
+    width: '100%',
     alignItems: 'center',
-    gap: wp(24),
+    marginTop: hp(20),
+    marginBottom: hp(20),
   },
-  textButton: {
-    paddingVertical: hp(8),
-    paddingHorizontal: wp(16),
+  commentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(12),
+    paddingHorizontal: wp(24),
+    borderRadius: rs(24),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E5E5',
+    gap: wp(8),
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  blockText: {
-    fontSize: wp(15),
+  commentButtonText: {
+    fontSize: rf(15),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '600',
     color: '#000000',
-    fontWeight: '500',
-  },
-  reportText: {
-    fontSize: wp(15),
-    color: '#FF0000',
-    fontWeight: '500',
   },
 });
 

@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  ImageBackground,
   Dimensions,
   StyleSheet,
   TouchableOpacity,
@@ -32,8 +33,11 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { Profile } from '../../../types/Profile';
 import { getApiCall, postApiCall } from '../../../config/apiCall';
+import { Plusicon } from '../../../assets';
+import { wp } from '../../../utils/responsive';
 import styles from './PeopleScreenStyles';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -223,9 +227,13 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     }
   }, [profile.id]);
 
-  const primaryImage = profile.images && profile.images.length > 0 
-    ? { uri: profile.images[0] } 
-    : require('../../../assets/girl.png');
+  const rawData = profile.rawData || {};
+  const profilePhoto = rawData.profile_photo || rawData.profile_picture || profile.images?.[0];
+  const bannerImage = profile.images && profile.images.length > 0 
+    ? profile.images[0] 
+    : null;
+  const allImages = profile.images || [];
+  const [accountType, setAccountType] = React.useState<'My profile' | 'Share profile'>('My profile');
 
   const staticZIndex = isTopCard ? 1000 : 100 - index;
 
@@ -260,6 +268,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
         {/* Scrollable Container with Image and Details */}
         <Animated.ScrollView
           style={styles.cardScrollContainer}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={scrollHandler}
@@ -271,121 +280,200 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           }}
           bounces={true}
         >
-          {/* Image Section */}
-          <View style={styles.imageContainer}>
-          <Image
-            source={primaryImage}
-            style={styles.cardImage}
+          {/* Fixed Banner Background */}
+          <ImageBackground
+            source={
+              bannerImage
+                ? { uri: bannerImage }
+                : require('../../../assets/girl.png')
+            }
+            style={styles.fixedBannerBackground}
             resizeMode="cover"
-          />
+          >
             <LinearGradient
-              colors={['transparent', 'transparent', 'rgba(0,0,0,0.6)']}
-              style={styles.gradientOverlay}
-              pointerEvents="none"
+              colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+              style={styles.bannerGradient}
             />
+          </ImageBackground>
 
-            {/* Connect Button - Top Right with Glass Effect */}
-        {isTopCard && (
-            <TouchableOpacity
-              style={styles.connectButton}
-              onPress={handleConnectPress}
-              activeOpacity={0.8}
-            >
-              {Platform.OS === 'ios' ? (
-                <BlurView
-                  blurType="light"
-                  blurAmount={10}
-                  style={styles.connectButtonGlass}
-                  reducedTransparencyFallbackColor="rgba(255,255,255,0.8)"
-                />
-              ) : (
-                <View style={styles.androidGlassButton} />
-              )}
-              <Text style={styles.connectButtonText}>Connect</Text>
-            </TouchableOpacity>
-            )}
-
-
-            {/* Name overlay on image bottom */}
-            <View style={styles.imageNameOverlay}>
-              <Text style={styles.nameText}>
-                {profile.name?.split(' ')[0] || 'Unknown'}
-                <Text style={styles.ageText}>, {profile.age || 0}</Text>
-            </Text>
-            </View>
-          </View>
-
-          {/* Details Section - Below Image */}
-          <View style={styles.detailsContainer}>
-            {/* My Bio Section */}
-            {profile.bio && (
-              <View style={styles.bioCard}>
-                <Text style={styles.sectionTitle}>My bio</Text>
-                <Text style={styles.bioText}>{profile.bio}</Text>
-                <View style={styles.divider} />
-                <TouchableOpacity style={styles.complimentButton}>
-                  <Text style={styles.complimentIcon}>💬</Text>
-                  <Text style={styles.complimentText}>Compliment</Text>
+          {/* Header Over Banner - Fixed */}
+          {isTopCard && (
+            <View style={styles.headerOverBanner}>
+              <View style={styles.headerCenter}>
+                <TouchableOpacity style={styles.headerShareButton}>
+                  <Icon name="arrow-up" size={20} color="#FFFFFF" />
+                  <Text style={styles.headerShareText}>Share</Text>
                 </TouchableOpacity>
+              </View>
+              <View style={styles.headerRight}>
+                <TouchableOpacity style={styles.headerIcon}>
+                  <Icon name="create-outline" size={26} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerIcon}>
+                  <Icon name="settings-outline" size={26} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Profile Picture Section - Scrollable */}
+          <View style={styles.profilePictureSection}>
+            {/* Thumbnail with + icon and Name */}
+            <View style={styles.profileInfoContainer}>
+              <View style={styles.thumbnailContainer}>
+                <Image
+                  source={
+                    profilePhoto
+                      ? { uri: profilePhoto }
+                      : require('../../../assets/user.png')
+                  }
+                  style={styles.thumbnailPicture}
+                  resizeMode="cover"
+                />
+                <View style={styles.plusIconContainer}>
+                  <Image source={Plusicon} style={styles.plusIcon} />
+                </View>
+              </View>
+              
+              {/* Name and Verified Badge */}
+              <View style={styles.nameVerifiedContainer}>
+                <Text style={styles.profileName}>
+                  {profile.name || rawData.first_name || rawData.name || 'Unknown'}
+                </Text>
+                {rawData.is_verified && (
+                  <Icon name="checkmark-circle" size={18} color="#1DA1F2" style={styles.verifiedIcon} />
+                )}
+              </View>
+            </View>
+
+            {/* Username and Followers on Same Line */}
+            {rawData.username && (
+              <View style={styles.usernameFollowersContainer}>
+                <Text style={styles.usernameFollowersText}>
+                  {rawData.username} {rawData.followers_count ? `• ${rawData.followers_count} followers` : ''}
+                </Text>
               </View>
             )}
 
-            {/* About me Section */}
+            {/* Account Type Buttons */}
+            <View style={styles.accountButtonsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.accountButton,
+                  accountType === 'My profile' && styles.accountButtonActive,
+                ]}
+                onPress={() => setAccountType('My profile')}
+              >
+                <Text
+                  style={[
+                    styles.accountButtonText,
+                    accountType === 'My profile' && styles.accountButtonTextActive,
+                  ]}
+                >
+                  My profile
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.accountButton,
+                  accountType === 'Share profile' && styles.accountButtonActive,
+                ]}
+                onPress={() => setAccountType('Share profile')}
+              >
+                <Text
+                  style={[
+                    styles.accountButtonText,
+                    accountType === 'Share profile' && styles.accountButtonTextActive,
+                  ]}
+                >
+                  Share profile
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Location Bar */}
+          {profile.location && (
+            <View style={styles.locationBarContainer}>
+              <Icon name="location-outline" size={18} color="#FFFFFF" />
+              <Text style={styles.locationBarText}>{profile.location}</Text>
+            </View>
+          )}
+
+          {/* Personal Details */}
+          {rawData.personalDetails && (
+            <View style={styles.personalDetailsContainer}>
+              <Text style={styles.personalDetailsText}>{rawData.personalDetails}</Text>
+              <View style={styles.purpleVIcon}>
+                <Text style={styles.purpleVText}>V</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Details Section - White background container */}
+          <View style={styles.detailsContainer}>
+            {/* My Bio Section */}
+            {(profile.bio || rawData.bio) && (
+              <View style={styles.bioCard}>
+                <Text style={styles.sectionTitle}>My bio</Text>
+                <Text style={styles.bioText}>{profile.bio || rawData.bio}</Text>
+              </View>
+            )}
+
+            {/* About me Section - Basic Info */}
             {(() => {
-              const rawData = profile.rawData || {};
-              const tags = [];
+              const tags: React.ReactElement[] = [];
               
-              // Height - only if exists and not null
+              // Height
               if (rawData.height_cm && rawData.height_cm !== null) {
                 tags.push(
                   <View key="height" style={styles.tag}>
-                    <Text style={styles.tagIcon}>📏</Text>
+                    <Icon name="resize-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
                     <Text style={styles.tagText}>{rawData.height_cm} cm</Text>
                   </View>
                 );
               }
               
-              // Drinking - only if exists and not empty
-              if (rawData.drinking && rawData.drinking.trim() !== '') {
+              // Gender
+              if (rawData.gender && rawData.gender.trim() !== '') {
                 tags.push(
-                  <View key="drinking" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🍷</Text>
-                    <Text style={styles.tagText}>{rawData.drinking}</Text>
+                  <View key="gender" style={styles.tag}>
+                    <Icon name="person-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.gender}</Text>
                   </View>
                 );
               }
               
-              // Smoking - only if exists and not empty
-              if (rawData.smoking && rawData.smoking.trim() !== '') {
+              // Pronouns
+              if (rawData.pronouns && rawData.pronouns.trim() !== '') {
                 tags.push(
-                  <View key="smoking" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🚬</Text>
-                    <Text style={styles.tagText}>{rawData.smoking}</Text>
+                  <View key="pronouns" style={styles.tag}>
+                    <Icon name="person-circle-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.pronouns}</Text>
                   </View>
                 );
               }
               
-              // Zodiac sign - only if exists and not empty
+              // Age
+              if (profile.age && profile.age > 0) {
+                tags.push(
+                  <View key="age" style={styles.tag}>
+                    <Icon name="calendar-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{profile.age}</Text>
+                  </View>
+                );
+              }
+              
+              // Zodiac sign
               if (rawData.zodiac_sign && rawData.zodiac_sign.trim() !== '') {
                 tags.push(
                   <View key="zodiac" style={styles.tag}>
-                    <Text style={styles.tagIcon}>♉</Text>
+                    <Icon name="star-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
                     <Text style={styles.tagText}>{rawData.zodiac_sign}</Text>
                   </View>
                 );
               }
               
-              // Religion - only if exists and not empty
-              if (rawData.religion && rawData.religion.trim() !== '') {
-                tags.push(
-                  <View key="religion" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🤔</Text>
-                    <Text style={styles.tagText}>{rawData.religion}</Text>
-                  </View>
-                );
-              }
-              
-              // Only show the section if there are tags
               if (tags.length === 0) return null;
               
               return (
@@ -398,38 +486,35 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               );
             })()}
 
-            {/* I'm looking for Section */}
+            {/* Lifestyle Section */}
             {(() => {
-              const rawData = profile.rawData || {};
-              const tags = [];
+              const tags: React.ReactElement[] = [];
               
-              // Dating preferences - only if exists
-              if (rawData.dating_preferences && Array.isArray(rawData.dating_preferences) && rawData.dating_preferences.length > 0) {
-                rawData.dating_preferences.forEach((pref: string, idx: number) => {
-                  if (pref && pref.trim() !== '') {
-                    tags.push(
-                      <View key={`pref-${idx}`} style={styles.tag}>
-                        <Text style={styles.tagIcon}>🔍</Text>
-                        <Text style={styles.tagText}>{pref}</Text>
-                      </View>
-                    );
-                  }
-                });
-              } else if (rawData.looking_for && rawData.looking_for.trim() !== '') {
+              // Drinking
+              if (rawData.drinking && rawData.drinking.trim() !== '') {
                 tags.push(
-                  <View key="looking-for" style={styles.tag}>
-                    <Text style={styles.tagIcon}>🔍</Text>
-                    <Text style={styles.tagText}>{rawData.looking_for}</Text>
+                  <View key="drinking" style={styles.tag}>
+                    <Icon name="wine-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.drinking}</Text>
                   </View>
                 );
               }
               
-              // Only show the section if there are tags
+              // Smoking
+              if (rawData.smoking && rawData.smoking.trim() !== '') {
+                tags.push(
+                  <View key="smoking" style={styles.tag}>
+                    <Icon name="create-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.smoking}</Text>
+                  </View>
+                );
+              }
+              
               if (tags.length === 0) return null;
               
               return (
-                <View style={styles.lookingForCard}>
-                  <Text style={styles.sectionTitle}>I'm looking for</Text>
+                <View style={styles.aboutCard}>
+                  <Text style={styles.sectionTitle}>Lifestyle</Text>
                   <View style={styles.tagsContainer}>
                     {tags}
                   </View>
@@ -437,94 +522,180 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               );
             })()}
 
-            {/* Location Section */}
-            {(profile.location || (typeof profile.distance === 'number' && profile.distance > 0)) && (
-              <View style={styles.locationCard}>
-                <Text style={styles.sectionTitle}>My location</Text>
-                {profile.location && (
-                  <>
-                    <View style={styles.locationRow}>
-                      <Text style={styles.locationIcon}>📍</Text>
-                      <View style={styles.locationInfo}>
-                        <Text style={styles.locationText}>{profile.location}</Text>
-                        {typeof profile.distance === 'number' && profile.distance > 0 && (
-                          <Text style={styles.distanceText}>{profile.distance} km away</Text>
-                        )}
-                      </View>
+            {/* Images Gallery - 1 per row, full width */}
+            <View style={styles.imagesContainer}>
+              {allImages.length > 0 ? (
+                allImages.map((imageUrl: string, index: number) => {
+                  return (
+                    <View key={index} style={styles.imageItem}>
+                      <Image
+                        source={
+                          imageUrl && typeof imageUrl === 'string'
+                            ? { uri: imageUrl }
+                            : require('../../../assets/user.png')
+                        }
+                        style={styles.gridImage}
+                        resizeMode="cover"
+                      />
                     </View>
-                    <View style={styles.locationButtons}>
-                      <View style={styles.locationButton}>
-                        <Text style={styles.locationButtonText}>Lives in {profile.location}</Text>
-                      </View>
-                      <View style={styles.locationButton}>
-                        <Text style={styles.locationButtonText}>From {profile.location}</Text>
-                      </View>
-                    </View>
-                  </>
-                )}
-                {!profile.location && typeof profile.distance === 'number' && profile.distance > 0 && (
-                  <View style={styles.locationRow}>
-                    <Text style={styles.locationIcon}>📍</Text>
-                    <View style={styles.locationInfo}>
-                      <Text style={styles.distanceText}>{profile.distance} km away</Text>
-                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.noImagesContainer}>
+                  <Text style={styles.noImagesText}>No images yet</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Comment Button below Images */}
+            {allImages.length > 0 && (
+              <View style={styles.commentButtonContainer}>
+                <TouchableOpacity style={styles.commentButton}>
+                  <Icon name="chatbubble-ellipses-outline" size={18} color="#000000" />
+                  <Text style={styles.commentButtonText}>Comment</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Education & Career Section */}
+            {rawData.currently && rawData.currently.trim() !== '' && (
+              <View style={styles.aboutCard}>
+                <Text style={styles.sectionTitle}>Education & Career</Text>
+                <View style={styles.tagsContainer}>
+                  <View style={styles.tag}>
+                    <Icon name="school-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.currently}</Text>
                   </View>
-                )}
+                </View>
               </View>
             )}
 
             {/* Interests Section */}
             {(() => {
-              const rawData = profile.rawData || {};
-              const interests: string[] = [];
+              const tags: React.ReactElement[] = [];
               
-              // Get hobbies from backend - can be array or object with categories
-              if (Array.isArray(rawData.hobbies)) {
-                interests.push(...rawData.hobbies.filter(Boolean));
-              } else if (rawData.hobbies && typeof rawData.hobbies === 'object') {
-                // If hobbies is an object with categories (e.g., {creative: [...], chill: [...]})
-                Object.values(rawData.hobbies).forEach((categoryInterests: any) => {
-                  if (Array.isArray(categoryInterests)) {
-                    interests.push(...categoryInterests.filter(Boolean));
+              // Hobbies
+              if (rawData.hobbies && Array.isArray(rawData.hobbies) && rawData.hobbies.length > 0) {
+                rawData.hobbies.forEach((hobby: string, idx: number) => {
+                  if (hobby && hobby.trim() !== '') {
+                    tags.push(
+                      <View key={`hobby-${idx}`} style={styles.tag}>
+                        <Text style={styles.tagText}>{hobby}</Text>
+                      </View>
+                    );
                   }
                 });
               }
               
-              // Also check profile.interests as fallback
-              if (interests.length === 0 && profile.interests && profile.interests.length > 0) {
-                interests.push(...profile.interests);
-              }
-              
-              if (interests.length === 0) return null;
-              
-              return (
-                <View style={styles.interestsCard}>
-                  <Text style={styles.sectionTitle}>Interests</Text>
-                  <View style={styles.tagsContainer}>
-                    {interests.map((interest, idx) => (
-                      <View key={idx} style={styles.tag}>
+              // Activity Interests
+              if (rawData.activity_interests && Array.isArray(rawData.activity_interests) && rawData.activity_interests.length > 0) {
+                rawData.activity_interests.forEach((interest: string, idx: number) => {
+                  if (interest && interest.trim() !== '') {
+                    tags.push(
+                      <View key={`activity-${idx}`} style={styles.tag}>
                         <Text style={styles.tagText}>{interest}</Text>
                       </View>
-                    ))}
+                    );
+                  }
+                });
+              }
+              
+              if (tags.length === 0) return null;
+              
+              return (
+                <View style={styles.aboutCard}>
+                  <Text style={styles.sectionTitle}>Interests</Text>
+                  <View style={styles.tagsContainer}>
+                    {tags}
                   </View>
                 </View>
               );
             })()}
 
-            {/* Additional Photos Section */}
-            {profile.images && profile.images.length > 1 && (
-              <View style={styles.photosCard}>
-                <Text style={styles.sectionTitle}>More Photos</Text>
-                <View style={styles.photosGrid}>
-                  {profile.images.slice(1).map((imageUri, idx) => (
-                    <Image
-                      key={idx}
-                      source={{ uri: imageUri }}
-                      style={styles.gridPhoto}
-                      resizeMode="cover"
-                    />
-                  ))}
-        </View>
+            {/* Values Section */}
+            {(() => {
+              const tags: React.ReactElement[] = [];
+              
+              // Religion
+              if (rawData.religion && rawData.religion.trim() !== '') {
+                tags.push(
+                  <View key="religion" style={styles.tag}>
+                    <Icon name="happy-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.religion}</Text>
+                  </View>
+                );
+              }
+              
+              // Causes & Communities
+              if (rawData.causes_communities && Array.isArray(rawData.causes_communities) && rawData.causes_communities.length > 0) {
+                rawData.causes_communities.forEach((cause: string, idx: number) => {
+                  if (cause && cause.trim() !== '') {
+                    tags.push(
+                      <View key={`cause-${idx}`} style={styles.tag}>
+                        <Icon name="people-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                        <Text style={styles.tagText}>{cause}</Text>
+                      </View>
+                    );
+                  }
+                });
+              }
+              
+              // Qualities
+              if (rawData.qualities && Array.isArray(rawData.qualities) && rawData.qualities.length > 0) {
+                rawData.qualities.forEach((quality: string, idx: number) => {
+                  if (quality && quality.trim() !== '') {
+                    tags.push(
+                      <View key={`quality-${idx}`} style={styles.tag}>
+                        <Icon name="sparkles-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                        <Text style={styles.tagText}>{quality}</Text>
+                      </View>
+                    );
+                  }
+                });
+              }
+              
+              if (tags.length === 0) return null;
+              
+              return (
+                <View style={styles.aboutCard}>
+                  <Text style={styles.sectionTitle}>Values</Text>
+                  <View style={styles.tagsContainer}>
+                    {tags}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Looking for Section */}
+            {rawData.connection_goal && rawData.connection_goal.trim() !== '' && (
+              <View style={styles.aboutCard}>
+                <Text style={styles.sectionTitle}>Looking for</Text>
+                <View style={styles.tagsContainer}>
+                  <View style={styles.tag}>
+                    <Icon name="heart-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.connection_goal}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Languages Section */}
+            {rawData.known_languages && Array.isArray(rawData.known_languages) && rawData.known_languages.length > 0 && (
+              <View style={styles.aboutCard}>
+                <Text style={styles.sectionTitle}>Languages</Text>
+                <View style={styles.tagsContainer}>
+                  {rawData.known_languages.map((lang: string, idx: number) => {
+                    if (lang && lang.trim() !== '') {
+                      return (
+                        <View key={`lang-${idx}`} style={styles.tag}>
+                          <Icon name="language-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                          <Text style={styles.tagText}>{lang}</Text>
+                        </View>
+                      );
+                    }
+                    return null;
+                  })}
+                </View>
               </View>
             )}
 
@@ -623,55 +794,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
                 <View style={styles.likeButton}>
                   <Text style={styles.likeIcon}>♥</Text>
                 </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Block and Report Text Buttons */}
-            <View style={styles.blockReportRow}>
-              <TouchableOpacity
-                style={styles.textButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Block User',
-                    'Are you sure you want to block this user?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Block',
-                        style: 'destructive',
-                        onPress: async () => {
-                          // TODO: Implement block API call
-                          Alert.alert('User blocked');
-                        },
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.blockText}>Block</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.textButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Report User',
-                    'Why are you reporting this user?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Report',
-                        style: 'destructive',
-                        onPress: async () => {
-                          // TODO: Implement report API call
-                          Alert.alert('User reported');
-                        },
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.reportText}>Report</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
