@@ -258,6 +258,73 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
               style={styles.bannerGradient}
             />
+            
+            {/* Name and Account Buttons Overlay on Banner */}
+            <View style={styles.bannerOverlayContent}>
+              {/* Thumbnail with + icon and Name */}
+              <View style={styles.bannerProfileInfoContainer}>
+                <View style={styles.thumbnailContainer}>
+                  <Image
+                    source={
+                      profilePhoto
+                        ? { uri: profilePhoto }
+                        : require('../../../assets/user.png')
+                    }
+                    style={styles.thumbnailPicture}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.plusIconContainer}>
+                    <Image source={Plusicon} style={styles.plusIcon} />
+                  </View>
+                </View>
+                
+                {/* Name and Verified Badge */}
+                <View style={styles.bannerNameContainer}>
+                  <Text style={styles.bannerNameText}>
+                    {profile.name || rawData.first_name || rawData.name || 'Unknown'}
+                  </Text>
+                  {rawData.is_verified && (
+                    <Icon name="checkmark-circle" size={18} color="#1DA1F2" style={styles.verifiedIcon} />
+                  )}
+                </View>
+              </View>
+
+              {/* Account Type Buttons */}
+              <View style={styles.accountButtonsContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.accountButton,
+                    accountType === 'My profile' && styles.accountButtonActive,
+                  ]}
+                  onPress={() => setAccountType('My profile')}
+                >
+                  <Text
+                    style={[
+                      styles.accountButtonText,
+                      accountType === 'My profile' && styles.accountButtonTextActive,
+                    ]}
+                  >
+                    My profile
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.accountButton,
+                    accountType === 'Share profile' && styles.accountButtonActive,
+                  ]}
+                  onPress={() => setAccountType('Share profile')}
+                >
+                  <Text
+                    style={[
+                      styles.accountButtonText,
+                      accountType === 'Share profile' && styles.accountButtonTextActive,
+                    ]}
+                  >
+                    Share profile
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </ImageBackground>
 
           {/* Header Over Banner - Fixed */}
@@ -282,34 +349,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
 
           {/* Profile Picture Section - Scrollable */}
           <View style={styles.profilePictureSection}>
-            {/* Thumbnail with + icon and Name */}
-            <View style={styles.profileInfoContainer}>
-              <View style={styles.thumbnailContainer}>
-                <Image
-                  source={
-                    profilePhoto
-                      ? { uri: profilePhoto }
-                      : require('../../../assets/user.png')
-                  }
-                  style={styles.thumbnailPicture}
-                  resizeMode="cover"
-                />
-                <View style={styles.plusIconContainer}>
-                  <Image source={Plusicon} style={styles.plusIcon} />
-                </View>
-              </View>
-              
-              {/* Name and Verified Badge */}
-              <View style={styles.nameVerifiedContainer}>
-                <Text style={styles.profileName}>
-                  {profile.name || rawData.first_name || rawData.name || 'Unknown'}
-                </Text>
-                {rawData.is_verified && (
-                  <Icon name="checkmark-circle" size={18} color="#1DA1F2" style={styles.verifiedIcon} />
-                )}
-              </View>
-            </View>
-
             {/* Username and Followers on Same Line */}
             {rawData.username && (
               <View style={styles.usernameFollowersContainer}>
@@ -318,42 +357,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
                 </Text>
               </View>
             )}
-
-            {/* Account Type Buttons */}
-            <View style={styles.accountButtonsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.accountButton,
-                  accountType === 'My profile' && styles.accountButtonActive,
-                ]}
-                onPress={() => setAccountType('My profile')}
-              >
-                <Text
-                  style={[
-                    styles.accountButtonText,
-                    accountType === 'My profile' && styles.accountButtonTextActive,
-                  ]}
-                >
-                  My profile
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.accountButton,
-                  accountType === 'Share profile' && styles.accountButtonActive,
-                ]}
-                onPress={() => setAccountType('Share profile')}
-              >
-                <Text
-                  style={[
-                    styles.accountButtonText,
-                    accountType === 'Share profile' && styles.accountButtonTextActive,
-                  ]}
-                >
-                  Share profile
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           {/* Location Bar */}
@@ -479,14 +482,14 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               return (
                 <View style={styles.aboutCard}>
                   <Text style={styles.sectionTitle}>Lifestyle</Text>
-                  <View style={styles.tagsContainer}>
+                  {/* <View style={styles.tagsContainer}>
                     {qualities.map((quality: string, index: number) => (
                       <View key={index} style={styles.pillTag}>
                         <Icon name="search-outline" size={16} color="#000000" style={styles.tagIcon} />
                         <Text style={styles.pillTagText}>{quality}</Text>
                       </View>
                     ))}
-                  </View>
+                  </View> */}
                 </View>
               );
             })()}
@@ -667,250 +670,12 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
                 </View>
               </View>
             )}
-
-            {/* Action Buttons - Right below More Photos */}
-            {isTopCard && (
-              <View style={styles.inlineActionsContainer}>
-                <View style={styles.actionButtonsRow}>
-                  {/* Pass Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => {
-                      translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 400 });
-                      opacity.value = withTiming(0, { duration: 350 }, () => {
-                        runOnJS(onSwipeComplete)('left');
-                      });
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.passButton}>
-                      <Icon name="close" size={28} color="#FFFFFF" />
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Superlike Button - Center, Larger */}
-                  <TouchableOpacity
-                    style={styles.actionButtonCenter}
-                    onPress={() => {
-                      const performSuperlike = async () => {
-                        try {
-                          const accessToken = await AsyncStorage.getItem('accessToken');
-                          if (accessToken) {
-                            const actionPayload = {
-                              target_user_id: parseInt(profile.id, 10),
-                              action: 'superlike',
-                            };
-                            
-                            console.log('=== SWIPE ACTION API Call ===');
-                            console.log('Payload:', JSON.stringify(actionPayload, null, 2));
-                            
-                            const actionResponse = await postApiCall(
-                              'POST',
-                              'SWIPE',
-                              'ACTION',
-                              actionPayload,
-                              accessToken,
-                            );
-
-                            console.log('=== SWIPE ACTION API Response ===');
-                            console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
-                            console.log('Response Status Code:', actionResponse?.statusCode);
-                            console.log('Response Error:', actionResponse?.error);
-                            console.log('Response Data:', actionResponse?.response);
-                            console.log('===================================');
-
-                            if (actionResponse?.response?.match === true) {
-                              Alert.alert(
-                                '🎉 It\'s a Match!',
-                                actionResponse?.response?.message || 'You both liked each other!',
-                              );
-                            }
-                          }
-                        } catch (error) {
-                          console.error('Error calling superlike API:', error);
-                        }
-                      };
-                      
-                      performSuperlike();
-                      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
-                      opacity.value = withTiming(0, { duration: 350 }, () => {
-                        runOnJS(onSwipeComplete)('right');
-                      });
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.superlikeButton}>
-                      <Icon name="star" size={28} color="#000000" />
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Like Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => {
-                      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
-                      opacity.value = withTiming(0, { duration: 350 }, () => {
-                        runOnJS(onSwipeComplete)('right');
-                      });
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.likeButton}>
-                      <Icon name="heart" size={28} color="#FFFFFF" />
-                    </View>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Block and Report Text Buttons */}
-                <View style={styles.blockReportRow}>
-                  <TouchableOpacity
-                    style={styles.textButton}
-                    onPress={() => {
-                      Alert.alert(
-                        'Block User',
-                        'Are you sure you want to block this user?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Block',
-                            style: 'destructive',
-                            onPress: async () => {
-                              // TODO: Implement block API call
-                              Alert.alert('User blocked');
-                            },
-                          },
-                        ]
-                      );
-                    }}
-                  >
-                    <Text style={styles.blockText}>Block</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.textButton}
-                    onPress={() => {
-                      Alert.alert(
-                        'Report User',
-                        'Why are you reporting this user?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Report',
-                            style: 'destructive',
-                            onPress: async () => {
-                              // TODO: Implement report API call
-                              Alert.alert('User reported');
-                            },
-                          },
-                        ]
-                      );
-                    }}
-                  >
-                    <Text style={styles.reportText}>Report</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+          </View>
 
             {/* Bottom Spacing */}
-            <View style={{ height: hp(40) }} />
-          </View>
+            <View style={{ height: 40 }} />
+      
         </Animated.ScrollView>
-
-        {/* Bottom Action Buttons - Fixed at bottom, shown only when scrolled to bottom */}
-        {isTopCard && showActions && (
-          <Animated.View style={[styles.bottomActionsContainer, bottomActionsStyle]} pointerEvents={showActions ? 'auto' : 'none'}>
-            <View style={styles.actionButtonsRow}>
-              {/* Pass Button */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 400 });
-                  opacity.value = withTiming(0, { duration: 350 }, () => {
-                    runOnJS(onSwipeComplete)('left');
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.passButton}>
-                  <Text style={styles.passIcon}>✕</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Superlike Button */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  const performSuperlike = async () => {
-                    try {
-                      const accessToken = await AsyncStorage.getItem('accessToken');
-                      if (accessToken) {
-                        const actionPayload = {
-                          target_user_id: parseInt(profile.id, 10),
-                          action: 'superlike',
-                        };
-                        
-                        console.log('=== SWIPE ACTION API Call ===');
-                        console.log('Payload:', JSON.stringify(actionPayload, null, 2));
-                        
-                        const actionResponse = await postApiCall(
-                          'POST',
-                          'SWIPE',
-                          'ACTION',
-                          actionPayload,
-                          accessToken,
-                        );
-
-                        console.log('=== SWIPE ACTION API Response ===');
-                        console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
-                        console.log('Response Status Code:', actionResponse?.statusCode);
-                        console.log('Response Error:', actionResponse?.error);
-                        console.log('Response Data:', actionResponse?.response);
-                        console.log('===================================');
-
-                        if (actionResponse?.response?.match === true) {
-                          Alert.alert(
-                            '🎉 It\'s a Match!',
-                            actionResponse?.response?.message || 'You both liked each other!',
-                          );
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error calling superlike API:', error);
-                    }
-                  };
-                  
-                  performSuperlike();
-                  translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
-                  opacity.value = withTiming(0, { duration: 350 }, () => {
-                    runOnJS(onSwipeComplete)('right');
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.superlikeButton}>
-                  <Text style={styles.superlikeIcon}>⭐</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Like Button */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
-                  opacity.value = withTiming(0, { duration: 350 }, () => {
-                    runOnJS(onSwipeComplete)('right');
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.likeButton}>
-                  <Text style={styles.likeIcon}>♥</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        )}
       </Animated.View>
     </GestureDetector>
   );

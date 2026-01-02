@@ -89,7 +89,7 @@ export default class LoginScreen extends Component<Props, State> {
   render() {
     return (
       <View style={styles.container}>
-         <Video
+         {/* <Video
           ref={(ref: any) => {
             (this as any).videoRef = ref;
           }}
@@ -102,7 +102,7 @@ export default class LoginScreen extends Component<Props, State> {
           playInBackground={false}
           playWhenInactive={false}
           ignoreSilentSwitch="ignore"
-        /> 
+        />  */}
         <SafeAreaView style={styles.overlayContainer}>
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 

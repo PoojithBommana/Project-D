@@ -71,7 +71,6 @@ interface ProfileData {
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
-  const [accountType, setAccountType] = useState<'My profile' | 'Share profile'>('My profile');
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -228,7 +227,10 @@ const ProfileScreen = () => {
             <TouchableOpacity style={styles.headerIcon}>
               <Icon name="create-outline" size={26} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerIcon}>
+            <TouchableOpacity 
+              style={styles.headerIcon}
+              onPress={() => navigation.getParent()?.navigate('SettingsStackNavigator')}
+            >
               <Icon name="settings-outline" size={26} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -289,42 +291,6 @@ const ProfileScreen = () => {
                 <Text style={styles.locationText}>{profileData.city}</Text>
               </View>
             )}
-
-            {/* Action Buttons */}
-            <View style={styles.accountButtonsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.accountButton,
-                  accountType === 'My profile' && styles.accountButtonActive,
-                ]}
-                onPress={() => setAccountType('My profile')}
-              >
-                <Text
-                  style={[
-                    styles.accountButtonText,
-                    accountType === 'My profile' && styles.accountButtonTextActive,
-                  ]}
-                >
-                  My profile
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.accountButton,
-                  accountType === 'Share profile' && styles.accountButtonActive,
-                ]}
-                onPress={() => setAccountType('Share profile')}
-              >
-                <Text
-                  style={[
-                    styles.accountButtonText,
-                    accountType === 'Share profile' && styles.accountButtonTextActive,
-                  ]}
-                >
-                  Share profile
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
           {/* Location Bar */}
           {profileData?.location && (
@@ -456,7 +422,7 @@ const ProfileScreen = () => {
               );
             })()}
 
-            {/* Images Gallery - 1 per row, full width */}
+            {/* Images Gallery - 2 per row */}
             <View style={styles.imagesContainer}>
               {images.length > 0 ? (
                 images.map((imageItem, index) => {

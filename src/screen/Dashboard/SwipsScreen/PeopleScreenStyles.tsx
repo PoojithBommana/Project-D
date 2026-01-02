@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: hp(110),
+    paddingTop: CARD_HEIGHT,
     paddingBottom: hp(120),
     backgroundColor: 'transparent',
   },
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     width: '100%',
-    height: hp(600),
+    height: CARD_HEIGHT,
     zIndex: 0,
   },
   bannerGradient: {
@@ -106,6 +106,32 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: hp(300),
+  },
+  bannerOverlayContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: hp(40),
+    paddingHorizontal: wp(20),
+    zIndex: 5,
+  },
+  bannerProfileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(16),
+    gap: wp(12),
+  },
+  bannerNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
+  bannerNameText: {
+    fontSize: rf(28),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   headerOverBanner: {
     position: 'absolute',
@@ -152,7 +178,7 @@ const styles = StyleSheet.create({
     gap: wp(4),
   },
   profilePictureSection: {
-    paddingTop: hp(250),
+    paddingTop: hp(20),
     paddingBottom: hp(20),
     zIndex: 2,
     backgroundColor: 'transparent',

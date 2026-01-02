@@ -4,19 +4,11 @@ import { wp, hp, rf, rs } from '../utils/responsive';
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-<<<<<<< HEAD
     backgroundColor: '#fffcf1',
   },
   container: {
     flex: 1,
     backgroundColor: '#fffcf1',
-=======
-    backgroundColor: '#FFFCF1',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFCF1',
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
   },
   fixedBannerBackground: {
     position: 'absolute',
@@ -24,11 +16,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     width: '100%',
-<<<<<<< HEAD
     height: hp(600),
-=======
-    height: hp(500),
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
     zIndex: 0,
   },
   headerOverBanner: {
@@ -45,7 +33,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 10,
   },
-<<<<<<< HEAD
   headerCenter: {
     flex: 1,
     flexDirection: 'row',
@@ -54,21 +41,10 @@ const styles = StyleSheet.create({
     paddingRight: wp(16),
   },
   headerShareButton: {
-=======
-  headerShareText: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruMedium',
-    fontWeight: '500',
-    color: '#FFFFFF',
-    marginLeft: wp(4),
-  },
-  shareButton: {
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: hp(8),
-<<<<<<< HEAD
     paddingHorizontal: wp(16),
     borderRadius: rs(24),
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -81,14 +57,6 @@ const styles = StyleSheet.create({
     fontFamily: 'GTMaruMedium',
     fontWeight: '500',
     color: '#FFFFFF',
-=======
-    paddingHorizontal: wp(14),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: rs(20),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    marginRight: wp(8),
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
   },
   headerIcon: {
     padding: wp(6),
@@ -103,7 +71,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   scrollContent: {
-<<<<<<< HEAD
     paddingTop: hp(110),
     paddingBottom: hp(120),
     backgroundColor: 'transparent',
@@ -113,14 +80,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingHorizontal: wp(20),
     marginTop: hp(20),
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   imageItem: {
-    width: '100%',
+    width: '48%',
     marginBottom: hp(16),
   },
   gridImage: {
     width: '100%',
-    height: hp(500),
+    height: hp(280),
     borderRadius: wp(12),
   },
   detailsContainer: {
@@ -129,12 +99,6 @@ const styles = StyleSheet.create({
     paddingTop: hp(20),
     paddingBottom: hp(40),
   },
-=======
-    paddingTop: hp(100),
-    paddingBottom: hp(120),
-    backgroundColor: 'transparent',
-  },
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
   bannerBackground: {
     width: '100%',
     minHeight: hp(420),
@@ -149,11 +113,7 @@ const styles = StyleSheet.create({
     height: hp(300),
   },
   profilePictureSection: {
-<<<<<<< HEAD
     paddingTop: hp(250),
-=======
-    paddingTop: hp(180),
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
     paddingBottom: hp(20),
     zIndex: 2,
     backgroundColor: 'transparent',
@@ -212,7 +172,6 @@ const styles = StyleSheet.create({
   },
   usernameFollowersContainer: {
     paddingHorizontal: wp(20),
-<<<<<<< HEAD
     marginBottom: hp(16),
   },
   usernameFollowersText: {
@@ -221,33 +180,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#FFFFFF',
     opacity: 0.9,
-=======
-    marginBottom: hp(8),
-  },
-  usernameFollowersText: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruRegular',
-    fontWeight: '400',
-    color: '#FFFFFF',
-    opacity: 0.9,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: wp(20),
-    marginBottom: hp(8),
-    gap: wp(6),
-  },
-  locationIcon: {
-    marginRight: wp(2),
-  },
-  locationText: {
-    fontSize: rf(13),
-    fontFamily: 'GTMaruRegular',
-    fontWeight: '400',
-    color: '#FFFFFF',
-    opacity: 0.85,
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
   },
   accountButtonsContainer: {
     flexDirection: 'row',
@@ -328,7 +260,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-<<<<<<< HEAD
   noImagesContainer: {
     width: '100%',
     alignItems: 'center',
@@ -452,241 +383,6 @@ const styles = StyleSheet.create({
     fontFamily: 'GTMaruMedium',
     fontWeight: '600',
     color: '#000000',
-=======
-  storiesGridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 0,
-    paddingTop: hp(16),
-    gap: 0,
-    backgroundColor: '#FFFCF1',
-    zIndex: 5,
-  },
-  storyItem: {
-    width: wp(393) / 3,
-    marginBottom: 0,
-  },
-  storyImageContainer: {
-    width: '100%',
-    aspectRatio: 0.75,
-    borderRadius: 0,
-    overflow: 'hidden',
-    backgroundColor: '#fffcf1',
-    position: 'relative',
-  },
-  storyImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imagesGridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: wp(20),
-    paddingTop: hp(20),
-    paddingBottom: hp(16),
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFCF1',
-    zIndex: 5,
-  },
-  imageGridItem: {
-    width: '48%',
-    aspectRatio: 1,
-    borderRadius: rs(16),
-    overflow: 'hidden',
-    backgroundColor: '#F5F5F5',
-    marginBottom: hp(12),
-  },
-  imageGridImage: {
-    width: '100%',
-    height: '100%',
-  },
-  storyTitleContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: hp(8),
-    paddingHorizontal: wp(8),
-    backgroundColor: 'rgba(255, 252, 241, 0.8)',
-  },
-  storyTitle: {
-    fontSize: rf(12),
-    fontFamily: 'GTMaruBold',
-    fontWeight: '700',
-    color: '#000000',
-    textAlign: 'left',
-    textTransform: 'uppercase',
-  },
-  noImagesContainer: {
-    width: '100%',
-    alignItems: 'center',
-    paddingVertical: hp(60),
-  },
-  noImagesText: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruRegular',
-    fontWeight: '400',
-    color: '#666666',
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: hp(100),
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFCF1',
-    paddingVertical: hp(14),
-    paddingHorizontal: wp(24),
-    borderRadius: rs(24),
-    gap: wp(8),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-    zIndex: 10,
-  },
-  floatingButtonText: {
-    fontSize: rf(15),
-    fontFamily: 'GTMaruMedium',
-    fontWeight: '500',
-    color: '#000000',
-  },
-  detailSection: {
-    paddingHorizontal: wp(20),
-    paddingTop: hp(24),
-    paddingBottom: hp(40),
-    backgroundColor: '#FFFCF1',
-    zIndex: 5,
-  },
-  detailCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: rs(20),
-    padding: wp(20),
-    marginBottom: hp(16),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  detailCardTitle: {
-    fontSize: rf(18),
-    fontFamily: 'GTMaruBold',
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: hp(16),
-    letterSpacing: 0.2,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    marginBottom: hp(12),
-    alignItems: 'flex-start',
-  },
-  detailLabel: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruMedium',
-    fontWeight: '500',
-    color: '#666666',
-    width: wp(120),
-    marginRight: wp(12),
-  },
-  detailValue: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruRegular',
-    fontWeight: '400',
-    color: '#000000',
-    flex: 1,
-  },
-  detailBioText: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruRegular',
-    fontWeight: '400',
-    color: '#000000',
-    lineHeight: hp(22),
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: wp(8),
-    marginTop: hp(4),
-  },
-  pillTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    paddingVertical: hp(10),
-    paddingHorizontal: wp(14),
-    borderRadius: rs(20),
-    borderWidth: 0.5,
-    borderColor: '#E8E8E8',
-    marginBottom: hp(6),
-  },
-  tagIcon: {
-    marginRight: wp(6),
-  },
-  pillTagText: {
-    fontSize: rf(14),
-    fontFamily: 'GTMaruMedium',
-    fontWeight: '500',
-    color: '#000000',
-  },
-  tag: {
-    backgroundColor: '#F5F5F5',
-    paddingVertical: hp(8),
-    paddingHorizontal: wp(16),
-    borderRadius: rs(20),
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  tagText: {
-    fontSize: rf(13),
-    fontFamily: 'GTMaruMedium',
-    fontWeight: '500',
-    color: '#000000',
-  },
-  musicArtistsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: wp(12),
-    marginTop: hp(8),
-    marginBottom: hp(12),
-  },
-  musicArtistItem: {
-    alignItems: 'center',
-    width: wp(80),
-  },
-  musicArtistImage: {
-    width: wp(64),
-    height: wp(64),
-    borderRadius: rs(32),
-    backgroundColor: '#F8F8F8',
-    marginBottom: hp(6),
-  },
-  musicArtistImagePlaceholder: {
-    width: wp(64),
-    height: wp(64),
-    borderRadius: rs(32),
-    backgroundColor: '#F8F8F8',
-    marginBottom: hp(6),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  musicArtistName: {
-    fontSize: rf(12),
-    fontFamily: 'GTMaruMedium',
-    fontWeight: '500',
-    color: '#000000',
-    textAlign: 'center',
-    maxWidth: wp(80),
->>>>>>> 872fc54bc8ac048bc29a7bd4ae86d41d25c7473f
   },
 });
 
