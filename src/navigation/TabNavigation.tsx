@@ -4,7 +4,7 @@ import PeopleStackNavigator from './PeopleStackNavigator';
 import LikesScreen from '../screen/Dashboard/LikesScreen';
 import ChatScreen from '../screen/Dashboard/ChatScreen';
 import ProfileScreen from '../screen/Dashboard/ProfileScreen';
-import DiscoverScreen from '../screen/Dashboard/DiscoverScreen';
+import DiscoverStackNavigator from './DiscoverStackNavigator';
 import CustomBottomTabBar from './CustomBottomTabBar';
 
 const TabNavigator = createBottomTabNavigator()
@@ -27,7 +27,7 @@ export default function TabNavigation() {
       />
       <TabNavigator.Screen 
         name='Discover' 
-        component={DiscoverScreen}
+        component={DiscoverStackNavigator}
         options={{
           tabBarLabel: 'Discover',
         }}

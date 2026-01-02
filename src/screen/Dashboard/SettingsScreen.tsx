@@ -221,8 +221,8 @@ export default function SettingsScreen({ navigation }: Props) {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Icon name="help-circle-outline" size={20} color="#FDDA0D" style={{ marginRight: wp(12) }} />
-                  <Text style={styles.optionText}>FAQ</Text>
-                </View>
+                <Text style={styles.optionText}>FAQ</Text>
+            </View>
               </TouchableOpacity>
               <View style={styles.divider} />
             </View>
@@ -237,7 +237,7 @@ export default function SettingsScreen({ navigation }: Props) {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Icon name="shield-checkmark-outline" size={20} color="#FDDA0D" style={{ marginRight: wp(12) }} />
-                  <Text style={styles.optionText}>Privacy Policy</Text>
+                <Text style={styles.optionText}>Privacy Policy</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
@@ -250,7 +250,7 @@ export default function SettingsScreen({ navigation }: Props) {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Icon name="document-text-outline" size={20} color="#FDDA0D" style={{ marginRight: wp(12) }} />
-                  <Text style={styles.optionText}>Terms of use</Text>
+                <Text style={styles.optionText}>Terms of use</Text>
                 </View>
               </TouchableOpacity>
               <View style={styles.divider} />
@@ -265,7 +265,7 @@ export default function SettingsScreen({ navigation }: Props) {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Icon name="log-out-outline" size={20} color="#FDDA0D" style={{ marginRight: wp(12) }} />
-                  <Text style={styles.optionText}>Sign out</Text>
+                <Text style={styles.optionText}>Sign out</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
@@ -275,7 +275,7 @@ export default function SettingsScreen({ navigation }: Props) {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Icon name="trash-outline" size={20} color="#FDDA0D" style={{ marginRight: wp(12) }} />
-                  <Text style={styles.deleteAccountText}>Delete Account</Text>
+                <Text style={styles.deleteAccountText}>Delete Account</Text>
                 </View>
               </TouchableOpacity>
             </View>

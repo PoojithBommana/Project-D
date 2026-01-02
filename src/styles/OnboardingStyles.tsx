@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#FDDA0D',
     borderTopLeftRadius: 30,
     borderBottomLeftRadius: 30,
   },
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: rs(12),
     borderWidth: rs(1.5),
-    borderColor: '#4A90E2',
+    borderColor: '#FDDA0D',
     paddingHorizontal: wp(16),
     fontSize: rf(16),
     fontFamily: 'Inter',
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   continueButtonActive: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#FDDA0D',
   },
   continueButtonDisabled: {
     backgroundColor: '#B8D4E3',
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     fontSize: rf(18),
     fontFamily: 'Inter',
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#FDDA0D',
   },
   continueButtonTextActive: {
     color: '#FFFFFF',

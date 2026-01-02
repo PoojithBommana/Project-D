@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   artistInitial: {
     fontSize: rf(20),
     fontFamily: 'GTMaruBold',
-    color: '#4A90E2',
+    color: '#FDDA0D',
   },
   artistNameSmall: {
     fontSize: rf(10),
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   popularArtistInitial: {
     fontSize: rf(32),
     fontFamily: 'GTMaruBold',
-    color: '#4A90E2',
+    color: '#FDDA0D',
   },
   addButton: {
     position: 'absolute',

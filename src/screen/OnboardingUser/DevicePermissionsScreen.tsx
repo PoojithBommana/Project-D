@@ -851,7 +851,7 @@ export default function DevicePermissionsScreen({ navigation, route }: Props) {
               <View style={styles.permissionRow}>
                 <View style={styles.permissionLeft}>
                   <View style={styles.permissionIconContainer}>
-                    <Icon name={permission.icon as any} size={rs(24)} color="#4A90E2" />
+                    <Icon name={permission.icon as any} size={rs(24)} color="#FDDA0D" />
                   </View>
                   <View style={styles.permissionContent}>
                     <Text style={styles.permissionTitle}>{permission.title}</Text>

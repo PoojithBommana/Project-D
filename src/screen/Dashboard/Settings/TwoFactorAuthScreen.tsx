@@ -79,7 +79,7 @@ export default function TwoFactorAuthScreen({ navigation }: Props) {
     linkText: {
       fontSize: rf(14),
       fontFamily: 'GTMaruBold',
-      color: '#4A90E2',
+      color: '#FDDA0D',
       marginBottom: hp(24),
     },
     section: {

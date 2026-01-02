@@ -83,7 +83,7 @@ const StudioScreen: React.FC<StudioScreenProps> = ({ navigation }) => {
   
   // Gradient palettes for collection item cards
   const gradientPalettes = [
-    ['#4A90E2', '#87CEEB'], // Blue to sky-blue
+    ['#FDDA0D', '#87CEEB'], // Blue to sky-blue
     ['#FF6B6B', '#FFB88C'], // Orange to pink
     ['#9B59B6', '#E8D5FF'], // Purple to lavender
     ['#FF8A80', '#FFB74D'], // Warm gradient

@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: rf(14),
     fontFamily: 'GTMaruBold',
-    color: '#4A90E2',
+    color: '#FDDA0D',
     marginTop: hp(8),
   },
 });

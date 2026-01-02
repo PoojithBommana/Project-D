@@ -537,7 +537,7 @@ export default function DatingPreferencesScreen({ navigation, route }: Props) {
               ]}
             >
               <View style={styles.modalIconContainer}>
-                <Icon name="favorite" size={rs(48)} color="#4A90E2" />
+                <Icon name="favorite" size={rs(48)} color="#FDDA0D" />
               </View>
               
               <Text style={styles.modalTitle}>

@@ -365,7 +365,7 @@ export default function LoginAlertsScreen({ navigation }: Props) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#4A90E2"
+              tintColor="#FDDA0D"
             />
           }
         >

@@ -29,4 +29,14 @@ export const API_ENDPOINTS: any = {
   WARDROBE: {
     COLLECTION_ITEMS: '/wardrobe/collection-items/',
   },
+  DISCOVER: {
+    TOP_SNIXXED: '/discover/top-snixxed/',
+    AI_PICKS: '/discover/ai-picks/',
+    VIBE_PROFILES: '/discover/vibe/',
+    NEARBY_ACTIVE: '/discover/nearby-active/',
+    STYLE_MATCHES: '/discover/style-matches/',
+    CONVERSATION_STARTERS: '/discover/conversation-starters/',
+    NEW_USERS: '/discover/new-users/',
+    SEARCH: '/discover/search/',
+  },
 };

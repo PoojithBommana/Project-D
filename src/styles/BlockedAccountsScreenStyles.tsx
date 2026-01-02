@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(16),
     paddingVertical: hp(8),
     borderRadius: rs(8),
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#FDDA0D',
   },
   unblockButtonText: {
     fontSize: rf(14),

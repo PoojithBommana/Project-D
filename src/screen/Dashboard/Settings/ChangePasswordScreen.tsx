@@ -122,7 +122,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
     linkText: {
       fontSize: rf(14),
       fontFamily: 'GTMaruBold',
-      color: '#4A90E2',
+      color: '#fdda0d',
       marginTop: hp(8),
     },
     checkboxContainer: {

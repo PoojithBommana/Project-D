@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   ageRangeText: {
     fontSize: rf(16),
     fontFamily: 'GTMaruRegular',
-    color: '#4A90E2',
+    color: '#FDDA0D',
     marginBottom: hp(24),
   },
   pickerWrapper: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     lineHeight: rf(30),
   },
   modalGenderText: {
-    color: '#4A90E2',
+    color: '#FDDA0D',
   },
   modalSubtext: {
     fontSize: rf(14),

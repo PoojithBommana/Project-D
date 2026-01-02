@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GTMaruBold',
     color: '#000000',
     borderBottomWidth: 1,
-    borderBottomColor: '#4A90E2',
+    borderBottomColor: '#FDDA0D',
     paddingVertical: hp(4),
     minWidth: wp(200),
   },
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: rf(14),
     fontFamily: 'GTMaruBold',
-    color: '#4A90E2',
+    color: '#FDDA0D',
   },
   cancelButtonText: {
     fontSize: rf(14),

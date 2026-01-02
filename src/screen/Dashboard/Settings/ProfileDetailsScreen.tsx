@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   StatusBar,
   SafeAreaView,
   Image,
@@ -84,6 +85,7 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
   };
 
   const handleEditField = (field: string, currentValue: string) => {
+    console.log('handleEditField called:', field, currentValue);
     setPendingField(field);
     setPendingCurrentValue(currentValue);
     setShowConfirmModal(true);
@@ -240,9 +242,9 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
     },
     header: {
       flexDirection: 'row' as const,
-      alignItems: 'center' as const,
+      alignItems: 'flex-end' as const,
       paddingHorizontal: wp(20),
-      paddingTop: hp(24),
+      paddingTop: hp(60),
       paddingBottom: hp(16),
       borderBottomWidth: 1,
       borderBottomColor: '#E5E5E5',
@@ -250,7 +252,7 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
     backButton: {
       width: wp(40),
       height: hp(40),
-      justifyContent: 'center' as const,
+      justifyContent: 'flex-end' as const,
       alignItems: 'flex-start' as const,
     },
     headerTitle: {
@@ -312,9 +314,11 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
+      position: 'relative' as const,
     },
     profileFieldContent: {
       flex: 1,
+      marginRight: wp(12),
     },
     profileFieldLabel: {
       fontSize: rf(14),
@@ -345,6 +349,13 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
     },
     editIconButton: {
       padding: wp(8),
+      width: 44,
+      height: 44,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      zIndex: 10,
+      elevation: 10,
+      backgroundColor: 'transparent',
     },
     saveCancelRow: {
       flexDirection: 'row' as const,
@@ -356,7 +367,7 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
       paddingHorizontal: wp(20),
       paddingVertical: hp(10),
       borderRadius: rs(8),
-      backgroundColor: '#4A90E2',
+      backgroundColor: '#FDDA0D',
     },
     saveButtonText: {
       fontSize: rf(14),
@@ -468,13 +479,13 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
           >
             <Icon name="arrow-back" size={24} color="#000000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profiles and personal details</Text>
         </View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* White Card Container */}
           <View style={styles.cardContainer}>
@@ -508,263 +519,284 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
               <Text style={styles.sectionHeader}>Edit Profile Details</Text>
               
               {/* First Name Field */}
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldRowInner}>
+              {editingField === 'firstName' ? (
+                <View style={styles.profileFieldRow}>
                   <View style={styles.profileFieldContent}>
                     <Text style={styles.profileFieldLabel}>First Name</Text>
-                    {editingField === 'firstName' ? (
-                      <View>
-                        <TextInput
-                          style={styles.profileFieldInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          placeholder="First name"
-                          placeholderTextColor="#999999"
-                          autoFocus
-                        />
-                        <View style={styles.saveCancelRow}>
-                          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('firstName')} activeOpacity={0.7}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
+                    <TextInput
+                      style={styles.profileFieldInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="First name"
+                      placeholderTextColor="#999999"
+                      autoFocus
+                    />
+                    <View style={styles.saveCancelRow}>
+                      <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('firstName')} activeOpacity={0.7}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.profileFieldRow,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => {
+                    console.log('Edit row pressed for firstName');
+                    handleEditField('firstName', profileData.firstName);
+                  }}
+                >
+                  <View style={styles.profileFieldRowInner}>
+                    <View style={styles.profileFieldContent}>
+                      <Text style={styles.profileFieldLabel}>First Name</Text>
                       <Text style={styles.profileFieldValue}>
                         {profileData.firstName || 'Not set'}
                       </Text>
-                    )}
-                  </View>
-                  {editingField !== 'firstName' && (
-                    <TouchableOpacity
-                      style={styles.editIconButton}
-                      onPress={() => handleEditField('firstName', profileData.firstName)}
-                      activeOpacity={0.7}
-                    >
+                    </View>
+                    <View style={styles.editIconButton}>
                       <Icon name="create-outline" size={20} color="#666666" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
               <View style={styles.fieldDivider} />
 
               {/* Last Name Field */}
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldRowInner}>
+              {editingField === 'lastName' ? (
+                <View style={styles.profileFieldRow}>
                   <View style={styles.profileFieldContent}>
                     <Text style={styles.profileFieldLabel}>Last Name</Text>
-                    {editingField === 'lastName' ? (
-                      <View>
-                        <TextInput
-                          style={styles.profileFieldInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          placeholder="Last name"
-                          placeholderTextColor="#999999"
-                          autoFocus
-                        />
-                        <View style={styles.saveCancelRow}>
-                          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('lastName')} activeOpacity={0.7}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
+                    <TextInput
+                      style={styles.profileFieldInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="Last name"
+                      placeholderTextColor="#999999"
+                      autoFocus
+                    />
+                    <View style={styles.saveCancelRow}>
+                      <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('lastName')} activeOpacity={0.7}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.profileFieldRow,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => handleEditField('lastName', profileData.lastName)}
+                >
+                  <View style={styles.profileFieldRowInner}>
+                    <View style={styles.profileFieldContent}>
+                      <Text style={styles.profileFieldLabel}>Last Name</Text>
                       <Text style={styles.profileFieldValue}>
                         {profileData.lastName || 'Not set'}
                       </Text>
-                    )}
-                  </View>
-                  {editingField !== 'lastName' && (
-                    <TouchableOpacity
-                      style={styles.editIconButton}
-                      onPress={() => handleEditField('lastName', profileData.lastName)}
-                      activeOpacity={0.7}
-                    >
+                    </View>
+                    <View style={styles.editIconButton}>
                       <Icon name="create-outline" size={20} color="#666666" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
               <View style={styles.fieldDivider} />
 
               {/* Email Field */}
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldRowInner}>
+              {editingField === 'email' ? (
+                <View style={styles.profileFieldRow}>
                   <View style={styles.profileFieldContent}>
                     <Text style={styles.profileFieldLabel}>Email</Text>
-                    {editingField === 'email' ? (
-                      <View>
-                        <TextInput
-                          style={styles.profileFieldInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          placeholder="Email address"
-                          placeholderTextColor="#999999"
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                          autoFocus
-                        />
-                        <View style={styles.saveCancelRow}>
-                          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('email')} activeOpacity={0.7}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
-                      <Text style={styles.profileFieldValue}>{profileData.email || 'Not set'}</Text>
-                    )}
+                    <TextInput
+                      style={styles.profileFieldInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="Email address"
+                      placeholderTextColor="#999999"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoFocus
+                    />
+                    <View style={styles.saveCancelRow}>
+                      <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('email')} activeOpacity={0.7}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  {editingField !== 'email' && (
-                    <TouchableOpacity
-                      style={styles.editIconButton}
-                      onPress={() => handleEditField('email', profileData.email)}
-                      activeOpacity={0.7}
-                    >
-                      <Icon name="create-outline" size={20} color="#666666" />
-                    </TouchableOpacity>
-                  )}
                 </View>
-              </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.profileFieldRow,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => handleEditField('email', profileData.email)}
+                >
+                  <View style={styles.profileFieldRowInner}>
+                    <View style={styles.profileFieldContent}>
+                      <Text style={styles.profileFieldLabel}>Email</Text>
+                      <Text style={styles.profileFieldValue}>{profileData.email || 'Not set'}</Text>
+                    </View>
+                    <View style={styles.editIconButton}>
+                      <Icon name="create-outline" size={20} color="#666666" />
+                    </View>
+                  </View>
+                </Pressable>
+              )}
               <View style={styles.fieldDivider} />
 
               {/* Phone Field */}
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldRowInner}>
+              {editingField === 'phone' ? (
+                <View style={styles.profileFieldRow}>
                   <View style={styles.profileFieldContent}>
                     <Text style={styles.profileFieldLabel}>Phone</Text>
-                    {editingField === 'phone' ? (
-                      <View>
-                        <TextInput
-                          style={styles.profileFieldInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          placeholder="Phone number"
-                          placeholderTextColor="#999999"
-                          keyboardType="phone-pad"
-                          autoFocus
-                        />
-                        <View style={styles.saveCancelRow}>
-                          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('phone')} activeOpacity={0.7}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
+                    <TextInput
+                      style={styles.profileFieldInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="Phone number"
+                      placeholderTextColor="#999999"
+                      keyboardType="phone-pad"
+                      autoFocus
+                    />
+                    <View style={styles.saveCancelRow}>
+                      <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('phone')} activeOpacity={0.7}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.profileFieldRow,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => handleEditField('phone', profileData.phone)}
+                >
+                  <View style={styles.profileFieldRowInner}>
+                    <View style={styles.profileFieldContent}>
+                      <Text style={styles.profileFieldLabel}>Phone</Text>
                       <Text style={styles.profileFieldValue}>
                         {profileData.phone ? formatPhone(profileData.phone) : 'Not set'}
                       </Text>
-                    )}
-                  </View>
-                  {editingField !== 'phone' && (
-                    <TouchableOpacity
-                      style={styles.editIconButton}
-                      onPress={() => handleEditField('phone', profileData.phone)}
-                      activeOpacity={0.7}
-                    >
+                    </View>
+                    <View style={styles.editIconButton}>
                       <Icon name="create-outline" size={20} color="#666666" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
               <View style={styles.fieldDivider} />
 
               {/* Username Field */}
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldRowInner}>
+              {editingField === 'username' ? (
+                <View style={styles.profileFieldRow}>
                   <View style={styles.profileFieldContent}>
                     <Text style={styles.profileFieldLabel}>Username</Text>
-                    {editingField === 'username' ? (
-                      <View>
-                        <TextInput
-                          style={styles.profileFieldInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          placeholder="Username"
-                          placeholderTextColor="#999999"
-                          autoCapitalize="none"
-                          autoFocus
-                        />
-                        <View style={styles.saveCancelRow}>
-                          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('username')} activeOpacity={0.7}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
+                    <TextInput
+                      style={styles.profileFieldInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="Username"
+                      placeholderTextColor="#999999"
+                      autoCapitalize="none"
+                      autoFocus
+                    />
+                    <View style={styles.saveCancelRow}>
+                      <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('username')} activeOpacity={0.7}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.profileFieldRow,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => handleEditField('username', profileData.username)}
+                >
+                  <View style={styles.profileFieldRowInner}>
+                    <View style={styles.profileFieldContent}>
+                      <Text style={styles.profileFieldLabel}>Username</Text>
                       <Text style={styles.profileFieldValue}>
                         {profileData.username ? `@${profileData.username}` : 'Not set'}
                       </Text>
-                    )}
-                  </View>
-                  {editingField !== 'username' && (
-                    <TouchableOpacity
-                      style={styles.editIconButton}
-                      onPress={() => handleEditField('username', profileData.username)}
-                      activeOpacity={0.7}
-                    >
+                    </View>
+                    <View style={styles.editIconButton}>
                       <Icon name="create-outline" size={20} color="#666666" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
               <View style={styles.fieldDivider} />
 
               {/* Date of Birth Field */}
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldRowInner}>
+              {editingField === 'dateOfBirth' ? (
+                <View style={styles.profileFieldRow}>
                   <View style={styles.profileFieldContent}>
                     <Text style={styles.profileFieldLabel}>Date of Birth</Text>
-                    {editingField === 'dateOfBirth' ? (
-                      <View>
-                        <TextInput
-                          style={styles.profileFieldInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          placeholder="MM/DD/YYYY"
-                          placeholderTextColor="#999999"
-                          autoFocus
-                        />
-                        <View style={styles.saveCancelRow}>
-                          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('dateOfBirth')} activeOpacity={0.7}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
+                    <TextInput
+                      style={styles.profileFieldInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="MM/DD/YYYY"
+                      placeholderTextColor="#999999"
+                      autoFocus
+                    />
+                    <View style={styles.saveCancelRow}>
+                      <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} activeOpacity={0.7}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveField('dateOfBirth')} activeOpacity={0.7}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.profileFieldRow,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => handleEditField('dateOfBirth', profileData.dateOfBirth)}
+                >
+                  <View style={styles.profileFieldRowInner}>
+                    <View style={styles.profileFieldContent}>
+                      <Text style={styles.profileFieldLabel}>Date of Birth</Text>
                       <Text style={styles.profileFieldValue}>
                         {profileData.dateOfBirth ? formatDate(profileData.dateOfBirth) : 'Not set'}
                       </Text>
-                    )}
-                  </View>
-                  {editingField !== 'dateOfBirth' && (
-                    <TouchableOpacity
-                      style={styles.editIconButton}
-                      onPress={() => handleEditField('dateOfBirth', profileData.dateOfBirth)}
-                      activeOpacity={0.7}
-                    >
+                    </View>
+                    <View style={styles.editIconButton}>
                       <Icon name="create-outline" size={20} color="#666666" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -793,12 +825,12 @@ export default function ProfileDetailsScreen({ navigation }: Props) {
               ]}
             >
               <View style={styles.modalIconContainer}>
-                <Icon name="create-outline" size={rs(48)} color="#4A90E2" />
+                <Icon name="create-outline" size={rs(48)} color="#FDDA0D" />
               </View>
               
               <Text style={styles.modalTitle}>
                 Do you want to change{'\n'}
-                <Text style={{ color: '#4A90E2' }}>{getFieldLabel(pendingField)}?</Text>
+                <Text style={{ color: '#FDDA0D' }}>{getFieldLabel(pendingField)}?</Text>
               </Text>
               
               <Text style={styles.modalSubtext}>
