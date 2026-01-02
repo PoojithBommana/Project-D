@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
   },
   superlikeButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#FDDA0D',
   },
   likeButton: {
     backgroundColor: '#4CAF50',

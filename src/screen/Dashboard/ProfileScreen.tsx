@@ -276,7 +276,21 @@ const ProfileScreen = () => {
               </Text>
             </View>
 
-            {/* Account Type Buttons */}
+            {/* Location */}
+            {profileData?.location && (
+              <View style={styles.locationContainer}>
+                <Icon name="location-outline" size={16} color="#FFFFFF" style={styles.locationIcon} />
+                <Text style={styles.locationText}>{profileData.location}</Text>
+              </View>
+            )}
+            {profileData?.city && (
+              <View style={styles.locationContainer}>
+                <Icon name="location-outline" size={16} color="#FFFFFF" style={styles.locationIcon} />
+                <Text style={styles.locationText}>{profileData.city}</Text>
+              </View>
+            )}
+
+            {/* Action Buttons */}
             <View style={styles.accountButtonsContainer}>
               <TouchableOpacity
                 style={[

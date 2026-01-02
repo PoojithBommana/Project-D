@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   accountCardSelected: {
     backgroundColor: '#FEFFAF',
     borderRadius: rs(24),
-    shadowColor: '#4A90E2',
+    shadowColor: '#FDDA0D',
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 5,

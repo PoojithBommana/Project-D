@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: rs(16),
     borderWidth: rs(2),
     borderStyle: 'dashed',
-    borderColor: '#4A90E2',
+    borderColor: '#FDDA0D',
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   photoPlaceholderText: {
     fontSize: rf(14),
     fontFamily: 'GTMaruRegular',
-    color: '#4A90E2',
+    color: '#FDDA0D',
   },
   bioSection: {
     marginBottom: hp(24),

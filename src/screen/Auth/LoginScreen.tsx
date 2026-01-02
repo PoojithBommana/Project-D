@@ -9,7 +9,7 @@ import styles from '../../styles/LoginScreenStyles';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { rf } from '../../utils/responsive';
 import { Applogoicon, Staricon } from '../../assets/index';
-import { Bgvideo } from '../../assets/index'; // Commented out - bgvideo.mp4 file not found
+// import { Bgvideo } from '../../assets/index'; // Commented out - bgvideo.mp4 file not found
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 

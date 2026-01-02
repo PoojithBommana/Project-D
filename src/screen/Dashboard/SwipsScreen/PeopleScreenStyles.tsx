@@ -326,27 +326,115 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: 'rgba(255, 255, 255, 0.5)',
   },
-
-  // Name Overlay on Image
-  imageNameOverlay: {
+  profileInfoOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     padding: wp(20),
     paddingBottom: wp(24),
+    zIndex: 5,
   },
-  nameText: {
-    fontSize: wp(34),
+  profileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(0),
+    marginBottom: hp(8),
+    gap: wp(12),
+  },
+  thumbnailContainer: {
+    position: 'relative',
+    width: wp(64),
+    height: wp(64),
+  },
+  thumbnailPicture: {
+    width: '100%',
+    height: '100%',
+    borderRadius: wp(32),
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  plusIconContainer: {
+    position: 'absolute',
+    bottom: -wp(2),
+    right: -wp(2),
+    width: wp(24),
+    height: wp(24),
+    borderRadius: wp(12),
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  plusIcon: {
+    width: wp(14),
+    height: wp(14),
+    tintColor: '#000000',
+  },
+  nameVerifiedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+  },
+  profileName: {
+    fontSize: rf(26),
+    fontFamily: 'GTMaruBold',
     fontWeight: '700',
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    letterSpacing: 0.5,
   },
-  ageText: {
-    fontSize: wp(30),
+  verifiedIcon: {
+    marginTop: hp(2),
+  },
+  usernameFollowersContainer: {
+    paddingHorizontal: wp(0),
+    marginBottom: hp(8),
+  },
+  usernameFollowersText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruRegular',
     fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  profileLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(0),
+    marginBottom: hp(8),
+    gap: wp(6),
+  },
+  profileLocationIcon: {
+    marginRight: wp(2),
+  },
+  profileLocationText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruRegular',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.85,
+  },
+  accountButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: wp(0),
+    gap: wp(12),
+    marginTop: hp(8),
+  },
+  accountButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(12),
+    borderRadius: wp(8),
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  accountButtonText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    fontWeight: '500',
     color: '#FFFFFF',
   },
 
@@ -486,6 +574,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: wp(12),
     padding: wp(16),
+    paddingBottom: wp(16),
     marginBottom: hp(12),
     borderWidth: 0.5,
     borderColor: '#E5E5E5',
@@ -520,9 +609,13 @@ const styles = StyleSheet.create({
     marginVertical: hp(12),
   },
   complimentButton: {
+    position: 'absolute',
+    bottom: hp(60),
+    left: wp(16),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
     paddingVertical: hp(10),
     gap: wp(8),
   },
@@ -551,7 +644,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5E5',
   },
   tagIcon: {
-    fontSize: wp(14),
     marginRight: wp(6),
   },
   tagText: {
@@ -632,6 +724,22 @@ const styles = StyleSheet.create({
     height: wp(200),
     borderRadius: wp(12),
     backgroundColor: '#F5F5F5',
+  },
+  // Photos List - One photo per row
+  photosList: {
+    flexDirection: 'column',
+    gap: hp(12),
+  },
+  photoItem: {
+    width: '100%',
+    marginBottom: hp(8),
+  },
+  fullWidthPhoto: {
+    width: '100%',
+    height: hp(450),
+    borderRadius: wp(20),
+    backgroundColor: '#F5F5F5',
+    overflow: 'hidden',
   },
 
   // Bottom Navigation

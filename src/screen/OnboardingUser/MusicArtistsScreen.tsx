@@ -468,7 +468,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
 
               {loadingArtists ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#4A90E2" />
+                  <ActivityIndicator size="small" color="#FDDA0D" />
                 </View>
               ) : displayedArtists.length > 0 ? (
                 <FlatList
@@ -539,7 +539,7 @@ export default function MusicArtistsScreen({ navigation, route }: Props) {
               ]}
             >
               <View style={styles.modalIconContainer}>
-                <Icon name="music-note" size={rs(48)} color="#4A90E2" />
+                <Icon name="music-note" size={rs(48)} color="#FDDA0D" />
               </View>
 
               <Text style={styles.modalTitle}>

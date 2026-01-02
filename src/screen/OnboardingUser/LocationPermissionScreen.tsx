@@ -258,6 +258,7 @@ export default function LocationPermissionScreen({ navigation, route }: Props) {
           gender: route?.params?.gender || '',
           age: route?.params?.age || 0,
           location: locationString,
+          city: route?.params?.city || '',
           ...(location && {
             latitude: location.latitude,
             longitude: location.longitude,

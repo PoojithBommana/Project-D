@@ -72,19 +72,16 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   const isScrolling = useSharedValue(false);
   const contentHeight = useSharedValue(0);
   const scrollViewHeight = useSharedValue(0);
-  const showBottomActions = useSharedValue(false);
 
   React.useEffect(() => {
     if (!isTopCard) {
       translateY.value = -stackOffset;
       scale.value = stackScale;
       opacity.value = stackOpacity;
-      showBottomActions.value = false; // Hide buttons when not top card
     } else {
       translateY.value = 0;
       scale.value = 1;
       opacity.value = 1;
-      showBottomActions.value = false; // Reset when card becomes top
     }
   }, [isTopCard, stackOffset, stackScale, stackOpacity]);
 
@@ -102,15 +99,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       contentHeight.value = contentHeightValue;
       scrollViewHeight.value = scrollViewHeightValue;
       
-      // Show buttons when scrolled near the bottom (within 100px of bottom)
-      // Also show if content fits in view (scrollPosition is 0 or very small)
-      const threshold = 100;
-      const isAtTop = scrollPosition <= 10;
-      const isNearBottom = contentHeightValue > 0 && scrollViewHeightValue > 0 && 
-                          (scrollPosition + scrollViewHeightValue >= contentHeightValue - threshold);
-      
-      // Only show buttons when scrolled to bottom, not at top
-      showBottomActions.value = isNearBottom && !isAtTop;
     },
     onBeginDrag: () => {
       isScrolling.value = true;
@@ -237,30 +225,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
 
   const staticZIndex = isTopCard ? 1000 : 100 - index;
 
-  // Track visibility state for conditional rendering
-  const [showActions, setShowActions] = React.useState(false);
-  
-  // Sync animated value to state
-  useAnimatedReaction(
-    () => showBottomActions.value && isTopCard,
-    (shouldShow) => {
-      runOnJS(setShowActions)(shouldShow);
-    },
-    [isTopCard],
-  );
-  
-  // Animated style for bottom actions visibility
-  const bottomActionsStyle = useAnimatedStyle(() => {
-    const shouldShow = showBottomActions.value && isTopCard;
-    return {
-      opacity: shouldShow ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 200 }),
-      transform: [
-        {
-          translateY: shouldShow ? withTiming(0, { duration: 200 }) : withTiming(50, { duration: 200 }),
-        },
-      ],
-    };
-  });
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -516,7 +480,12 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
                 <View style={styles.aboutCard}>
                   <Text style={styles.sectionTitle}>Lifestyle</Text>
                   <View style={styles.tagsContainer}>
-                    {tags}
+                    {qualities.map((quality: string, index: number) => (
+                      <View key={index} style={styles.pillTag}>
+                        <Icon name="search-outline" size={16} color="#000000" style={styles.tagIcon} />
+                        <Text style={styles.pillTagText}>{quality}</Text>
+                      </View>
+                    ))}
                   </View>
                 </View>
               );
@@ -570,7 +539,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               </View>
             )}
 
-            {/* Interests Section */}
+            {/* My interests Section */}
             {(() => {
               const tags: React.ReactElement[] = [];
               
@@ -699,8 +668,152 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               </View>
             )}
 
-            {/* Bottom Spacing for Action Buttons */}
-            <View style={{ height: 140 }} />
+            {/* Action Buttons - Right below More Photos */}
+            {isTopCard && (
+              <View style={styles.inlineActionsContainer}>
+                <View style={styles.actionButtonsRow}>
+                  {/* Pass Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 400 });
+                      opacity.value = withTiming(0, { duration: 350 }, () => {
+                        runOnJS(onSwipeComplete)('left');
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.passButton}>
+                      <Icon name="close" size={28} color="#FFFFFF" />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Superlike Button - Center, Larger */}
+                  <TouchableOpacity
+                    style={styles.actionButtonCenter}
+                    onPress={() => {
+                      const performSuperlike = async () => {
+                        try {
+                          const accessToken = await AsyncStorage.getItem('accessToken');
+                          if (accessToken) {
+                            const actionPayload = {
+                              target_user_id: parseInt(profile.id, 10),
+                              action: 'superlike',
+                            };
+                            
+                            console.log('=== SWIPE ACTION API Call ===');
+                            console.log('Payload:', JSON.stringify(actionPayload, null, 2));
+                            
+                            const actionResponse = await postApiCall(
+                              'POST',
+                              'SWIPE',
+                              'ACTION',
+                              actionPayload,
+                              accessToken,
+                            );
+
+                            console.log('=== SWIPE ACTION API Response ===');
+                            console.log('Full Response:', JSON.stringify(actionResponse, null, 2));
+                            console.log('Response Status Code:', actionResponse?.statusCode);
+                            console.log('Response Error:', actionResponse?.error);
+                            console.log('Response Data:', actionResponse?.response);
+                            console.log('===================================');
+
+                            if (actionResponse?.response?.match === true) {
+                              Alert.alert(
+                                '🎉 It\'s a Match!',
+                                actionResponse?.response?.message || 'You both liked each other!',
+                              );
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error calling superlike API:', error);
+                        }
+                      };
+                      
+                      performSuperlike();
+                      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
+                      opacity.value = withTiming(0, { duration: 350 }, () => {
+                        runOnJS(onSwipeComplete)('right');
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.superlikeButton}>
+                      <Icon name="star" size={28} color="#000000" />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Like Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 400 });
+                      opacity.value = withTiming(0, { duration: 350 }, () => {
+                        runOnJS(onSwipeComplete)('right');
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.likeButton}>
+                      <Icon name="heart" size={28} color="#FFFFFF" />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Block and Report Text Buttons */}
+                <View style={styles.blockReportRow}>
+                  <TouchableOpacity
+                    style={styles.textButton}
+                    onPress={() => {
+                      Alert.alert(
+                        'Block User',
+                        'Are you sure you want to block this user?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Block',
+                            style: 'destructive',
+                            onPress: async () => {
+                              // TODO: Implement block API call
+                              Alert.alert('User blocked');
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Text style={styles.blockText}>Block</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.textButton}
+                    onPress={() => {
+                      Alert.alert(
+                        'Report User',
+                        'Why are you reporting this user?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Report',
+                            style: 'destructive',
+                            onPress: async () => {
+                              // TODO: Implement report API call
+                              Alert.alert('User reported');
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Text style={styles.reportText}>Report</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Bottom Spacing */}
+            <View style={{ height: hp(40) }} />
           </View>
         </Animated.ScrollView>
 

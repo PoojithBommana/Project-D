@@ -5,6 +5,7 @@ import AuthNavigation from './AuthNavigation';
 // import ProfileScreen from '../screen/Dashboard/ProfileScreen';
 import TabNavigation from './TabNavigation';
 import OnboardingNavigation from './OnboardingNavigation';
+import SettingsStackNavigator from './SettingsStackNavigator';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +22,7 @@ export default function MainNavigation() {
       <Stack.Screen name="AuthNavigation" component={AuthNavigation} />
       <Stack.Screen name="OnboardingNavigation" component={OnboardingNavigation} />
       <Stack.Screen name='TabNavigation' component={TabNavigation} />
+      <Stack.Screen name="SettingsStackNavigator" component={SettingsStackNavigator} />
     </Stack.Navigator>
   );
 }

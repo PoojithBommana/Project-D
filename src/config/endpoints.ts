@@ -9,8 +9,11 @@ export const API_ENDPOINTS: any = {
     LOGOUT: '/auth/logout/',
     REFRESH_TOKEN: '/token/refresh/',
     GET_PROFILE: '/auth/profile/',
+    UPDATE_PROFILE: '/auth/profile/',
     VERIFY_FACE: '/auth/verify-face/',
     USERNAME_CHECK: '/auth/username/check/',
+    GET_BLOCKED_USERS: '/auth/blocked-users/',
+    UNBLOCK_USER: '/auth/unblock-user/',
   },
   SWIPE: {
     GET_USERS: '/auth/swipe/users/',
@@ -25,5 +28,15 @@ export const API_ENDPOINTS: any = {
   },
   WARDROBE: {
     COLLECTION_ITEMS: '/wardrobe/collection-items/',
+  },
+  DISCOVER: {
+    TOP_SNIXXED: '/discover/top-snixxed/',
+    AI_PICKS: '/discover/ai-picks/',
+    VIBE_PROFILES: '/discover/vibe/',
+    NEARBY_ACTIVE: '/discover/nearby-active/',
+    STYLE_MATCHES: '/discover/style-matches/',
+    CONVERSATION_STARTERS: '/discover/conversation-starters/',
+    NEW_USERS: '/discover/new-users/',
+    SEARCH: '/discover/search/',
   },
 };

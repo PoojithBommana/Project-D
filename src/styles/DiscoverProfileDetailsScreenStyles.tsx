@@ -1,0 +1,250 @@
+import { StyleSheet, Dimensions } from 'react-native';
+import { hp, wp, rf } from '../utils/responsive';
+
+const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  scrollViewContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: hp(120),
+  },
+  topNavBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingTop: hp(50),
+    paddingBottom: hp(20),
+    paddingHorizontal: wp(20),
+    zIndex: 100,
+  },
+  backButton: {
+    width: wp(40),
+    height: wp(40),
+    borderRadius: wp(20),
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileImageContainer: {
+    marginTop: hp(100),
+    alignItems: 'center',
+    marginBottom: hp(24),
+  },
+  profileImage: {
+    width: wp(200),
+    height: wp(200),
+    borderRadius: wp(100),
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  profileInfoContainer: {
+    paddingHorizontal: wp(20),
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(8),
+    gap: wp(8),
+  },
+  name: {
+    fontSize: rf(32),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    includeFontPadding: false,
+  },
+  verifiedIcon: {
+    marginTop: hp(2),
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(12),
+    gap: wp(6),
+  },
+  location: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruRegular',
+    color: '#FFFFFF',
+    opacity: 0.9,
+    includeFontPadding: false,
+  },
+  distance: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruRegular',
+    color: '#FFFFFF',
+    opacity: 0.7,
+    includeFontPadding: false,
+  },
+  contextContainer: {
+    marginBottom: hp(16),
+    paddingVertical: hp(8),
+    paddingHorizontal: wp(12),
+    borderRadius: rf(12),
+    backgroundColor: '#FDFF8D',
+  },
+  contextText: {
+    fontSize: rf(13),
+    fontFamily: 'GTMaruMedium',
+    color: '#000000',
+    includeFontPadding: false,
+  },
+  bioContainer: {
+    marginBottom: hp(20),
+  },
+  bio: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruRegular',
+    color: '#FFFFFF',
+    lineHeight: hp(24),
+    opacity: 0.9,
+    includeFontPadding: false,
+  },
+  readMoreText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruBold',
+    color: '#FDFF8D',
+    marginTop: hp(8),
+    includeFontPadding: false,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(12),
+    gap: wp(12),
+  },
+  infoText: {
+    fontSize: rf(16),
+    fontFamily: 'GTMaruRegular',
+    color: '#FFFFFF',
+    opacity: 0.9,
+    flex: 1,
+    includeFontPadding: false,
+  },
+  interestsContainer: {
+    marginTop: hp(8),
+    marginBottom: hp(20),
+  },
+  sectionTitle: {
+    fontSize: rf(20),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: hp(12),
+    includeFontPadding: false,
+  },
+  interestsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: wp(8),
+  },
+  interestTag: {
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(8),
+    borderRadius: rf(20),
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  interestText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    color: '#FFFFFF',
+    includeFontPadding: false,
+  },
+  styleContainer: {
+    marginTop: hp(8),
+    marginBottom: hp(20),
+  },
+  styleList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: wp(8),
+  },
+  styleTag: {
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(8),
+    borderRadius: rf(20),
+    backgroundColor: '#FDFF8D',
+  },
+  styleText: {
+    fontSize: rf(14),
+    fontFamily: 'GTMaruMedium',
+    color: '#FFFFFF',
+    includeFontPadding: false,
+  },
+  actionButtonsContainer: {
+    position: 'absolute',
+    bottom: hp(40),
+    left: wp(20),
+    right: wp(20),
+    flexDirection: 'row',
+    gap: wp(12),
+    zIndex: 100,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: hp(16),
+    borderRadius: rf(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  passButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  passButtonText: {
+    fontSize: rf(18),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#000000',
+    includeFontPadding: false,
+  },
+  snixxButton: {
+    backgroundColor: '#FDFF8D',
+  },
+  snixxButtonText: {
+    fontSize: rf(18),
+    fontFamily: 'GTMaruBold',
+    fontWeight: '700',
+    color: '#000000',
+    includeFontPadding: false,
+  },
+});
+
+export default styles;
+
