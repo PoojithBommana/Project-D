@@ -477,55 +477,89 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
                 );
               }
               
+              // Workout/Exercise
+              if (rawData.workout && rawData.workout.trim() !== '') {
+                tags.push(
+                  <View key="workout" style={styles.tag}>
+                    <Icon name="fitness-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.workout}</Text>
+                  </View>
+                );
+              }
+              
+              // Diet
+              if (rawData.diet && rawData.diet.trim() !== '') {
+                tags.push(
+                  <View key="diet" style={styles.tag}>
+                    <Icon name="restaurant-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.diet}</Text>
+                  </View>
+                );
+              }
+              
+              // Pets
+              if (rawData.pets && rawData.pets.trim() !== '') {
+                tags.push(
+                  <View key="pets" style={styles.tag}>
+                    <Icon name="paw-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                    <Text style={styles.tagText}>{rawData.pets}</Text>
+                  </View>
+                );
+              }
+              
+              // Check for any other lifestyle-related fields in rawData
+              const lifestyleFields = ['exercise', 'sleep_schedule', 'social_media', 'outdoor_activities'];
+              lifestyleFields.forEach((field) => {
+                if (rawData[field] && typeof rawData[field] === 'string' && rawData[field].trim() !== '') {
+                  tags.push(
+                    <View key={field} style={styles.tag}>
+                      <Icon name="information-circle-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                      <Text style={styles.tagText}>{rawData[field]}</Text>
+                    </View>
+                  );
+                }
+              });
+              
               if (tags.length === 0) return null;
               
               return (
                 <View style={styles.aboutCard}>
                   <Text style={styles.sectionTitle}>Lifestyle</Text>
-                  {/* <View style={styles.tagsContainer}>
-                    {qualities.map((quality: string, index: number) => (
-                      <View key={index} style={styles.pillTag}>
-                        <Icon name="search-outline" size={16} color="#000000" style={styles.tagIcon} />
-                        <Text style={styles.pillTagText}>{quality}</Text>
-                      </View>
-                    ))}
-                  </View> */}
+                  <View style={styles.tagsContainer}>
+                    {tags}
+                  </View>
                 </View>
               );
             })()}
 
-            {/* Images Gallery - 1 per row, full width */}
-            <View style={styles.imagesContainer}>
-              {allImages.length > 0 ? (
-                allImages.map((imageUrl: string, index: number) => {
-                  return (
-                    <View key={index} style={styles.imageItem}>
-                      <Image
-                        source={
-                          imageUrl && typeof imageUrl === 'string'
-                            ? { uri: imageUrl }
-                            : require('../../../assets/user.png')
-                        }
-                        style={styles.gridImage}
-                        resizeMode="cover"
-                      />
-                    </View>
-                  );
-                })
-              ) : (
-                <View style={styles.noImagesContainer}>
-                  <Text style={styles.noImagesText}>No images yet</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Comment Button below Images */}
+            {/* Images Gallery - 1 per row, full width with Comment Button below each */}
             {allImages.length > 0 && (
-              <View style={styles.commentButtonContainer}>
-                <TouchableOpacity style={styles.commentButton}>
-                  <Icon name="chatbubble-ellipses-outline" size={18} color="#000000" />
-                  <Text style={styles.commentButtonText}>Comment</Text>
-                </TouchableOpacity>
+              <View style={styles.imagesCard}>
+                <Text style={styles.sectionTitle}>Photos</Text>
+                <View style={styles.imagesContainer}>
+                  {allImages.map((imageUrl: string, index: number) => {
+                    return (
+                      <View key={index} style={styles.imageWrapper}>
+                        <View style={styles.imageItem}>
+                          <Image
+                            source={
+                              imageUrl && typeof imageUrl === 'string'
+                                ? { uri: imageUrl }
+                                : require('../../../assets/user.png')
+                            }
+                            style={styles.gridImage}
+                            resizeMode="cover"
+                          />
+                        </View>
+                        {/* Comment Button below each image */}
+                        <TouchableOpacity style={styles.commentButton}>
+                          <Icon name="chatbubble-ellipses-outline" size={18} color="#000000" />
+                          <Text style={styles.commentButtonText}>Comment</Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
               </View>
             )}
 
@@ -542,7 +576,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               </View>
             )}
 
-            {/* My interests Section */}
+            {/* Interests Section */}
             {(() => {
               const tags: React.ReactElement[] = [];
               
@@ -577,6 +611,63 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               return (
                 <View style={styles.aboutCard}>
                   <Text style={styles.sectionTitle}>Interests</Text>
+                  <View style={styles.tagsContainer}>
+                    {tags}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Music Section */}
+            {(() => {
+              const tags: React.ReactElement[] = [];
+              
+              // Music Artists
+              if (rawData.music_artists && Array.isArray(rawData.music_artists) && rawData.music_artists.length > 0) {
+                rawData.music_artists.forEach((artist: string | { name?: string; id?: string }, idx: number) => {
+                  const artistName = typeof artist === 'string' ? artist : artist?.name || artist?.id || '';
+                  if (artistName && artistName.trim() !== '') {
+                    tags.push(
+                      <View key={`artist-${idx}`} style={styles.tag}>
+                        <Icon name="musical-notes-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                        <Text style={styles.tagText}>{artistName}</Text>
+                      </View>
+                    );
+                  }
+                });
+              } else if (rawData.favorite_artists && Array.isArray(rawData.favorite_artists) && rawData.favorite_artists.length > 0) {
+                rawData.favorite_artists.forEach((artist: string | { name?: string }, idx: number) => {
+                  const artistName = typeof artist === 'string' ? artist : artist?.name || '';
+                  if (artistName && artistName.trim() !== '') {
+                    tags.push(
+                      <View key={`artist-${idx}`} style={styles.tag}>
+                        <Icon name="musical-notes-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                        <Text style={styles.tagText}>{artistName}</Text>
+                      </View>
+                    );
+                  }
+                });
+              }
+              
+              // Music Genres
+              if (rawData.music_genres && Array.isArray(rawData.music_genres) && rawData.music_genres.length > 0) {
+                rawData.music_genres.forEach((genre: string, idx: number) => {
+                  if (genre && genre.trim() !== '') {
+                    tags.push(
+                      <View key={`genre-${idx}`} style={styles.tag}>
+                        <Icon name="radio-outline" size={16} color="#000000" style={{ marginRight: wp(6) }} />
+                        <Text style={styles.tagText}>{genre}</Text>
+                      </View>
+                    );
+                  }
+                });
+              }
+              
+              if (tags.length === 0) return null;
+              
+              return (
+                <View style={styles.aboutCard}>
+                  <Text style={styles.sectionTitle}>Music</Text>
                   <View style={styles.tagsContainer}>
                     {tags}
                   </View>
@@ -638,6 +729,42 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               );
             })()}
 
+            {/* Action Buttons Section */}
+            {isTopCard && (
+              <View style={styles.actionButtonsContainer}>
+                {/* Three circular buttons in curved layout */}
+                <View style={styles.actionButtonsCurvedRow}>
+                  <TouchableOpacity 
+                    style={[styles.actionCircleButton, styles.passButtonCurved]}
+                    onPress={() => onSwipeComplete('left')}
+                  >
+                    <Icon name="close" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.actionCircleButton, styles.superlikeButtonCircle]}
+                  >
+                    <Icon name="star" size={24} color="#000000" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.actionCircleButton, styles.likeButtonCurved]}
+                    onPress={() => onSwipeComplete('right')}
+                  >
+                    <Icon name="heart" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+                
+                {/* Block Text */}
+                <TouchableOpacity style={styles.blockReportButton}>
+                  <Text style={styles.blockText}>Block</Text>
+                </TouchableOpacity>
+                
+                {/* Report Text */}
+                <TouchableOpacity style={styles.blockReportButton}>
+                  <Text style={styles.reportText}>Report</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Looking for Section */}
             {rawData.connection_goal && rawData.connection_goal.trim() !== '' && (
               <View style={styles.aboutCard}>
@@ -671,9 +798,6 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               </View>
             )}
           </View>
-
-            {/* Bottom Spacing */}
-            <View style={{ height: 40 }} />
       
         </Animated.ScrollView>
       </Animated.View>
